@@ -5,4 +5,3 @@ let mmu = MMU(cartridge: cartridge)
 let cpu = CPU(mmu: mmu)
 
 try cpu.start()
-try cpu.start()
