@@ -4,7 +4,4 @@ let cartridge = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"), tit
 let mmu = MMU(cartridge: cartridge)
 let cpu = CPU(mmu: mmu)
 
-try cpu.run()
-
-
-
+try cpu.start()

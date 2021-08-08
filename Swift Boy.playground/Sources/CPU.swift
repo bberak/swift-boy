@@ -60,15 +60,15 @@ class Flags: CustomStringConvertible {
 }
 
 enum OpCode: Hashable, CustomStringConvertible {
-    case bit8(UInt8)
-    case bit16(UInt8)
+    case byte(UInt8)
+    case word(UInt8)
     
     public var description: String {
         switch self {
-        case .bit8(let value):
+        case .byte(let value):
             return "0x\(value.toHexString())"
-        case .bit16(let value):
-            return "0x\(value.toHexString()) (16bit)"
+        case .word(let value):
+            return "0x\(value.toHexString()) (word)"
         }
     }
 }
@@ -78,9 +78,9 @@ enum CPUError: Error {
 }
 
 public class CPU: CustomStringConvertible {
-    private let mmu: MMU
     private var pc: UInt16
     private var cycles: Int
+    internal let mmu: MMU
     internal var a: UInt8
     internal let f: Flags
     internal var b: UInt8
@@ -90,6 +90,42 @@ public class CPU: CustomStringConvertible {
     internal var h: UInt8
     internal var l: UInt8
     internal var sp: UInt16
+    
+    internal var bc: UInt16 {
+        get {
+            return [c, b].toWord()
+        }
+        
+        set {
+            let bytes = newValue.toBytes()
+            b = bytes[1]
+            c = bytes[0]
+        }
+    }
+    
+    internal var de: UInt16 {
+        get {
+            return [e, d].toWord()
+        }
+        
+        set {
+            let bytes = newValue.toBytes()
+            d = bytes[1]
+            e = bytes[0]
+        }
+    }
+    
+    internal var hl: UInt16 {
+        get {
+            return [l, h].toWord()
+        }
+        
+        set {
+            let bytes = newValue.toBytes()
+            h = bytes[1]
+            l = bytes[0]
+        }
+    }
     
     public var description: String {
         return "a: \(a), f: (\(f)), b: \(b), c: \(c), d: \(d), e: \(e), h: \(h), l: \(l), sp: \(sp), pc: \(pc), cycles: \(cycles)"
@@ -117,13 +153,8 @@ public class CPU: CustomStringConvertible {
         return byte
     }
     
-    func readNextBytes(count: UInt8) throws -> [UInt8] {
-        return try (0..<count).map({ _ in try readNextByte() })
-    }
-    
     func readNextWord() throws -> UInt16 {
-        let bytes = try readNextBytes(count: 2)
-        return bytes.toWord()
+        return [try readNextByte(), try readNextByte()].toWord()
     }
     
     func readNextOpCode() throws -> OpCode {
@@ -132,17 +163,17 @@ public class CPU: CustomStringConvertible {
         if value == 0xCB {
             value = try readNextByte()
             
-            return OpCode.bit16(value)
+            return OpCode.word(value)
         }
         
-        return OpCode.bit8(value)
+        return OpCode.byte(value)
     }
         
-    public func run() throws {
+    public func start() throws {
         while true {
             let opCode = try readNextOpCode()
             
-            print("opCode \(opCode)")
+            print("opCode: \(opCode)")
             
             if let instruction = instructions[opCode] {
                 let atoms = try instruction.atoms(self)

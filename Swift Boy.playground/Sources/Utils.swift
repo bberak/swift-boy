@@ -24,21 +24,20 @@ public func calculateTime(block : (() -> Void)) {
 
 extension Array where Element == UInt8 {
     func toWord() -> UInt16 {
-        let lb = self[0]
         let hb = self[1]
+        let lb = self[0]
         return UInt16(hb) << 8 + UInt16(lb)
     }
 }
 
 extension UInt16 {
     func toBytes() -> [UInt8] {
-        let arr = [UInt8(0x00FF & self), UInt8(0xFF00 & self)]
-        return arr
+        return [UInt8(0x00FF & self), UInt8((0xFF00 & self) >> 8)]
     }
     
     func toHexString() -> String {
-        let arr = toBytes()
-        return String(format:"%02X", arr[1]) + String(format:"%02X", arr[0])
+        let bytes = toBytes()
+        return String(format:"%02X", bytes[1]) + String(format:"%02X", bytes[0])
     }
 }
 
