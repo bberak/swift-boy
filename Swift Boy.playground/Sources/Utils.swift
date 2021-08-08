@@ -35,4 +35,15 @@ extension UInt16 {
         let arr = [UInt8(0x00FF & self), UInt8(0xFF00 & self)]
         return arr
     }
+    
+    func toHexString() -> String {
+        let arr = toBytes()
+        return String(format:"%02X", arr[1]) + String(format:"%02X", arr[0])
+    }
+}
+
+extension UInt8 {
+    func toHexString() -> String {
+        return String(format:"%02X", self)
+    }
 }

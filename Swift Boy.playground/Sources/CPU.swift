@@ -2,27 +2,27 @@ struct Atomic {
     internal var cycles: Int
     internal var command: () -> Void
     
-    init(_ cycles: Int, command: @escaping () -> Void) {
+    init(cycles: Int, command: @escaping () -> Void) {
         self.cycles = cycles;
         self.command = command;
     }
 }
 
 struct Instruction {
-    internal var bytes: UInt16
+    internal var operands: UInt8
     internal var operations: (CPU, [UInt8]) -> [Atomic]
     
-    init(bytes: UInt16, operations: @escaping (CPU, [UInt8]) -> [Atomic]) {
-        self.bytes = bytes
+    init(operands: UInt8, operations: @escaping (CPU, [UInt8]) -> [Atomic]) {
+        self.operands = operands
         self.operations = operations
     }
 }
 
 class Flags: CustomStringConvertible {
-    private var z = false
-    private var n = false
-    private var h = false
-    private var c = false
+    internal var z = false
+    internal var n = false
+    internal var h = false
+    internal var c = false
     
     public var description: String {
         return "z: \(z ? 1 : 0), n: \(n ? 1 : 0), h: \(h ? 1 : 0), c: \(c ? 1 : 0)"
@@ -53,21 +53,39 @@ class Flags: CustomStringConvertible {
     }
 }
 
+enum OpCode: Hashable, CustomStringConvertible {
+    case bit8(UInt8)
+    case bit16(UInt8)
+    
+    public var description: String {
+        switch self {
+        case .bit8(let value):
+            return "0x\(value.toHexString()) (8bit)"
+        case .bit16(let value):
+            return "0x\(value.toHexString()) (16bit)"
+        }
+    }
+}
+
+enum CPUError: Error {
+    case instructionNotFound(OpCode)
+}
+
 public class CPU: CustomStringConvertible {
     private let mmu: MMU
-    private var a: UInt8
-    private let f: Flags
-    private var b: UInt8
-    private var c: UInt8
-    private var d: UInt8
-    private var e: UInt8
-    private var h: UInt8
-    private var l: UInt8
-    internal var sp: UInt16
     private var pc: UInt16
     private var cycles: Int
+    internal var a: UInt8
+    internal let f: Flags
+    internal var b: UInt8
+    internal var c: UInt8
+    internal var d: UInt8
+    internal var e: UInt8
+    internal var h: UInt8
+    internal var l: UInt8
+    internal var sp: UInt16
     
-    public var description: String { 
+    public var description: String {
         return "a: \(a), f: (\(f)), b: \(b), c: \(c), d: \(d), e: \(e), h: \(h), l: \(l), sp: \(sp), pc: \(pc), cycles: \(cycles)"
     }
     
@@ -86,23 +104,54 @@ public class CPU: CustomStringConvertible {
         cycles = 0
     }
     
-    public func start() throws {
-        print(self)
+    func readNextOpCode() throws -> OpCode {
+        var value = try mmu.readByte(address: pc)
+        pc+=1
         
-        let opCode = try mmu.readByte(address: pc)
-        
-        if let instruction = instructions[opCode] {
-            let operands: [UInt8] = try (1...instruction.bytes-1).map { try mmu.readByte(address: pc + $0) }
-            let ops = instruction.operations(self, operands)
+        if value == 0xCB {
+            value = try mmu.readByte(address: pc)
+            pc+=1
             
-            ops.forEach { op in
-                op.command()
-                cycles+=op.cycles
-            }
-            
-            pc+=instruction.bytes
+            return OpCode.bit16(value)
         }
         
-        print(self)
+        return OpCode.bit8(value)
+    }
+    
+    func readNextOperands(num: UInt8) throws -> [UInt8] {
+        var operands: [UInt8] = []
+        
+        if num == 0 {
+            return operands
+        }
+        
+        for _ in 0...num-1 {
+            operands.append(try mmu.readByte(address: pc))
+            pc+=1
+        }
+        
+        return operands
+    }
+    
+    public func run() throws {
+        while true {
+            let opCode = try readNextOpCode()
+            
+            print("opCode \(opCode)")
+            
+            if let instruction = instructions[opCode] {
+                let operands = try readNextOperands(num: instruction.operands)
+                let ops = instruction.operations(self, operands)
+                
+                ops.forEach { op in
+                    op.command()
+                    cycles+=op.cycles
+                }
+            } else {
+                throw CPUError.instructionNotFound(opCode)
+            }
+            
+            print(self)
+        }
     }
 }
