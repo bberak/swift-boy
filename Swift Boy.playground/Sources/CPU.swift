@@ -1,20 +1,26 @@
-struct Atomic {
+struct Atom {
     internal var cycles: Int
-    internal var command: () -> Void
+    internal var command: () throws -> Void
     
-    init(cycles: Int, command: @escaping () -> Void) {
+    init(cycles: Int, command: @escaping () throws -> Void) {
         self.cycles = cycles;
         self.command = command;
     }
 }
 
 struct Instruction {
-    internal var operands: UInt8
-    internal var operations: (CPU, [UInt8]) -> [Atomic]
+    internal var atoms: (CPU) throws -> [Atom]
     
-    init(operands: UInt8, operations: @escaping (CPU, [UInt8]) -> [Atomic]) {
-        self.operands = operands
-        self.operations = operations
+    init(atoms: @escaping (CPU) throws -> [Atom]) {
+        self.atoms = atoms
+    }
+    
+    static func atomic(cycles: Int, command: @escaping (CPU) throws -> Void) -> Instruction {
+        return Instruction { cpu in
+            return [Atom(cycles: cycles) {
+                try command(cpu)
+            }]
+        }
     }
 }
 
@@ -60,7 +66,7 @@ enum OpCode: Hashable, CustomStringConvertible {
     public var description: String {
         switch self {
         case .bit8(let value):
-            return "0x\(value.toHexString()) (8bit)"
+            return "0x\(value.toHexString())"
         case .bit16(let value):
             return "0x\(value.toHexString()) (16bit)"
         }
@@ -104,35 +110,34 @@ public class CPU: CustomStringConvertible {
         cycles = 0
     }
     
-    func readNextOpCode() throws -> OpCode {
-        var value = try mmu.readByte(address: pc)
+    func readNextByte() throws -> UInt8 {
+        let byte = try mmu.readByte(address: pc)
         pc+=1
         
+        return byte
+    }
+    
+    func readNextBytes(count: UInt8) throws -> [UInt8] {
+        return try (0..<count).map({ _ in try readNextByte() })
+    }
+    
+    func readNextWord() throws -> UInt16 {
+        let bytes = try readNextBytes(count: 2)
+        return bytes.toWord()
+    }
+    
+    func readNextOpCode() throws -> OpCode {
+        var value = try readNextByte()
+        
         if value == 0xCB {
-            value = try mmu.readByte(address: pc)
-            pc+=1
+            value = try readNextByte()
             
             return OpCode.bit16(value)
         }
         
         return OpCode.bit8(value)
     }
-    
-    func readNextOperands(num: UInt8) throws -> [UInt8] {
-        var operands: [UInt8] = []
         
-        if num == 0 {
-            return operands
-        }
-        
-        for _ in 0...num-1 {
-            operands.append(try mmu.readByte(address: pc))
-            pc+=1
-        }
-        
-        return operands
-    }
-    
     public func run() throws {
         while true {
             let opCode = try readNextOpCode()
@@ -140,12 +145,11 @@ public class CPU: CustomStringConvertible {
             print("opCode \(opCode)")
             
             if let instruction = instructions[opCode] {
-                let operands = try readNextOperands(num: instruction.operands)
-                let ops = instruction.operations(self, operands)
+                let atoms = try instruction.atoms(self)
                 
-                ops.forEach { op in
-                    op.command()
-                    cycles+=op.cycles
+                try atoms.forEach { atom in
+                    try atom.command()
+                    cycles+=atom.cycles
                 }
             } else {
                 throw CPUError.instructionNotFound(opCode)
