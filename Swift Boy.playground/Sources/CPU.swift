@@ -25,32 +25,32 @@ struct Instruction {
 }
 
 class Flags: CustomStringConvertible {
-    internal var z = false
-    internal var n = false
-    internal var h = false
-    internal var c = false
+    internal var zero = false
+    internal var subtract = false
+    internal var halfCarry = false
+    internal var carry = false
     
     public var description: String {
-        return "z: \(z ? 1 : 0), n: \(n ? 1 : 0), h: \(h ? 1 : 0), c: \(c ? 1 : 0)"
+        return "z: \(zero ? 1 : 0), n: \(subtract ? 1 : 0), h: \(halfCarry ? 1 : 0), c: \(carry ? 1 : 0)"
     }
     
     func clear() {
-        z = false
-        n = false
-        h = false
-        c = false
+        zero = false
+        subtract = false
+        halfCarry = false
+        carry = false
     }
     
     func set(byte: UInt8) {
-        z = (byte & 0b10000000) != 0
-        n = (byte & 0b01000000) != 0
-        h = (byte & 0b00100000) != 0
-        c = (byte & 0b00010000) != 0
+        zero = (byte & 0b10000000) != 0
+        subtract = (byte & 0b01000000) != 0
+        halfCarry = (byte & 0b00100000) != 0
+        carry = (byte & 0b00010000) != 0
     }
     
     func toUInt8() -> UInt8 {
         var result: UInt8 = 0;
-        let arr = [z, n, h, c]
+        let arr = [zero, subtract, halfCarry, carry]
         
         arr.forEach {
             if $0 { 
@@ -88,8 +88,8 @@ public class CPU: CustomStringConvertible {
     private var pc: UInt16
     private var cycles: Int
     internal let mmu: MMU
+    internal let flags: Flags
     internal var a: UInt8
-    internal let f: Flags
     internal var b: UInt8
     internal var c: UInt8
     internal var d: UInt8
@@ -100,13 +100,13 @@ public class CPU: CustomStringConvertible {
     
     internal var af: UInt16 {
         get {
-            return [f.toUInt8(), a].toWord()
+            return [flags.toUInt8(), a].toWord()
         }
         
         set {
             let bytes = newValue.toBytes()
             a = bytes[1]
-            f.set(byte: bytes[0])
+            flags.set(byte: bytes[0])
         }
     }
     
@@ -147,13 +147,13 @@ public class CPU: CustomStringConvertible {
     }
     
     public var description: String {
-        return "a: \(a), f: (\(f)), b: \(b), c: \(c), d: \(d), e: \(e), h: \(h), l: \(l), sp: \(sp), pc: \(pc), cycles: \(cycles)"
+        return "a: \(a), f: (\(flags)), b: \(b), c: \(c), d: \(d), e: \(e), h: \(h), l: \(l), sp: \(sp), pc: \(pc), cycles: \(cycles)"
     }
     
     public init(mmu: MMU) {
         self.mmu = mmu
+        flags = Flags()
         a = 0
-        f = Flags()
         b = 0
         c = 0
         d = 0

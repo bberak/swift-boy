@@ -57,26 +57,37 @@ public extension UInt8 {
     }
 }
 
-public func add(num1: UInt8, num2: UInt8) -> (value: UInt8, halfCarry: Bool, carry: Bool) {
+public struct ByteOp {
+    var value: UInt8
+    var halfCarry: Bool
+    var carry: Bool
+    var subtract: Bool
+    var zero: Bool {
+        return value == 0
+    }
+}
+
+public func add(num1: UInt8, num2: UInt8) -> ByteOp {
     let value: UInt16 = UInt16(num1) + UInt16(num2)
     let halfCarry = (((num1 & 0x0F) + (num2 & 0x0F)) & 0x10) == 0x10
     let carry = value > 0x00FF
     
-    return (value: UInt8(value & 0x00FF), halfCarry: halfCarry, carry: carry)
+    return ByteOp(value: UInt8(value & 0x00FF), halfCarry: halfCarry, carry: carry, subtract: false)
 }
 
-public func add(_ num1: UInt8, _ num2: UInt8) -> (value: UInt8, halfCarry: Bool, carry: Bool) {
+public func add(_ num1: UInt8, _ num2: UInt8) -> ByteOp {
     return add(num1: num1, num2: num2)
 }
 
-public func subtract(num1: UInt8, num2: UInt8) -> (value: UInt8, halfCarry: Bool, carry: Bool) {
-    return add(num1, (0xFF - UInt16(num2) + 1).toBytes()[0])
+public func subtract(num1: UInt8, num2: UInt8) -> ByteOp {
+    let tmp = add(num1, (0xFF - UInt16(num2) + 1).toBytes()[0])
+    return ByteOp(value: tmp.value, halfCarry: tmp.halfCarry, carry: tmp.carry, subtract: true)
 }
 
-public func subtract(_ num1: UInt8, _ num2: UInt8) -> (value: UInt8, halfCarry: Bool, carry: Bool) {
+public func subtract(_ num1: UInt8, _ num2: UInt8) -> ByteOp {
     return subtract(num1: num1, num2: num2)
 }
 
-public func sub(_ num1: UInt8, _ num2: UInt8) -> (value: UInt8, halfCarry: Bool, carry: Bool) {
+public func sub(_ num1: UInt8, _ num2: UInt8) -> ByteOp {
     return subtract(num1: num1, num2: num2)
 }

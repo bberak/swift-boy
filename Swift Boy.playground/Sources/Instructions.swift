@@ -18,17 +18,17 @@ let instructions: [OpCode: Instruction] = [
         // Increment the contents of register B by 1.
         let result = add(cpu.b, 1)
         cpu.b = result.value
-        cpu.f.z = cpu.b == 0
-        cpu.f.n = false
-        cpu.f.h = result.halfCarry
+        cpu.flags.zero = result.zero
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
     },
     OpCode.byte(0x05): Instruction.atomic(cycles: 1) { cpu in
         // Decrement the contents of register B by 1
         let result = sub(cpu.b, 1)
         cpu.b = result.value
-        cpu.f.z = cpu.b == 0
-        cpu.f.n = true
-        cpu.f.h = result.halfCarry
+        cpu.flags.zero = result.zero
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
     },
     OpCode.byte(0x06): Instruction.atomic(cycles: 2) { cpu in
         // Load the 8-bit immediate operand d8 into register B.
@@ -41,21 +41,25 @@ let instructions: [OpCode: Instruction] = [
         // are placed in both the CY flag and bit 0 of register A.
         let carry = cpu.a.bit(7)
         cpu.a = (cpu.a << 1) + (carry ? 1 : 0)
-        cpu.f.c = carry
-    }
+        cpu.flags.carry = carry
+    },
 ]
 
-//-    OpCode.byte(0x31): Instruction.atomic(cycles: 3) { cpu in
-//-        // Load the 2 bytes of immediate data into register pair SP.
-//-        cpu.sp = try cpu.readNextWord()
-//-    },
-//-    OpCode.byte(0xAF): Instruction.atomic(cycles: 1) { cpu in
-//-        // Take the logical exclusive-OR for each bit of the contents of register A and the contents of register A,
-//-        // and store the results in register A.
-//-        cpu.a^=cpu.a
-//-        cpu.f.z = cpu.a == 0
-//-    },
-//-    OpCode.byte(0x21): Instruction.atomic(cycles: 3) { cpu in
-//-        // Load the 2 bytes of immediate data into register pair HL.
-//-        cpu.hl = try cpu.readNextWord()
-//-    }
+//    OpCode.byte(0x31): Instruction.atomic(cycles: 3) { cpu in
+//        // Load the 2 bytes of immediate data into register pair SP.
+//        cpu.sp = try cpu.readNextWord()
+//    },
+//    OpCode.byte(0xAF): Instruction.atomic(cycles: 1) { cpu in
+//        // Take the logical exclusive-OR for each bit of the contents of register A and the contents of register A,
+//        // and store the results in register A.
+//        cpu.a^=cpu.a
+//        cpu.flags.zero = cpu.a == 0
+//    },
+//    OpCode.byte(0x21): Instruction.atomic(cycles: 3) { cpu in
+//        // Load the 2 bytes of immediate data into register pair HL.
+//        cpu.hl = try cpu.readNextWord()
+//    }
+
+
+
+
