@@ -41,6 +41,13 @@ class Flags: CustomStringConvertible {
         c = false
     }
     
+    func set(byte: UInt8) {
+        z = (byte & 0b10000000) != 0
+        n = (byte & 0b01000000) != 0
+        h = (byte & 0b00100000) != 0
+        c = (byte & 0b00010000) != 0
+    }
+    
     func toUInt8() -> UInt8 {
         var result: UInt8 = 0;
         let arr = [z, n, h, c]
@@ -90,6 +97,18 @@ public class CPU: CustomStringConvertible {
     internal var h: UInt8
     internal var l: UInt8
     internal var sp: UInt16
+    
+    internal var af: UInt16 {
+        get {
+            return [f.toUInt8(), a].toWord()
+        }
+        
+        set {
+            let bytes = newValue.toBytes()
+            a = bytes[1]
+            f.set(byte: bytes[0])
+        }
+    }
     
     internal var bc: UInt16 {
         get {
