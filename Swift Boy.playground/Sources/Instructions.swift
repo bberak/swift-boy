@@ -14,7 +14,8 @@ let instructions: [OpCode: Instruction] = [
     },
     OpCode.byte(0x03): Instruction.atomic(cycles: 2) { cpu in
         // Increment the contents of register pair BC by 1.
-        cpu.bc+=1
+        let result = add(cpu.bc, 1)
+        cpu.bc = result.value
     },
     OpCode.byte(0x04): Instruction.atomic(cycles: 1) { cpu in
         // Increment the contents of register B by 1.
@@ -44,42 +45,80 @@ let instructions: [OpCode: Instruction] = [
         // in both the CY flag and bit 0 of register A.
         let carry = cpu.a.bit(7)
         cpu.a = (cpu.a << 1) + (carry ? 1 : 0)
+        cpu.flags.zero = false
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
         cpu.flags.carry = carry
     },
-    OpCode.byte(0x08): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x08))
+    OpCode.byte(0x08): Instruction.atomic(cycles: 5) { cpu in
+        // Store the lower byte of stack pointer SP at the address specified by the 16-bit
+        // immediate operand a16, and store the upper byte of SP at address a16 + 1.
+        let address = try cpu.readNextWord()
+        try cpu.mmu.writeWord(address: address, word: cpu.sp)
     },
     OpCode.byte(0x09): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x09))
+        // Add the contents of register pair BC to the contents of register pair HL,
+        // and store the results in register pair HL.
+        let result = add(cpu.bc, cpu.hl)
+        cpu.hl = result.value
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     OpCode.byte(0x0A): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x0A))
+        // Load the 8-bit contents of memory specified by register pair BC into register A.
+        cpu.a = try cpu.mmu.readByte(address: cpu.bc)
     },
     OpCode.byte(0x0B): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x0B))
+        // Decrement the contents of register pair BC by 1.
+        let result = sub(cpu.bc, 1)
+        cpu.bc = result.value
     },
-    OpCode.byte(0x0C): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x0C))
+    OpCode.byte(0x0C): Instruction.atomic(cycles: 1) { cpu in
+        // Increment the contents of register C by 1.
+        let result = add(cpu.c, 1)
+        cpu.c = result.value
+        cpu.flags.zero = result.zero
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
     },
-    OpCode.byte(0x0D): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x0D))
+    OpCode.byte(0x0D): Instruction.atomic(cycles: 1) { cpu in
+        // Decrement the contents of register C by 1.
+        let result = sub(cpu.c, 1)
+        cpu.c = result.value
+        cpu.flags.zero = result.zero
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
     },
     OpCode.byte(0x0E): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x0E))
+        // Load the 8-bit immediate operand d8 into register C.
+        cpu.c = try cpu.readNextByte()
     },
-    OpCode.byte(0x0F): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x0F))
+    OpCode.byte(0x0F): Instruction.atomic(cycles: 1) { cpu in
+        // Rotate the contents of register A to the right. That is, the contents of bit 7
+        // are copied to bit 6, and the previous contents of bit 6 (before the copy) are copied
+        // to bit 5. The same operation is repeated in sequence for the rest of the register.
+        // The contents of bit 0 are placed in both the CY flag and bit 7 of register A.
+        let carry = cpu.a.bit(0)
+        cpu.a = (cpu.a >> 1) + (carry ? 0b10000000 : 0)
+        cpu.flags.zero = false
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
-    OpCode.byte(0x10): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
+    OpCode.byte(0x10): Instruction.atomic(cycles: 1) { cpu in
+        // Execution of a STOP instruction stops both the system clock and oscillator circuit.
+        // STOP mode is entered and the LCD controller also stops. However, the status of the
+        // internal RAM register ports remains unchanged.
+        //
+        // STOP mode can be cancelled by a reset signal.
+        //
+        // If the RESET terminal goes LOW in STOP mode, it becomes that of a normal reset status.
+        //
+        // The following conditions should be met before a STOP instruction is executed and stop mode is entered:
+        //
+        // All interrupt-enable (IE) flags are reset.
+        // Input to P10-P13 is LOW for all.
         throw CPUError.instructionNotImplemented(OpCode.byte(0x10))
     },
     OpCode.byte(0x11): Instruction.atomic(cycles: 2) { cpu in
@@ -717,8 +756,11 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0xAF): Instruction.atomic(cycles: 1) { cpu in
         // Take the logical exclusive-OR for each bit of the contents of register A
         // and the contents of register A, and store the results in register A.
-        cpu.a^=cpu.a
+        cpu.a = cpu.a ^ cpu.a
         cpu.flags.zero = cpu.a == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = false
     },
     OpCode.byte(0xB0): Instruction.atomic(cycles: 2) { cpu in
         // Add comment here
