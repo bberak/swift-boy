@@ -82,6 +82,7 @@ enum OpCode: Hashable, CustomStringConvertible {
 
 enum CPUError: Error {
     case instructionNotFound(OpCode)
+    case instructionNotImplemented(OpCode)
 }
 
 public class CPU: CustomStringConvertible {
