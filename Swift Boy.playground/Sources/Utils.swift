@@ -68,11 +68,11 @@ public struct ByteOp {
 }
 
 public func add(num1: UInt8, num2: UInt8) -> ByteOp {
-    let value: UInt16 = UInt16(num1) + UInt16(num2)
+    let value: UInt8 = num1 &+ num2
     let halfCarry = (((num1 & 0x0F) + (num2 & 0x0F)) & 0x10) == 0x10
-    let carry = value > 0xFF
+    let carry = value < num1 || value < num2
     
-    return ByteOp(value: UInt8(value & 0xFF), halfCarry: halfCarry, carry: carry, subtract: false)
+    return ByteOp(value: value, halfCarry: halfCarry, carry: carry, subtract: false)
 }
 
 public func add(_ num1: UInt8, _ num2: UInt8) -> ByteOp {
@@ -100,11 +100,11 @@ public struct WordOp {
 }
 
 public func add(num1: UInt16, num2: UInt16) -> WordOp {
-    let value: UInt32 = UInt32(num1) + UInt32(num2)
+    let value: UInt16 = num1 &+ num2
     let halfCarry = (((num1 & 0x0FFF) + (num2 & 0x0FFF)) & 0x1000) == 0x1000
-    let carry = value > 0xFFFF
+    let carry = value < num1 || value < num2
     
-    return WordOp(value: UInt16(value & 0xFFFF), halfCarry: halfCarry, carry: carry, subtract: false)
+    return WordOp(value: value, halfCarry: halfCarry, carry: carry, subtract: false)
 }
 
 public func add(_ num1: UInt16, _ num2: UInt16) -> WordOp {
