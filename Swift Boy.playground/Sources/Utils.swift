@@ -80,7 +80,7 @@ public func add(_ num1: UInt8, _ num2: UInt8) -> ByteOp {
 }
 
 public func sub(num1: UInt8, num2: UInt8) -> ByteOp {
-    let complement: UInt8 = UInt8((0xFF - UInt16(num2) + 1) & 0xFF)
+    let complement: UInt8 = ~num2 &+ 1
     let result = add(num1, complement)
     return ByteOp(value: result.value, halfCarry: result.halfCarry, carry: result.carry, subtract: true)
 }
@@ -112,7 +112,7 @@ public func add(_ num1: UInt16, _ num2: UInt16) -> WordOp {
 }
 
 public func sub(num1: UInt16, num2: UInt16) -> WordOp {
-    let complement: UInt16 = UInt16((0xFFFF - UInt16(num2) + 1) & 0xFFFF)
+    let complement: UInt16 = ~num2 &+ 1
     let result = add(num1, complement)
     return WordOp(value: result.value, halfCarry: result.halfCarry, carry: result.carry, subtract: true)
 }
