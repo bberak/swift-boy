@@ -64,7 +64,7 @@ extension Array: MemoryAccess where Element == MemoryAccess {
     
     func writeByte(address: UInt16, byte: UInt8) throws {
         if let block = find(address: address) {
-            try block.writeByte(address: address, byte: byte)
+            return try block.writeByte(address: address, byte: byte)
         }
         
         throw MemoryAccessError.addressOutOfRange
@@ -169,7 +169,9 @@ public class MMU: MemoryAccess {
             bios,
             cartridge,
             //-- Internal RAM and Echo RAM
-            MultiRangeMemoryBlock(ranges: [0xC000...0xCFFF, 0xE000...0xFDFF], readOnly: false, enabled: true)
+            MultiRangeMemoryBlock(ranges: [0xC000...0xCFFF, 0xE000...0xFDFF], readOnly: false, enabled: true),
+            //-- Placeholder
+            MemoryBlock(range: 0x0000...0xFFFF, readOnly: false, enabled: true),
         ]
     }
     
