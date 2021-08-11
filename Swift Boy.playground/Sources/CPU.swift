@@ -86,8 +86,6 @@ enum CPUError: Error {
 }
 
 public class CPU: CustomStringConvertible {
-    private var pc: UInt16
-    private var cycles: Int
     internal let mmu: MMU
     internal let flags: Flags
     internal var a: UInt8
@@ -98,6 +96,8 @@ public class CPU: CustomStringConvertible {
     internal var h: UInt8
     internal var l: UInt8
     internal var sp: UInt16
+    internal var pc: UInt16
+    private var cycles: Int
     
     internal var af: UInt16 {
         get {

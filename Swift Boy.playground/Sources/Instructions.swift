@@ -115,71 +115,118 @@ let instructions: [OpCode: Instruction] = [
         //
         // If the RESET terminal goes LOW in STOP mode, it becomes that of a normal reset status.
         //
-        // The following conditions should be met before a STOP instruction is executed and stop mode is entered:
+        // The following conditions should be met before a STOP instruction is executed
+        // and stop mode is entered:
         //
         // All interrupt-enable (IE) flags are reset.
+        //
         // Input to P10-P13 is LOW for all.
         throw CPUError.instructionNotImplemented(OpCode.byte(0x10))
     },
-    OpCode.byte(0x11): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x11))
+    OpCode.byte(0x11): Instruction.atomic(cycles: 3) { cpu in
+        // Load the 2 bytes of immediate data into register pair DE.
+        //
+        // The first byte of immediate data is the lower byte (i.e., bits 0-7),
+        // and the second byte of immediate data is the higher byte (i.e., bits 8-15).
+        cpu.de = try cpu.readNextWord()
     },
     OpCode.byte(0x12): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x12))
+        // Store the contents of register A in the memory location specified by register pair DE.
+        try cpu.mmu.writeByte(address: cpu.de, byte: cpu.a)
     },
     OpCode.byte(0x13): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x13))
+        // Increment the contents of register pair DE by 1.
+        let result = add(cpu.de, 1)
+        cpu.de = result.value
     },
-    OpCode.byte(0x14): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x14))
+    OpCode.byte(0x14): Instruction.atomic(cycles: 1) { cpu in
+        // Increment the contents of register D by 1.
+        let result = add(cpu.d, 1)
+        cpu.d = result.value
+        cpu.flags.zero = result.zero
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
     },
-    OpCode.byte(0x15): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x15))
+    OpCode.byte(0x15): Instruction.atomic(cycles: 1) { cpu in
+        // Decrement the contents of register D by 1.
+        let result = sub(cpu.d, 1)
+        cpu.d = result.value
+        cpu.flags.zero = result.zero
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
     },
     OpCode.byte(0x16): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x16))
+        // Load the 8-bit immediate operand d8 into register D.
+        cpu.d = try cpu.readNextByte()
     },
-    OpCode.byte(0x17): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x17))
+    OpCode.byte(0x17): Instruction.atomic(cycles: 1) { cpu in
+        // Rotate the contents of register A to the left, through the carry (CY) flag.
+        // That is, the contents of bit 0 are copied to bit 1, and the previous contents
+        // of bit 1 (before the copy operation) are copied to bit 2. The same operation is
+        // repeated in sequence for the rest of the register. The previous contents of the
+        // carry flag are copied to bit 0.
+        let carry = cpu.a.bit(7)
+        cpu.a = (cpu.a << 1) + (cpu.flags.carry ? 1 : 0)
+        cpu.flags.zero = false
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
-    OpCode.byte(0x18): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x18))
+    OpCode.byte(0x18): Instruction.atomic(cycles: 3) { cpu in
+        // Jump s8 steps from the current address in the program counter (PC). (Jump relative.)
+        let offset = try cpu.readNextByte()
+        cpu.pc = cpu.pc + UInt16(offset)
     },
     OpCode.byte(0x19): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x19))
+        // Add the contents of register pair DE to the contents of register pair HL,
+        // and store the results in register pair HL.
+        let result = add(cpu.de, cpu.hl)
+        cpu.hl = result.value
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     OpCode.byte(0x1A): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x1A))
+        // Load the 8-bit contents of memory specified by register pair DE into register A.
+        cpu.a = try cpu.mmu.readByte(address: cpu.de)
     },
     OpCode.byte(0x1B): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x1B))
+        // Decrement the contents of register pair DE by 1.
+        let result = sub(cpu.de, 1)
+        cpu.de = result.value
     },
-    OpCode.byte(0x1C): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x1C))
+    OpCode.byte(0x1C): Instruction.atomic(cycles: 1) { cpu in
+        // Increment the contents of register E by 1.
+        let result = add(cpu.e, 1)
+        cpu.e = result.value
+        cpu.flags.zero = result.zero
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
     },
-    OpCode.byte(0x1D): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x1D))
+    OpCode.byte(0x1D): Instruction.atomic(cycles: 1) { cpu in
+        // Decrement the contents of register E by 1.
+       let result = sub(cpu.e, 1)
+       cpu.e = result.value
+       cpu.flags.zero = result.zero
+       cpu.flags.subtract = result.subtract
+       cpu.flags.halfCarry = result.halfCarry
     },
     OpCode.byte(0x1E): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x1E))
+        // Load the 8-bit immediate operand d8 into register E.
+        cpu.e = try cpu.readNextByte()
     },
-    OpCode.byte(0x1F): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x1F))
+    OpCode.byte(0x1F): Instruction.atomic(cycles: 1) { cpu in
+        // Rotate the contents of register A to the right, through the carry (CY) flag.
+        // That is, the contents of bit 7 are copied to bit 6, and the previous contents
+        // of bit 6 (before the copy) are copied to bit 5. The same operation is repeated
+        // in sequence for the rest of the register. The previous contents of the carry
+        // flag are copied to bit 7.
+        let carry = cpu.a.bit(0)
+        cpu.a = (cpu.a >> 1) + (cpu.flags.carry ? 0b10000000 : 0)
+        cpu.flags.zero = false
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.byte(0x20): Instruction.atomic(cycles: 2) { cpu in
         // Add comment here
