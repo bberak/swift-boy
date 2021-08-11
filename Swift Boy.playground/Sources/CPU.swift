@@ -1,8 +1,8 @@
 struct Atom {
-    internal var cycles: Int
+    internal var cycles: UInt
     internal var command: () throws -> Void
     
-    init(cycles: Int, command: @escaping () throws -> Void) {
+    init(cycles: UInt, command: @escaping () throws -> Void) {
         self.cycles = cycles;
         self.command = command;
     }
@@ -15,7 +15,7 @@ struct Instruction {
         self.atoms = atoms
     }
     
-    static func atomic(cycles: Int, command: @escaping (CPU) throws -> Void) -> Instruction {
+    static func atomic(cycles: UInt, command: @escaping (CPU) throws -> Void) -> Instruction {
         return Instruction { cpu in
             return [Atom(cycles: cycles) {
                 try command(cpu)
@@ -97,7 +97,7 @@ public class CPU: CustomStringConvertible {
     internal var l: UInt8
     internal var sp: UInt16
     internal var pc: UInt16
-    private var cycles: Int
+    internal var cycles: UInt
     
     internal var af: UInt16 {
         get {

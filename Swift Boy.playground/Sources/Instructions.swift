@@ -125,9 +125,6 @@ let instructions: [OpCode: Instruction] = [
     },
     OpCode.byte(0x11): Instruction.atomic(cycles: 3) { cpu in
         // Load the 2 bytes of immediate data into register pair DE.
-        //
-        // The first byte of immediate data is the lower byte (i.e., bits 0-7),
-        // and the second byte of immediate data is the higher byte (i.e., bits 8-15).
         cpu.de = try cpu.readNextWord()
     },
     OpCode.byte(0x12): Instruction.atomic(cycles: 2) { cpu in
@@ -229,68 +226,134 @@ let instructions: [OpCode: Instruction] = [
         cpu.flags.carry = carry
     },
     OpCode.byte(0x20): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x20))
+        // If the Z flag is 0, jump s8 steps from the current address stored in the
+        // program counter (PC). If not, the instruction following the current JP
+        // instruction is executed (as usual).
+        let offset = try cpu.readNextByte()
+        
+        if (!cpu.flags.zero) {
+            cpu.pc = cpu.pc &+ UInt16(offset)
+            cpu.cycles+=1
+        }
     },
     OpCode.byte(0x21): Instruction.atomic(cycles: 3) { cpu in
         // Load the 2 bytes of immediate data into register pair HL.
         cpu.hl = try cpu.readNextWord()
     },
     OpCode.byte(0x22): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x22))
+        // Store the contents of register A into the memory location specified by
+        // register pair HL, and simultaneously increment the contents of HL.
+        try cpu.mmu.writeByte(address: cpu.hl, byte: cpu.a)
+        cpu.hl = cpu.hl &+ 1
     },
     OpCode.byte(0x23): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x23))
+        // Increment the contents of register pair HL by 1.
+        cpu.hl = cpu.hl &+ 1
     },
-    OpCode.byte(0x24): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x24))
+    OpCode.byte(0x24): Instruction.atomic(cycles: 1) { cpu in
+        // Increment the contents of register H by 1.
+        let result = add(cpu.h, 1)
+        cpu.h = result.value
+        cpu.flags.zero = result.zero
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
     },
-    OpCode.byte(0x25): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x25))
+    OpCode.byte(0x25): Instruction.atomic(cycles: 1) { cpu in
+        // Decrement the contents of register H by 1.
+        let result = sub(cpu.h, 1)
+        cpu.h = result.value
+        cpu.flags.zero = result.zero
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
     },
     OpCode.byte(0x26): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x26))
+        // Load the 8-bit immediate operand d8 into register H.
+        cpu.h = try cpu.readNextByte()
     },
-    OpCode.byte(0x27): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x27))
+    OpCode.byte(0x27): Instruction.atomic(cycles: 1) { cpu in
+        // Adjust the accumulator (register A) to a binary-coded decimal (BCD)
+        // number after BCD addition and subtraction operations.
+        //
+        // https://ehaskins.com/2018-01-30%20Z80%20DAA/
+        // https://www.reddit.com/r/EmuDev/comments/cdtuyw/gameboy_emulator_fails_blargg_daa_test/
+        
+        if (!cpu.flags.subtract) {
+            if (cpu.flags.carry || cpu.a > 0x99) {
+                cpu.a = cpu.a &+ 0x60
+                cpu.flags.carry = true
+            }
+            if (cpu.flags.halfCarry || (cpu.a & 0x0F) > 0x09) {
+                cpu.a = cpu.a &+ 0x06;
+            }
+        }
+        else {
+            if (cpu.flags.carry) {
+                cpu.a = cpu.a &- 0x60;
+                cpu.flags.carry = true
+            }
+            if (cpu.flags.halfCarry) {
+                cpu.a = cpu.a &- 0x06;
+            }
+        }
+
+        cpu.flags.zero = cpu.a == 0
+        cpu.flags.halfCarry = false
     },
     OpCode.byte(0x28): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x28))
+        // If the Z flag is 1, jump s8 steps from the current address stored in the
+        // program counter (PC). If not, the instruction following the current
+        // JP instruction is executed (as usual).
+        let offset = try cpu.readNextByte()
+        
+        if (cpu.flags.zero) {
+            cpu.pc = cpu.pc &+ UInt16(offset)
+            cpu.cycles+=1
+        }
     },
     OpCode.byte(0x29): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x29))
+        // Add the contents of register pair HL to the contents of register pair HL,
+        // and store the results in register pair HL.
+        let result = add(cpu.hl, cpu.hl)
+        cpu.hl = result.value
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     OpCode.byte(0x2A): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x2A))
+        // Load the contents of memory specified by register pair HL into register A,
+        // and simultaneously increment the contents of HL.
+        cpu.a = try cpu.mmu.readByte(address: cpu.hl)
+        cpu.hl = cpu.hl &+ 1
     },
     OpCode.byte(0x2B): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x2B))
+        // Decrement the contents of register pair HL by 1.
+        cpu.hl = cpu.hl &- 1
     },
-    OpCode.byte(0x2C): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x2C))
+    OpCode.byte(0x2C): Instruction.atomic(cycles: 1) { cpu in
+        // Increment the contents of register L by 1.
+        let result = add(cpu.l, 1)
+        cpu.l = result.value
+        cpu.flags.zero = result.zero
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
     },
-    OpCode.byte(0x2D): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x2D))
+    OpCode.byte(0x2D): Instruction.atomic(cycles: 1) { cpu in
+        // Decrement the contents of register L by 1.
+        let result = sub(cpu.l, 1)
+        cpu.l = result.value
+        cpu.flags.zero = result.zero
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
     },
     OpCode.byte(0x2E): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x2E))
+        // Load the 8-bit immediate operand d8 into register L.
+        cpu.l = try cpu.readNextByte()
     },
     OpCode.byte(0x2F): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x2F))
+        // Take the one's complement (i.e., flip all bits) of the contents of register A.
+        cpu.a = ~cpu.a
+        cpu.flags.subtract = true
+        cpu.flags.halfCarry = true
     },
     OpCode.byte(0x30): Instruction.atomic(cycles: 2) { cpu in
         // Add comment here
