@@ -171,8 +171,8 @@ let instructions: [OpCode: Instruction] = [
     },
     OpCode.byte(0x18): Instruction.atomic(cycles: 3) { cpu in
         // Jump s8 steps from the current address in the program counter (PC). (Jump relative.)
-        let offset = try cpu.readNextByte()
-        cpu.pc = cpu.pc + UInt16(offset)
+        let offset = Int8(try cpu.readNextByte())
+        cpu.pc = offset > 0 ? cpu.pc &+ UInt16(offset.toUInt8()) : cpu.pc &- UInt16(offset.toUInt8())
     },
     OpCode.byte(0x19): Instruction.atomic(cycles: 2) { cpu in
         // Add the contents of register pair DE to the contents of register pair HL,
@@ -229,10 +229,10 @@ let instructions: [OpCode: Instruction] = [
         // If the Z flag is 0, jump s8 steps from the current address stored in the
         // program counter (PC). If not, the instruction following the current JP
         // instruction is executed (as usual).
-        let offset = try cpu.readNextByte()
+        let offset = Int8(try cpu.readNextByte())
         
         if (!cpu.flags.zero) {
-            cpu.pc = cpu.pc &+ UInt16(offset)
+            cpu.pc = offset > 0 ? cpu.pc &+ UInt16(offset.toUInt8()) : cpu.pc &- UInt16(offset.toUInt8())
             cpu.cycles = cpu.cycles &+ 1
         }
     },
@@ -303,10 +303,10 @@ let instructions: [OpCode: Instruction] = [
         // If the Z flag is 1, jump s8 steps from the current address stored in the
         // program counter (PC). If not, the instruction following the current
         // JP instruction is executed (as usual).
-        let offset = try cpu.readNextByte()
+        let offset = Int8(try cpu.readNextByte())
         
         if (cpu.flags.zero) {
-            cpu.pc = cpu.pc &+ UInt16(offset)
+            cpu.pc = offset > 0 ? cpu.pc &+ UInt16(offset.toUInt8()) : cpu.pc &- UInt16(offset.toUInt8())
             cpu.cycles = cpu.cycles &+ 1
         }
     },
@@ -358,10 +358,10 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0x30): Instruction.atomic(cycles: 2) { cpu in
         // If the CY flag is 0, jump s8 steps from the current address stored in the
         // program counter (PC). If not, the instruction following the current JP
-        let offset = try cpu.readNextByte()
+        let offset = Int8(try cpu.readNextByte())
         
         if (!cpu.flags.carry) {
-            cpu.pc = cpu.pc &+ UInt16(offset)
+            cpu.pc = offset > 0 ? cpu.pc &+ UInt16(offset.toUInt8()) : cpu.pc &- UInt16(offset.toUInt8())
             cpu.cycles = cpu.cycles &+ 1
         }
     },
@@ -415,10 +415,10 @@ let instructions: [OpCode: Instruction] = [
         // If the CY flag is 1, jump s8 steps from the current address stored in the
         // program counter (PC). If not, the instruction following the current JP
         // instruction is executed (as usual).
-        let offset = try cpu.readNextByte()
+        let offset = Int8(try cpu.readNextByte())
         
         if (cpu.flags.carry) {
-            cpu.pc = cpu.pc &+ UInt16(offset)
+            cpu.pc = offset > 0 ? cpu.pc &+ UInt16(offset.toUInt8()) : cpu.pc &- UInt16(offset.toUInt8())
             cpu.cycles = cpu.cycles &+ 1
         }
     },

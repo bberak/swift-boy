@@ -57,6 +57,12 @@ public extension UInt8 {
     }
 }
 
+public extension Int8 {
+    func toUInt8() -> UInt8 {
+        return UInt8(self & 0b01111111)
+    }
+}
+
 public struct ByteOp {
     var value: UInt8
     var halfCarry: Bool
