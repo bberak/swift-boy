@@ -467,97 +467,97 @@ let instructions: [OpCode: Instruction] = [
         cpu.flags.halfCarry = false
         cpu.flags.carry = !cpu.flags.carry
     },
-    OpCode.byte(0x40): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x40))
+    OpCode.byte(0x40): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register B into register B.
+        cpu.b = cpu.b
     },
-    OpCode.byte(0x41): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x41))
+    OpCode.byte(0x41): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register C into register B.
+        cpu.b = cpu.c
     },
-    OpCode.byte(0x42): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x42))
+    OpCode.byte(0x42): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register D into register B.
+        cpu.b = cpu.d
     },
-    OpCode.byte(0x43): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x43))
+    OpCode.byte(0x43): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register E into register B.
+        cpu.b = cpu.e
     },
-    OpCode.byte(0x44): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x44))
+    OpCode.byte(0x44): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register H into register B.
+        cpu.b = cpu.h
     },
-    OpCode.byte(0x45): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x45))
+    OpCode.byte(0x45): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register L into register B.
+        cpu.b = cpu.l
     },
     OpCode.byte(0x46): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x46))
+        // Load the 8-bit contents of memory specified by register pair HL into register B.
+        cpu.b = try cpu.mmu.readByte(address: cpu.hl)
     },
-    OpCode.byte(0x47): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x47))
+    OpCode.byte(0x47): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register A into register B.
+        cpu.b = cpu.a
     },
-    OpCode.byte(0x48): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x48))
+    OpCode.byte(0x48): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register B into register C.
+        cpu.c = cpu.b
     },
-    OpCode.byte(0x49): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x49))
+    OpCode.byte(0x49): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register C into register C.
+        cpu.c = cpu.c
     },
-    OpCode.byte(0x4A): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x4A))
+    OpCode.byte(0x4A): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register D into register C.
+        cpu.c = cpu.d
     },
-    OpCode.byte(0x4B): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x4B))
+    OpCode.byte(0x4B): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register E into register C.
+        cpu.c = cpu.e
     },
-    OpCode.byte(0x4C): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x4C))
+    OpCode.byte(0x4C): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register H into register C
+        cpu.c = cpu.h
     },
-    OpCode.byte(0x4D): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x4D))
+    OpCode.byte(0x4D): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register L into register C.
+        cpu.c = cpu.l
     },
     OpCode.byte(0x4E): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x4E))
+        // Load the 8-bit contents of memory specified by register pair HL into register C.
+        cpu.c = try cpu.mmu.readByte(address: cpu.hl)
     },
-    OpCode.byte(0x4F): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x4F))
+    OpCode.byte(0x4F): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register A into register C.
+        cpu.c = cpu.a
     },
-    OpCode.byte(0x50): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x50))
+    OpCode.byte(0x50): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register B into register D.
+        cpu.d = cpu.b
     },
-    OpCode.byte(0x51): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x51))
+    OpCode.byte(0x51): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register C into register D.
+        cpu.d = cpu.c
     },
-    OpCode.byte(0x52): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x52))
+    OpCode.byte(0x52): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register D into register D.
+        cpu.d = cpu.d
     },
-    OpCode.byte(0x53): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x53))
+    OpCode.byte(0x53): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register E into register D.
+        cpu.d = cpu.e
     },
-    OpCode.byte(0x54): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x54))
+    OpCode.byte(0x54): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register H into register D.
+        cpu.d = cpu.h
     },
-    OpCode.byte(0x55): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x55))
+    OpCode.byte(0x55): Instruction.atomic(cycles: 1) { cpu in
+        // Load the contents of register L into register D.
+        cpu.d = cpu.l
     },
     OpCode.byte(0x56): Instruction.atomic(cycles: 2) { cpu in
-        // Add comment here
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x56))
+        // Load the 8-bit contents of memory specified by register pair HL into register D.
+        cpu.d = try cpu.mmu.readByte(address: cpu.hl)
     },
     OpCode.byte(0x57): Instruction.atomic(cycles: 2) { cpu in
         // Add comment here
