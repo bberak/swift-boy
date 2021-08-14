@@ -34,10 +34,10 @@ const sanitizeFlags = (flags) => {
 };
 
 const writeFlags = (flags) => {
-	if (flags.Z) writeLine("\t\t// cpu.flags.zero = ");
-	if (flags.N) writeLine("\t\t// cpu.flags.subtract = ");
-	if (flags.H) writeLine("\t\t// cpu.flags.halfCarry = ");
-	if (flags.CY) writeLine("\t\t// cpu.flags.carry = ");
+	if (flags.Z) writeLine("\t\t//cpu.flags.zero = ");
+	if (flags.N) writeLine("\t\t//cpu.flags.subtract = ");
+	if (flags.H) writeLine("\t\t//cpu.flags.halfCarry = ");
+	if (flags.CY) writeLine("\t\t//cpu.flags.carry = ");
 };
 
 const countLetters = (destination) => {
@@ -71,89 +71,89 @@ const writeLD = (op) => {
 		const wordOperation = countLetters(destination) == 2;
 		const source = operands[2];
 
-		if (source === "d8") writeLine("\t\t// let data = try cpu.readNextByte()");
+		if (source === "d8") writeLine("\t\t//let data = try cpu.readNextByte()");
 
-		if (source === "d16") writeLine("\t\t// let data = try cpu.readNextWord()");
+		if (source === "d16") writeLine("\t\t//let data = try cpu.readNextWord()");
 
 		if (source === "a8") {
-			writeLine("\t\t// let address = UInt16(try cpu.readNextByte() + 0xFF00)");
+			writeLine("\t\t//let address = UInt16(try cpu.readNextByte() + 0xFF00)");
 
-			if (wordOperation) writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
-			else writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
+			if (wordOperation) writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
+			else writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
 		}
 
 		if (source === "a16") {
-			writeLine("\t\t// let address = try cpu.readNextWord()");
+			writeLine("\t\t//let address = try cpu.readNextWord()");
 
-			if (wordOperation) writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
-			else writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
+			if (wordOperation) writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
+			else writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
 		}
 
 		if (source === "A")
-			writeLine("\t\t// let data = cpu.a")
+			writeLine("\t\t//let data = cpu.a")
 
 		if (source === "F")
-			writeLine("\t\t// let data = cpu.f")
+			writeLine("\t\t//let data = cpu.f")
 
 		if (source === "AF")
-			 writeLine("\t\t// let data = cpu.af");
+			 writeLine("\t\t//let data = cpu.af");
 
 		if (source === "(AF)") {
-			writeLine("\t\t// let address = try cpu.mmu.readWord(address: cpu.af)");
+			writeLine("\t\t//let address = try cpu.mmu.readWord(address: cpu.af)");
 			
-			if (wordOperation) writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
-			else writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
+			if (wordOperation) writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
+			else writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
 		}
 
 		if (source === "B")
-			writeLine("\t\t// let data = cpu.b")
+			writeLine("\t\t//let data = cpu.b")
 
 		if (source === "C")
-			writeLine("\t\t// let data = cpu.c")
+			writeLine("\t\t//let data = cpu.c")
 
 		if (source === "BC")
-			 writeLine("\t\t// let data = cpu.bc");
+			 writeLine("\t\t//let data = cpu.bc");
 
 		if (source === "(BC)") {
-			writeLine("\t\t// let address = try cpu.mmu.readWord(address: cpu.bc)");
+			writeLine("\t\t//let address = try cpu.mmu.readWord(address: cpu.bc)");
 			
-			if (wordOperation) writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
-			else writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
+			if (wordOperation) writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
+			else writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
 		}
 
 		if (source === "D")
-			writeLine("\t\t// let data = cpu.d")
+			writeLine("\t\t//let data = cpu.d")
 
 		if (source === "E")
-			writeLine("\t\t// let data = cpu.e")
+			writeLine("\t\t//let data = cpu.e")
 
 		if (source === "DE")
-			 writeLine("\t\t// let data = cpu.de");
+			 writeLine("\t\t//let data = cpu.de");
 
 		if (source === "(DE)") {
-			writeLine("\t\t// let address = try cpu.mmu.readWord(address: cpu.de)");
+			writeLine("\t\t//let address = try cpu.mmu.readWord(address: cpu.de)");
 			
-			if (wordOperation) writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
-			else writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
+			if (wordOperation) writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
+			else writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
 		}
 
 		if (source === "H")
-			writeLine("\t\t// let data = cpu.h")
+			writeLine("\t\t//let data = cpu.h")
 
 		if (source === "L")
-			writeLine("\t\t// let data = cpu.l")
+			writeLine("\t\t//let data = cpu.l")
 
 		if (source === "HL")
-			 writeLine("\t\t// let data = cpu.hl");
+			 writeLine("\t\t//let data = cpu.hl");
 
 		if (source === "(HL)") {
-			writeLine("\t\t// let address = try cpu.mmu.readWord(address: cpu.hl)");
+			writeLine("\t\t//let address = try cpu.mmu.readWord(address: cpu.hl)");
 			
 			if (wordOperation) writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
-			else writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
+			else writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
 		}
 
-		writeLine(`\t\t// cpu.${sanitizeDestination(destination)} = data`)
+		writeLine(`\t\t//cpu.${sanitizeDestination(destination)} = data`)
 	}
 
 	writeFlags(op.flags);
