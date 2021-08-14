@@ -64,11 +64,11 @@ public extension Int8 {
 }
 
 public struct ByteOp {
-    var value: UInt8
-    var halfCarry: Bool
-    var carry: Bool
-    var subtract: Bool
-    var zero: Bool {
+    public var value: UInt8
+    public var halfCarry: Bool
+    public var carry: Bool
+    public var subtract: Bool
+    public var zero: Bool {
         return value == 0
     }
 }
@@ -96,11 +96,11 @@ public func sub(_ num1: UInt8, _ num2: UInt8) -> ByteOp {
 }
 
 public struct WordOp {
-    var value: UInt16
-    var halfCarry: Bool
-    var carry: Bool
-    var subtract: Bool
-    var zero: Bool {
+    public var value: UInt16
+    public var halfCarry: Bool
+    public var carry: Bool
+    public var subtract: Bool
+    public var zero: Bool {
         return value == 0
     }
 }

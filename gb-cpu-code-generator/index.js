@@ -152,10 +152,10 @@ const writeLD = (op) => {
 };
 
 const writeFlags = (flags) => {
-	if (flags.Z) writeLine("\t\t//cpu.flags.zero = ");
-	if (flags.N) writeLine("\t\t//cpu.flags.subtract = ");
-	if (flags.H) writeLine("\t\t//cpu.flags.halfCarry = ");
-	if (flags.CY) writeLine("\t\t//cpu.flags.carry = ");
+	if (flags.Z) writeLine("\t\t//cpu.flags.zero = result.zero");
+	if (flags.N) writeLine("\t\t//cpu.flags.subtract = result.subtract");
+	if (flags.H) writeLine("\t\t//cpu.flags.halfCarry = result.halfCarry");
+	if (flags.CY) writeLine("\t\t//cpu.flags.carry = result.carry");
 };
 
 const sanitizeFlags = (flags) => {
