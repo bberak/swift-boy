@@ -160,17 +160,18 @@ class MultiRangeMemoryBlock: MemoryBlock {
 }
 
 public class MMU: MemoryAccess {
+    private let cartridge: Cartridge?
     private let bios: MemoryBlock
     private let memory: [MemoryAccess]
     
-    public init(cartridge: Cartridge) {
+    public init() {
+        cartridge = nil
         bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
         memory = [
             bios,
-            cartridge,
             //-- Internal RAM and Echo RAM
             MultiRangeMemoryBlock(ranges: [0xC000...0xCFFF, 0xE000...0xFDFF], readOnly: false, enabled: true),
-            //-- Placeholder
+            //-- Catch-all
             MemoryBlock(range: 0x0000...0xFFFF, readOnly: false, enabled: true),
         ]
     }
