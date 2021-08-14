@@ -34,7 +34,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of register A in the memory location specified by register pair BC.
 		//
 		//let data = cpu.a
-		//cpu.bc = data
+		//try cpu.mmu.writeByte(address: cpu.bc, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x02))
 	},
 	OpCode.byte(0x03): Instruction.atomic(cycles: 2) { cpu in
@@ -113,7 +113,7 @@ let instructions: [OpCode: Instruction] = [
 		//
 		// Store the lower byte of stack pointer SP at the address specified by the 16-bit immediate operand a16, and store the upper byte of SP at address a16 + 1.
 		//
-		//cpu.a16 = data
+		//try cpu.mmu.writeByte(address: cpu.a16, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x08))
 	},
 	OpCode.byte(0x09): Instruction.atomic(cycles: 2) { cpu in
@@ -139,8 +139,7 @@ let instructions: [OpCode: Instruction] = [
 		//
 		// Load the 8-bit contents of memory specified by register pair BC into register A.
 		//
-		//let address = try cpu.mmu.readWord(address: cpu.bc)
-		//let data = try cpu.mmu.readWord(address: address)
+		//let data = try cpu.mmu.readByte(address: cpu.bc)
 		//cpu.a = data
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x0A))
 	},
@@ -251,7 +250,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of register A in the memory location specified by register pair DE.
 		//
 		//let data = cpu.a
-		//cpu.de = data
+		//try cpu.mmu.writeByte(address: cpu.de, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x12))
 	},
 	OpCode.byte(0x13): Instruction.atomic(cycles: 2) { cpu in
@@ -355,8 +354,7 @@ let instructions: [OpCode: Instruction] = [
 		//
 		// Load the 8-bit contents of memory specified by register pair DE into register A.
 		//
-		//let address = try cpu.mmu.readWord(address: cpu.de)
-		//let data = try cpu.mmu.readWord(address: address)
+		//let data = try cpu.mmu.readByte(address: cpu.de)
 		//cpu.a = data
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x1A))
 	},
@@ -462,7 +460,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of register A into the memory location specified by register pair HL, and simultaneously increment the contents of HL.
 		//
 		//let data = cpu.a
-		//cpu.hl = data
+		//try cpu.mmu.writeByte(address: cpu.hl, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x22))
 	},
 	OpCode.byte(0x23): Instruction.atomic(cycles: 2) { cpu in
@@ -668,7 +666,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of register A into the memory location specified by register pair HL, and simultaneously decrement the contents of HL.
 		//
 		//let data = cpu.a
-		//cpu.hl = data
+		//try cpu.mmu.writeByte(address: cpu.hl, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x32))
 	},
 	OpCode.byte(0x33): Instruction.atomic(cycles: 2) { cpu in
@@ -720,7 +718,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of 8-bit immediate operand d8 in the memory location specified by register pair HL.
 		//
 		//let data = try cpu.readNextByte()
-		//cpu.hl = data
+		//try cpu.mmu.writeByte(address: cpu.hl, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x36))
 	},
 	OpCode.byte(0x37): Instruction.atomic(cycles: 1) { cpu in
@@ -927,8 +925,7 @@ let instructions: [OpCode: Instruction] = [
 		//
 		// Load the 8-bit contents of memory specified by register pair HL into register B.
 		//
-		//let address = try cpu.mmu.readWord(address: cpu.hl)
-		//let data = try cpu.mmu.readWord(address: address)
+		//let data = try cpu.mmu.readByte(address: cpu.hl)
 		//cpu.b = data
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x46))
 	},
@@ -1032,8 +1029,7 @@ let instructions: [OpCode: Instruction] = [
 		//
 		// Load the 8-bit contents of memory specified by register pair HL into register C.
 		//
-		//let address = try cpu.mmu.readWord(address: cpu.hl)
-		//let data = try cpu.mmu.readWord(address: address)
+		//let data = try cpu.mmu.readByte(address: cpu.hl)
 		//cpu.c = data
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x4E))
 	},
@@ -1137,8 +1133,7 @@ let instructions: [OpCode: Instruction] = [
 		//
 		// Load the 8-bit contents of memory specified by register pair HL into register D.
 		//
-		//let address = try cpu.mmu.readWord(address: cpu.hl)
-		//let data = try cpu.mmu.readWord(address: address)
+		//let data = try cpu.mmu.readByte(address: cpu.hl)
 		//cpu.d = data
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x56))
 	},
@@ -1242,8 +1237,7 @@ let instructions: [OpCode: Instruction] = [
 		//
 		// Load the 8-bit contents of memory specified by register pair HL into register E.
 		//
-		//let address = try cpu.mmu.readWord(address: cpu.hl)
-		//let data = try cpu.mmu.readWord(address: address)
+		//let data = try cpu.mmu.readByte(address: cpu.hl)
 		//cpu.e = data
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x5E))
 	},
@@ -1347,8 +1341,7 @@ let instructions: [OpCode: Instruction] = [
 		//
 		// Load the 8-bit contents of memory specified by register pair HL into register H.
 		//
-		//let address = try cpu.mmu.readWord(address: cpu.hl)
-		//let data = try cpu.mmu.readWord(address: address)
+		//let data = try cpu.mmu.readByte(address: cpu.hl)
 		//cpu.h = data
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x66))
 	},
@@ -1452,8 +1445,7 @@ let instructions: [OpCode: Instruction] = [
 		//
 		// Load the 8-bit contents of memory specified by register pair HL into register L.
 		//
-		//let address = try cpu.mmu.readWord(address: cpu.hl)
-		//let data = try cpu.mmu.readWord(address: address)
+		//let data = try cpu.mmu.readByte(address: cpu.hl)
 		//cpu.l = data
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x6E))
 	},
@@ -1480,7 +1472,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of register B in the memory location specified by register pair HL.
 		//
 		//let data = cpu.b
-		//cpu.hl = data
+		//try cpu.mmu.writeByte(address: cpu.hl, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x70))
 	},
 	OpCode.byte(0x71): Instruction.atomic(cycles: 2) { cpu in
@@ -1493,7 +1485,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of register C in the memory location specified by register pair HL.
 		//
 		//let data = cpu.c
-		//cpu.hl = data
+		//try cpu.mmu.writeByte(address: cpu.hl, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x71))
 	},
 	OpCode.byte(0x72): Instruction.atomic(cycles: 2) { cpu in
@@ -1506,7 +1498,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of register D in the memory location specified by register pair HL.
 		//
 		//let data = cpu.d
-		//cpu.hl = data
+		//try cpu.mmu.writeByte(address: cpu.hl, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x72))
 	},
 	OpCode.byte(0x73): Instruction.atomic(cycles: 2) { cpu in
@@ -1519,7 +1511,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of register E in the memory location specified by register pair HL.
 		//
 		//let data = cpu.e
-		//cpu.hl = data
+		//try cpu.mmu.writeByte(address: cpu.hl, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x73))
 	},
 	OpCode.byte(0x74): Instruction.atomic(cycles: 2) { cpu in
@@ -1532,7 +1524,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of register H in the memory location specified by register pair HL.
 		//
 		//let data = cpu.h
-		//cpu.hl = data
+		//try cpu.mmu.writeByte(address: cpu.hl, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x74))
 	},
 	OpCode.byte(0x75): Instruction.atomic(cycles: 2) { cpu in
@@ -1545,7 +1537,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of register L in the memory location specified by register pair HL.
 		//
 		//let data = cpu.l
-		//cpu.hl = data
+		//try cpu.mmu.writeByte(address: cpu.hl, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x75))
 	},
 	OpCode.byte(0x76): Instruction.atomic(cycles: 1) { cpu in
@@ -1575,7 +1567,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of register A in the memory location specified by register pair HL.
 		//
 		//let data = cpu.a
-		//cpu.hl = data
+		//try cpu.mmu.writeByte(address: cpu.hl, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x77))
 	},
 	OpCode.byte(0x78): Instruction.atomic(cycles: 1) { cpu in
@@ -1665,8 +1657,7 @@ let instructions: [OpCode: Instruction] = [
 		//
 		// Load the 8-bit contents of memory specified by register pair HL into register A.
 		//
-		//let address = try cpu.mmu.readWord(address: cpu.hl)
-		//let data = try cpu.mmu.readWord(address: address)
+		//let data = try cpu.mmu.readByte(address: cpu.hl)
 		//cpu.a = data
 		throw CPUError.instructionNotImplemented(OpCode.byte(0x7E))
 	},
@@ -3027,7 +3018,7 @@ let instructions: [OpCode: Instruction] = [
 		// 0xFFFF: Interrupt Enable Register
 		//
 		//let data = cpu.a
-		//cpu.a8 = data
+		//try cpu.mmu.writeByte(address: cpu.a8, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0xE0))
 	},
 	OpCode.byte(0xE1): Instruction.atomic(cycles: 3) { cpu in
@@ -3057,7 +3048,7 @@ let instructions: [OpCode: Instruction] = [
 		// 0xFFFF: Interrupt Enable Register
 		//
 		//let data = cpu.a
-		//cpu.c = data
+		//try cpu.mmu.writeByte(address: cpu.c, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0xE2))
 	},
 	OpCode.byte(0xE5): Instruction.atomic(cycles: 4) { cpu in
@@ -3138,7 +3129,7 @@ let instructions: [OpCode: Instruction] = [
 		// Store the contents of register A in the internal RAM or register specified by the 16-bit immediate operand a16.
 		//
 		//let data = cpu.a
-		//cpu.a16 = data
+		//try cpu.mmu.writeByte(address: cpu.a16, byte: data)
 		throw CPUError.instructionNotImplemented(OpCode.byte(0xEA))
 	},
 	OpCode.byte(0xEE): Instruction.atomic(cycles: 2) { cpu in

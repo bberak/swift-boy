@@ -568,9 +568,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register A into register D.
         //
-        //let data = cpu.a
-        //cpu.d = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x57))
+        let data = cpu.a
+        cpu.d = data
     },
     OpCode.byte(0x58): Instruction.atomic(cycles: 1) { cpu in
         // LD E, B
@@ -581,9 +580,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register B into register E.
         //
-        //let data = cpu.b
-        //cpu.e = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x58))
+        let data = cpu.b
+        cpu.e = data
     },
     OpCode.byte(0x59): Instruction.atomic(cycles: 1) { cpu in
         // LD E, C
@@ -594,9 +592,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register C into register E.
         //
-        //let data = cpu.c
-        //cpu.e = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x59))
+        let data = cpu.c
+        cpu.e = data
     },
     OpCode.byte(0x5A): Instruction.atomic(cycles: 1) { cpu in
         // LD E, D
@@ -607,9 +604,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register D into register E.
         //
-        //let data = cpu.d
-        //cpu.e = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x5A))
+        let data = cpu.d
+        cpu.e = data
     },
     OpCode.byte(0x5B): Instruction.atomic(cycles: 1) { cpu in
         // LD E, E
@@ -620,9 +616,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register E into register E.
         //
-        //let data = cpu.e
-        //cpu.e = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x5B))
+        let data = cpu.e
+        cpu.e = data
     },
     OpCode.byte(0x5C): Instruction.atomic(cycles: 1) { cpu in
         // LD E, H
@@ -633,9 +628,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register H into register E.
         //
-        //let data = cpu.h
-        //cpu.e = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x5C))
+        let data = cpu.h
+        cpu.e = data
     },
     OpCode.byte(0x5D): Instruction.atomic(cycles: 1) { cpu in
         // LD E, L
@@ -646,9 +640,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register L into register E.
         //
-        //let data = cpu.l
-        //cpu.e = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x5D))
+        let data = cpu.l
+        cpu.e = data
     },
     OpCode.byte(0x5E): Instruction.atomic(cycles: 2) { cpu in
         // LD E, (HL)
@@ -659,10 +652,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the 8-bit contents of memory specified by register pair HL into register E.
         //
-        //let address = try cpu.mmu.readWord(address: cpu.hl)
-        //let data = try cpu.mmu.readWord(address: address)
-        //cpu.e = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x5E))
+        let data = try cpu.mmu.readByte(address: cpu.hl)
+        cpu.e = data
     },
     OpCode.byte(0x5F): Instruction.atomic(cycles: 1) { cpu in
         // LD E, A
@@ -673,9 +664,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register A into register E.
         //
-        //let data = cpu.a
-        //cpu.e = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x5F))
+        let data = cpu.a
+        cpu.e = data
     },
     OpCode.byte(0x60): Instruction.atomic(cycles: 1) { cpu in
         // LD H, B
@@ -686,9 +676,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register B into register H.
         //
-        //let data = cpu.b
-        //cpu.h = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x60))
+        let data = cpu.b
+        cpu.h = data
     },
     OpCode.byte(0x61): Instruction.atomic(cycles: 1) { cpu in
         // LD H, C
@@ -699,9 +688,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register C into register H.
         //
-        //let data = cpu.c
-        //cpu.h = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x61))
+        let data = cpu.c
+        cpu.h = data
     },
     OpCode.byte(0x62): Instruction.atomic(cycles: 1) { cpu in
         // LD H, D
@@ -712,9 +700,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register D into register H.
         //
-        //let data = cpu.d
-        //cpu.h = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x62))
+        let data = cpu.d
+        cpu.h = data
     },
     OpCode.byte(0x63): Instruction.atomic(cycles: 1) { cpu in
         // LD H, E
@@ -725,9 +712,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register E into register H.
         //
-        //let data = cpu.e
-        //cpu.h = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x63))
+        let data = cpu.e
+        cpu.h = data
     },
     OpCode.byte(0x64): Instruction.atomic(cycles: 1) { cpu in
         // LD H, H
@@ -738,9 +724,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register H into register H.
         //
-        //let data = cpu.h
-        //cpu.h = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x64))
+        let data = cpu.h
+        cpu.h = data
     },
     OpCode.byte(0x65): Instruction.atomic(cycles: 1) { cpu in
         // LD H, L
@@ -751,9 +736,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register L into register H.
         //
-        //let data = cpu.l
-        //cpu.h = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x65))
+        let data = cpu.l
+        cpu.h = data
     },
     OpCode.byte(0x66): Instruction.atomic(cycles: 2) { cpu in
         // LD H, (HL)
@@ -764,10 +748,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the 8-bit contents of memory specified by register pair HL into register H.
         //
-        //let address = try cpu.mmu.readWord(address: cpu.hl)
-        //let data = try cpu.mmu.readWord(address: address)
-        //cpu.h = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x66))
+        let data = try cpu.mmu.readByte(address: cpu.hl)
+        cpu.h = data
     },
     OpCode.byte(0x67): Instruction.atomic(cycles: 1) { cpu in
         // LD H, A
@@ -778,9 +760,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register A into register H.
         //
-        //let data = cpu.a
-        //cpu.h = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x67))
+        let data = cpu.a
+        cpu.h = data
     },
     OpCode.byte(0x68): Instruction.atomic(cycles: 1) { cpu in
         // LD L, B
@@ -791,9 +772,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register B into register L.
         //
-        //let data = cpu.b
-        //cpu.l = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x68))
+        let data = cpu.b
+        cpu.l = data
     },
     OpCode.byte(0x69): Instruction.atomic(cycles: 1) { cpu in
         // LD L, C
@@ -804,9 +784,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register C into register L.
         //
-        //let data = cpu.c
-        //cpu.l = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x69))
+        let data = cpu.c
+        cpu.l = data
     },
     OpCode.byte(0x6A): Instruction.atomic(cycles: 1) { cpu in
         // LD L, D
@@ -817,9 +796,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register D into register L.
         //
-        //let data = cpu.d
-        //cpu.l = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x6A))
+        let data = cpu.d
+        cpu.l = data
     },
     OpCode.byte(0x6B): Instruction.atomic(cycles: 1) { cpu in
         // LD L, E
@@ -830,9 +808,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register E into register L.
         //
-        //let data = cpu.e
-        //cpu.l = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x6B))
+        let data = cpu.e
+        cpu.l = data
     },
     OpCode.byte(0x6C): Instruction.atomic(cycles: 1) { cpu in
         // LD L, H
@@ -843,9 +820,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register H into register L.
         //
-        //let data = cpu.h
-        //cpu.l = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x6C))
+        let data = cpu.h
+        cpu.l = data
     },
     OpCode.byte(0x6D): Instruction.atomic(cycles: 1) { cpu in
         // LD L, L
@@ -856,9 +832,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register L into register L.
         //
-        //let data = cpu.l
-        //cpu.l = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x6D))
+        let data = cpu.l
+        cpu.l = data
     },
     OpCode.byte(0x6E): Instruction.atomic(cycles: 2) { cpu in
         // LD L, (HL)
@@ -869,10 +844,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the 8-bit contents of memory specified by register pair HL into register L.
         //
-        //let address = try cpu.mmu.readWord(address: cpu.hl)
-        //let data = try cpu.mmu.readWord(address: address)
-        //cpu.l = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x6E))
+        let data = try cpu.mmu.readByte(address: cpu.hl)
+        cpu.l = data
     },
     OpCode.byte(0x6F): Instruction.atomic(cycles: 1) { cpu in
         // LD L, A
@@ -883,9 +856,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register A into register L.
         //
-        //let data = cpu.a
-        //cpu.l = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x6F))
+        let data = cpu.a
+        cpu.l = data
     },
     OpCode.byte(0x70): Instruction.atomic(cycles: 2) { cpu in
         // LD (HL), B
@@ -896,9 +868,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Store the contents of register B in the memory location specified by register pair HL.
         //
-        //let data = cpu.b
-        //cpu.hl = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x70))
+        let data = cpu.b
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     OpCode.byte(0x71): Instruction.atomic(cycles: 2) { cpu in
         // LD (HL), C
@@ -909,9 +880,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Store the contents of register C in the memory location specified by register pair HL.
         //
-        //let data = cpu.c
-        //cpu.hl = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x71))
+        let data = cpu.c
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     OpCode.byte(0x72): Instruction.atomic(cycles: 2) { cpu in
         // LD (HL), D
@@ -922,9 +892,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Store the contents of register D in the memory location specified by register pair HL.
         //
-        //let data = cpu.d
-        //cpu.hl = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x72))
+        let data = cpu.d
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     OpCode.byte(0x73): Instruction.atomic(cycles: 2) { cpu in
         // LD (HL), E
@@ -935,9 +904,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Store the contents of register E in the memory location specified by register pair HL.
         //
-        //let data = cpu.e
-        //cpu.hl = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x73))
+        let data = cpu.e
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     OpCode.byte(0x74): Instruction.atomic(cycles: 2) { cpu in
         // LD (HL), H
@@ -949,7 +917,7 @@ let instructions: [OpCode: Instruction] = [
         // Store the contents of register H in the memory location specified by register pair HL.
         //
         //let data = cpu.h
-        //cpu.hl = data
+        //try cpu.mmu.writeByte(address: cpu.hl, byte: data)
         throw CPUError.instructionNotImplemented(OpCode.byte(0x74))
     },
     OpCode.byte(0x75): Instruction.atomic(cycles: 2) { cpu in
@@ -961,9 +929,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Store the contents of register L in the memory location specified by register pair HL.
         //
-        //let data = cpu.l
-        //cpu.hl = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x75))
+        let data = cpu.l
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     OpCode.byte(0x76): Instruction.atomic(cycles: 1) { cpu in
         // HALT
@@ -991,9 +958,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Store the contents of register A in the memory location specified by register pair HL.
         //
-        //let data = cpu.a
-        //cpu.hl = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x77))
+        let data = cpu.a
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     OpCode.byte(0x78): Instruction.atomic(cycles: 1) { cpu in
         // LD A, B
@@ -1004,9 +970,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register B into register A.
         //
-        //let data = cpu.b
-        //cpu.a = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x78))
+        let data = cpu.b
+        cpu.a = data
     },
     OpCode.byte(0x79): Instruction.atomic(cycles: 1) { cpu in
         // LD A, C
@@ -1017,9 +982,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register C into register A.
         //
-        //let data = cpu.c
-        //cpu.a = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x79))
+        let data = cpu.c
+        cpu.a = data
     },
     OpCode.byte(0x7A): Instruction.atomic(cycles: 1) { cpu in
         // LD A, D
@@ -1030,9 +994,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register D into register A.
         //
-        //let data = cpu.d
-        //cpu.a = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x7A))
+        let data = cpu.d
+        cpu.a = data
     },
     OpCode.byte(0x7B): Instruction.atomic(cycles: 1) { cpu in
         // LD A, E
@@ -1043,9 +1006,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register E into register A.
         //
-        //let data = cpu.e
-        //cpu.a = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x7B))
+        let data = cpu.e
+        cpu.a = data
     },
     OpCode.byte(0x7C): Instruction.atomic(cycles: 1) { cpu in
         // LD A, H
@@ -1056,9 +1018,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register H into register A.
         //
-        //let data = cpu.h
-        //cpu.a = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x7C))
+        let data = cpu.h
+        cpu.a = data
     },
     OpCode.byte(0x7D): Instruction.atomic(cycles: 1) { cpu in
         // LD A, L
@@ -1069,9 +1030,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register L into register A.
         //
-        //let data = cpu.l
-        //cpu.a = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x7D))
+        let data = cpu.l
+        cpu.a = data
     },
     OpCode.byte(0x7E): Instruction.atomic(cycles: 2) { cpu in
         // LD A, (HL)
@@ -1082,10 +1042,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the 8-bit contents of memory specified by register pair HL into register A.
         //
-        //let address = try cpu.mmu.readWord(address: cpu.hl)
-        //let data = try cpu.mmu.readWord(address: address)
-        //cpu.a = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x7E))
+        let data = try cpu.mmu.readByte(address: cpu.hl)
+        cpu.a = data
     },
     OpCode.byte(0x7F): Instruction.atomic(cycles: 1) { cpu in
         // LD A, A
@@ -1096,9 +1054,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register A into register A.
         //
-        //let data = cpu.a
-        //cpu.a = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x7F))
+        let data = cpu.a
+        cpu.a = data
     },
     OpCode.byte(0x80): Instruction.atomic(cycles: 1) { cpu in
         // ADD A, B
@@ -1814,11 +1771,11 @@ let instructions: [OpCode: Instruction] = [
         //
         // Take the logical exclusive-OR for each bit of the contents of register A and the contents of register A, and store the results in register A.
         //
-        cpu.a = cpu.a ^ cpu.a
-        cpu.flags.zero = cpu.a == 0
-        cpu.flags.subtract = false
-        cpu.flags.halfCarry = false
-        cpu.flags.carry = false
+        //cpu.flags.zero =
+        //cpu.flags.subtract =
+        //cpu.flags.halfCarry =
+        //cpu.flags.carry =
+        throw CPUError.instructionNotImplemented(OpCode.byte(0xAF))
     },
     OpCode.byte(0xB0): Instruction.atomic(cycles: 1) { cpu in
         // OR B
@@ -2444,7 +2401,7 @@ let instructions: [OpCode: Instruction] = [
         // 0xFFFF: Interrupt Enable Register
         //
         //let data = cpu.a
-        //cpu.a8 = data
+        //try cpu.mmu.writeByte(address: cpu.a8, byte: data)
         throw CPUError.instructionNotImplemented(OpCode.byte(0xE0))
     },
     OpCode.byte(0xE1): Instruction.atomic(cycles: 3) { cpu in
@@ -2474,7 +2431,7 @@ let instructions: [OpCode: Instruction] = [
         // 0xFFFF: Interrupt Enable Register
         //
         //let data = cpu.a
-        //cpu.c = data
+        //try cpu.mmu.writeByte(address: cpu.c, byte: data)
         throw CPUError.instructionNotImplemented(OpCode.byte(0xE2))
     },
     OpCode.byte(0xE5): Instruction.atomic(cycles: 4) { cpu in
@@ -2555,7 +2512,7 @@ let instructions: [OpCode: Instruction] = [
         // Store the contents of register A in the internal RAM or register specified by the 16-bit immediate operand a16.
         //
         //let data = cpu.a
-        //cpu.a16 = data
+        //try cpu.mmu.writeByte(address: cpu.a16, byte: data)
         throw CPUError.instructionNotImplemented(OpCode.byte(0xEA))
     },
     OpCode.byte(0xEE): Instruction.atomic(cycles: 2) { cpu in
@@ -6032,7 +5989,3 @@ let instructions: [OpCode: Instruction] = [
         throw CPUError.instructionNotImplemented(OpCode.word(0xFF))
     },
 ]
-
-
-
-

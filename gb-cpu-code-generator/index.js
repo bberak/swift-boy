@@ -68,6 +68,7 @@ const writeLD = (op) => {
 
 	if (operands.length === 3) {
 		const destination = operands[1];
+		const destinationSanitized = sanitizeDestination(destination)
 		const wordOperation = countLetters(destination) == 2;
 		const source = operands[2];
 
@@ -99,10 +100,8 @@ const writeLD = (op) => {
 			 writeLine("\t\t//let data = cpu.af");
 
 		if (source === "(AF)") {
-			writeLine("\t\t//let address = try cpu.mmu.readWord(address: cpu.af)");
-			
-			if (wordOperation) writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
-			else writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
+			if (wordOperation) writeLine("\t\t//let data = try cpu.mmu.readWord(address: cpu.af)");
+			else writeLine("\t\t//let data = try cpu.mmu.readByte(address: cpu.af)");
 		}
 
 		if (source === "B")
@@ -115,10 +114,8 @@ const writeLD = (op) => {
 			 writeLine("\t\t//let data = cpu.bc");
 
 		if (source === "(BC)") {
-			writeLine("\t\t//let address = try cpu.mmu.readWord(address: cpu.bc)");
-			
-			if (wordOperation) writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
-			else writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
+			if (wordOperation) writeLine("\t\t//let data = try cpu.mmu.readWord(address: cpu.bc)");
+			else writeLine("\t\t//let data = try cpu.mmu.readByte(address: cpu.bc)");
 		}
 
 		if (source === "D")
@@ -131,10 +128,8 @@ const writeLD = (op) => {
 			 writeLine("\t\t//let data = cpu.de");
 
 		if (source === "(DE)") {
-			writeLine("\t\t//let address = try cpu.mmu.readWord(address: cpu.de)");
-			
-			if (wordOperation) writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
-			else writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
+			if (wordOperation) writeLine("\t\t//let data = try cpu.mmu.readWord(address: cpu.de)");
+			else writeLine("\t\t//let data = try cpu.mmu.readByte(address: cpu.de)");
 		}
 
 		if (source === "H")
@@ -147,13 +142,16 @@ const writeLD = (op) => {
 			 writeLine("\t\t//let data = cpu.hl");
 
 		if (source === "(HL)") {
-			writeLine("\t\t//let address = try cpu.mmu.readWord(address: cpu.hl)");
-			
-			if (wordOperation) writeLine("\t\t// let data = try cpu.mmu.readWord(address: address)");
-			else writeLine("\t\t//let data = try cpu.mmu.readWord(address: address)");
+			if (wordOperation) writeLine("\t\t//let data = try cpu.mmu.readWord(address: cpu.hl)");
+			else writeLine("\t\t//let data = try cpu.mmu.readByte(address: cpu.hl)");
 		}
 
-		writeLine(`\t\t//cpu.${sanitizeDestination(destination)} = data`)
+		if (destination.indexOf("(") !== -1) {
+			if (wordOperation) writeLine(`\t\t//try cpu.mmu.writeWord(address: cpu.${destinationSanitized}, word: data)`)
+			else writeLine(`\t\t//try cpu.mmu.writeByte(address: cpu.${destinationSanitized}, byte: data)`)
+		}
+		else
+			writeLine(`\t\t//cpu.${destinationSanitized} = data`)
 	}
 
 	writeFlags(op.flags);
