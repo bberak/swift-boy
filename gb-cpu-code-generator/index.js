@@ -19,51 +19,35 @@ const writeLine = (line) => {
 	fs.appendFileSync(path, `${line}\n`);
 };
 
-const sanitizeFlags = (flags) => {
-	let result = "";
+const writeInstruction = (op) => {
+	const cycles = op.cycles.length === 1 ? op.cycles : _.last(op.cycles.split("/"));
 
-	if (flags.Z) result += flags.Z;
-	else result += "-";
+	if (op.opCode.length === 2)
+		writeLine(`\tOpCode.byte(0x${op.opCode}): Instruction.atomic(cycles: ${cycles}) { cpu in`);
+	else 
+		writeLine(`\tOpCode.word(0x${op.opCode.replace("CB", "")}): Instruction.atomic(cycles: ${cycles}) { cpu in`);
 
-	result += " ";
+	writeLine(`\t\t// ${op.mnemonic}`);
+	writeLine(`\t\t//`);
+	writeLine(`\t\t// Cycles: ${op.cycles}`);
+	writeLine(`\t\t// Bytes: ${op.bytes}`);
+	writeLine(`\t\t// Flags: ${sanitizeFlags(op.flags)}`);
+	writeLine(`\t\t//`);
 
-	if (flags.N) result += flags.N;
-	else result += "-";
+	(op.description || "").split("\n").forEach((x) => writeLine(`\t\t// ${_.trim(x)}`));
 
-	result += " ";
+	writeLine(`\t\t//`);
 
-	if (flags.H) result += flags.H;
-	else result += "-";
+	if (op.mnemonic.startsWith("LD")) writeLD(op);
+	else writeFlags(op.flags);
 
-	result += " ";
+	if (op.opCode.length === 2)
+		writeLine(`\t\tthrow CPUError.instructionNotImplemented(OpCode.byte(0x${op.opCode}))`);
+	else 
+		writeLine(`\t\tthrow CPUError.instructionNotImplemented(OpCode.word(0x${op.opCode.replace("CB", "")}))`);
 
-	if (flags.CY) result += flags.CY;
-	else result += "-";
-
-	return result;
+	writeLine(`\t},`);
 };
-
-const writeFlags = (flags) => {
-	if (flags.Z) writeLine("\t\t//cpu.flags.zero = ");
-	if (flags.N) writeLine("\t\t//cpu.flags.subtract = ");
-	if (flags.H) writeLine("\t\t//cpu.flags.halfCarry = ");
-	if (flags.CY) writeLine("\t\t//cpu.flags.carry = ");
-};
-
-const countLetters = (destination) => {
-	return (destination.match(/is/g) || []).length;
-};
-
-const sanitizeDestination = (destination) => {
-	let result = destination
-	let arr = ["+", "-", "(", ")"]
-	
-	arr.forEach(x => {
-		result = result.replace(x, "")
-	})
-
-	return result.toLowerCase()
-}
 
 const writeLD = (op) => {
 	/*
@@ -167,32 +151,48 @@ const writeLD = (op) => {
 	writeFlags(op.flags);
 };
 
-const writeInstruction = (op) => {
-	const cycles = op.cycles.length === 1 ? op.cycles : _.last(op.cycles.split("/"));
+const writeFlags = (flags) => {
+	if (flags.Z) writeLine("\t\t//cpu.flags.zero = ");
+	if (flags.N) writeLine("\t\t//cpu.flags.subtract = ");
+	if (flags.H) writeLine("\t\t//cpu.flags.halfCarry = ");
+	if (flags.CY) writeLine("\t\t//cpu.flags.carry = ");
+};
 
-	if (op.opCode.length === 2)
-		writeLine(`\tOpCode.byte(0x${op.opCode}): Instruction.atomic(cycles: ${cycles}) { cpu in`);
-	else 
-		writeLine(`\tOpCode.word(0x${op.opCode.replace("CB", "")}): Instruction.atomic(cycles: ${cycles}) { cpu in`);
+const sanitizeFlags = (flags) => {
+	let result = "";
 
-	writeLine(`\t\t// ${op.mnemonic}`);
-	writeLine(`\t\t//`);
-	writeLine(`\t\t// Cycles: ${op.cycles}`);
-	writeLine(`\t\t// Bytes: ${op.bytes}`);
-	writeLine(`\t\t// Flags: ${sanitizeFlags(op.flags)}`);
-	writeLine(`\t\t//`);
+	if (flags.Z) result += flags.Z;
+	else result += "-";
 
-	(op.description || "").split("\n").forEach((x) => writeLine(`\t\t// ${_.trim(x)}`));
+	result += " ";
 
-	writeLine(`\t\t//`);
+	if (flags.N) result += flags.N;
+	else result += "-";
 
-	if (op.mnemonic.startsWith("LD")) writeLD(op);
-	else writeFlags(op.flags);
+	result += " ";
 
-	if (op.opCode.length === 2)
-		writeLine(`\t\tthrow CPUError.instructionNotImplemented(OpCode.byte(0x${op.opCode}))`);
-	else 
-		writeLine(`\t\tthrow CPUError.instructionNotImplemented(OpCode.word(0x${op.opCode.replace("CB", "")}))`);
+	if (flags.H) result += flags.H;
+	else result += "-";
 
-	writeLine(`\t},`);
+	result += " ";
+
+	if (flags.CY) result += flags.CY;
+	else result += "-";
+
+	return result;
+};
+
+const countLetters = (destination) => {
+	return (destination.match(/is/g) || []).length;
+};
+
+const sanitizeDestination = (destination) => {
+	let result = destination
+	let arr = ["+", "-", "(", ")"]
+	
+	arr.forEach(x => {
+		result = result.replace(x, "")
+	})
+
+	return result.toLowerCase()
 };
