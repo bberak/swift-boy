@@ -5,6 +5,16 @@ const path = "out.swift";
 
 if (fs.existsSync(path)) fs.unlinkSync(path);
 
+fetch("https://gist.githubusercontent.com/bberak/ca001281bb8431d2706afd31401e802b/raw/118ac680ac43cc3153c3c33344a692d37d2fd5a7/gb-instructions-db.json")
+	.then((res) => res.json())
+	.then((arr) => {
+		const byteOps = _.sortBy(arr.filter((x) => x.opCode.length == 2), (x) => x.opCode);
+		const wordOps = _.sortBy(arr.filter((x) => x.opCode.length == 4), (x) => x.opCode);
+		writeLine("let instructions: [OpCode: Instruction] = [");
+		[...byteOps, ...wordOps].forEach(writeInstruction);
+		writeLine("]");
+	});
+
 const writeLine = (line) => {
 	fs.appendFileSync(path, `${line}\n`);
 };
@@ -186,15 +196,3 @@ const writeInstruction = (op) => {
 
 	writeLine(`\t},`);
 };
-
-fetch(
-	"https://gist.githubusercontent.com/bberak/ca001281bb8431d2706afd31401e802b/raw/118ac680ac43cc3153c3c33344a692d37d2fd5a7/gb-instructions-db.json"
-)
-	.then((res) => res.json())
-	.then((arr) => {
-		const byteOps = _.sortBy(arr.filter((x) => x.opCode.length == 2), (x) => x.opCode);
-		const wordOps = _.sortBy(arr.filter((x) => x.opCode.length == 4), (x) => x.opCode);
-		writeLine("let instructions: [OpCode: Instruction] = [");
-		[...byteOps, ...wordOps].forEach(writeInstruction);
-		writeLine("]");
-	});
