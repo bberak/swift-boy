@@ -2529,9 +2529,8 @@ let instructions: [OpCode: Instruction] = [
         // 0xFF80-0xFFFE: Working & Stack RAM (127 bytes)
         // 0xFFFF: Interrupt Enable Register
         //
-        //let data = cpu.a
-        //try cpu.mmu.writeByte(address: cpu.a8, byte: data)
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xE0))
+        let address = try cpu.readNextByte()
+        try cpu.mmu.writeByte(address: 0xFF00 + UInt16(address), byte: cpu.a)
     },
     OpCode.byte(0xE1): Instruction.atomic(cycles: 3) { cpu in
         // POP HL
@@ -2545,7 +2544,7 @@ let instructions: [OpCode: Instruction] = [
         // Add 1 to SP and load the contents from the new memory location into the upper portion of HL.
         // By the end, SP should be 2 more than its initial value.
         //
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xE1))
+        cpu.hl = try cpu.popWordOffStack()
     },
     OpCode.byte(0xE2): Instruction.atomic(cycles: 2) { cpu in
         // LD (C), A
@@ -2559,9 +2558,7 @@ let instructions: [OpCode: Instruction] = [
         // 0xFF80-0xFFFE: Working & Stack RAM (127 bytes)
         // 0xFFFF: Interrupt Enable Register
         //
-        //let data = cpu.a
-        //try cpu.mmu.writeByte(address: cpu.c, byte: data)
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xE2))
+        try cpu.mmu.writeByte(address: 0xFF00 + UInt16(cpu.c), byte: cpu.a)
     },
     OpCode.byte(0xE5): Instruction.atomic(cycles: 4) { cpu in
         // PUSH HL
@@ -2575,7 +2572,7 @@ let instructions: [OpCode: Instruction] = [
         // Subtract 2 from SP, and put the lower portion of register pair HL on the stack.
         // Decrement SP by 2.
         //
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xE5))
+        try cpu.pushWordOnStack(word: cpu.hl)
     },
     OpCode.byte(0xE6): Instruction.atomic(cycles: 2) { cpu in
         // AND d8
@@ -2586,11 +2583,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Take the logical AND for each bit of the contents of 8-bit immediate operand d8 and the contents of register A, and store the results in register A.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xE6))
+        let data = try cpu.readNextByte()
+        cpu.a = cpu.a & data
+        cpu.flags.zero = cpu.a == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = true
+        cpu.flags.carry = false
     },
     OpCode.byte(0xE7): Instruction.atomic(cycles: 4) { cpu in
         // RST 4
@@ -2603,7 +2601,8 @@ let instructions: [OpCode: Instruction] = [
         // With the push, the contents of the stack pointer SP are decremented by 1, and the higher-order byte of PC is loaded in the memory address specified by the new SP value. The value of SP is then again decremented by 1, and the lower-order byte of the PC is loaded in the memory address specified by that value of SP.
         // The RST instruction can be used to jump to 1 of 8 addresses. Because all ofthe addresses are held in page 0 memory, 0x00 is loaded in the higher-orderbyte of the PC, and 0x20 is loaded in the lower-order byte.
         //
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xE7))
+        try cpu.pushWordOnStack(word: cpu.pc)
+        cpu.pc = try cpu.mmu.readWord(address: 0x0020)
     },
     OpCode.byte(0xE8): Instruction.atomic(cycles: 4) { cpu in
         // ADD SP, s8
@@ -2614,11 +2613,13 @@ let instructions: [OpCode: Instruction] = [
         //
         // Add the contents of the 8-bit signed (2's complement) immediate operand s8 and the stack pointer SP and store the results in SP.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xE8))
+        let offset = try Int8(cpu.readNextByte())
+        let result = offset > 0 ? add(cpu.sp, UInt16(offset.toUInt8())) : sub(cpu.sp, UInt16(offset.toUInt8()))
+        cpu.sp = result.value
+        cpu.flags.zero = false
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     OpCode.byte(0xE9): Instruction.atomic(cycles: 1) { cpu in
         // JP HL
@@ -2629,7 +2630,7 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load the contents of register pair HL into the program counter PC. The next instruction is fetched from the location specified by the new value of PC.
         //
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xE9))
+        cpu.pc = cpu.hl
     },
     OpCode.byte(0xEA): Instruction.atomic(cycles: 4) { cpu in
         // LD (a16), A
@@ -2640,9 +2641,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Store the contents of register A in the internal RAM or register specified by the 16-bit immediate operand a16.
         //
-        //let data = cpu.a
-        //try cpu.mmu.writeByte(address: cpu.a16, byte: data)
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xEA))
+        let address = try cpu.readNextWord()
+        try cpu.mmu.writeByte(address: address, byte: cpu.a)
     },
     OpCode.byte(0xEE): Instruction.atomic(cycles: 2) { cpu in
         // XOR d8
@@ -2653,11 +2653,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Take the logical exclusive-OR for each bit of the contents of the 8-bit immediate operand d8 and the contents of register A, and store the results in register A.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xEE))
+        let data = try cpu.readNextByte()
+        cpu.a = cpu.a ^ data
+        cpu.flags.zero = cpu.a == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = false
     },
     OpCode.byte(0xEF): Instruction.atomic(cycles: 4) { cpu in
         // RST 5
@@ -2670,7 +2671,8 @@ let instructions: [OpCode: Instruction] = [
         // With the push, the contents of the stack pointer SP are decremented by 1, and the higher-order byte of PC is loaded in the memory address specified by the new SP value. The value of SP is then again decremented by 1, and the lower-order byte of the PC is loaded in the memory address specified by that value of SP.
         // The RST instruction can be used to jump to 1 of 8 addresses. Because all ofthe addresses are held in page 0 memory, 0x00 is loaded in the higher-orderbyte of the PC, and 0x28 is loaded in the lower-order byte.
         //
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xEF))
+        try cpu.pushWordOnStack(word: cpu.pc)
+        cpu.pc = try cpu.mmu.readWord(address: 0x0028)
     },
     OpCode.byte(0xF0): Instruction.atomic(cycles: 3) { cpu in
         // LD A, (a8)
@@ -2685,8 +2687,8 @@ let instructions: [OpCode: Instruction] = [
         // 0xFF80-0xFFFE: Working & Stack RAM (127 bytes)
         // 0xFFFF: Interrupt Enable Register
         //
-        //cpu.a = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xF0))
+        let address = try cpu.readNextByte()
+        cpu.a = try cpu.mmu.readByte(address: 0xFF00 + UInt16(address))
     },
     OpCode.byte(0xF1): Instruction.atomic(cycles: 3) { cpu in
         // POP AF
@@ -2700,7 +2702,7 @@ let instructions: [OpCode: Instruction] = [
         // Add 1 to SP and load the contents from the new memory location into the upper portion of AF.
         // By the end, SP should be 2 more than its initial value.
         //
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xF1))
+        cpu.af = try cpu.popWordOffStack()
     },
     OpCode.byte(0xF2): Instruction.atomic(cycles: 2) { cpu in
         // LD A, (C)
@@ -2714,8 +2716,7 @@ let instructions: [OpCode: Instruction] = [
         // 0xFF80-0xFFFE: Working & Stack RAM (127 bytes)
         // 0xFFFF: Interrupt Enable Register
         //
-        //cpu.a = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xF2))
+        cpu.a = try cpu.mmu.readByte(address: 0xFF00 + UInt16(cpu.c))
     },
     OpCode.byte(0xF3): Instruction.atomic(cycles: 1) { cpu in
         // DI
@@ -2727,7 +2728,7 @@ let instructions: [OpCode: Instruction] = [
         // Reset the interrupt master enable (IME) flag and prohibit maskable interrupts.
         // Even if a DI instruction is executed in an interrupt routine, the IME flag is set if a return is performed with a RETI instruction.
         //
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xF3))
+        cpu.ime = false
     },
     OpCode.byte(0xF5): Instruction.atomic(cycles: 4) { cpu in
         // PUSH AF
@@ -2741,7 +2742,7 @@ let instructions: [OpCode: Instruction] = [
         // Subtract 2 from SP, and put the lower portion of register pair AF on the stack.
         // Decrement SP by 2.
         //
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xF5))
+        try cpu.pushWordOnStack(word: cpu.af)
     },
     OpCode.byte(0xF6): Instruction.atomic(cycles: 2) { cpu in
         // OR d8
@@ -2752,11 +2753,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Take the logical OR for each bit of the contents of the 8-bit immediate operand d8 and the contents of register A, and store the results in register A.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xF6))
+        let data = try cpu.readNextByte()
+        cpu.a = cpu.a | data
+        cpu.flags.zero = cpu.a == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = false
     },
     OpCode.byte(0xF7): Instruction.atomic(cycles: 4) { cpu in
         // RST 6
@@ -2769,7 +2771,8 @@ let instructions: [OpCode: Instruction] = [
         // With the push, the contents of the stack pointer SP are decremented by 1, and the higher-order byte of PC is loaded in the memory address specified by the new SP value. The value of SP is then again decremented by 1, and the lower-order byte of the PC is loaded in the memory address specified by that value of SP.
         // The RST instruction can be used to jump to 1 of 8 addresses. Because all ofthe addresses are held in page 0 memory, 0x00 is loaded in the higher-orderbyte of the PC, and 0x30 is loaded in the lower-order byte.
         //
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xF7))
+        try cpu.pushWordOnStack(word: cpu.pc)
+        cpu.pc = try cpu.mmu.readWord(address: 0x0030)
     },
     OpCode.byte(0xF8): Instruction.atomic(cycles: 3) { cpu in
         // LD HL, SP+s8
@@ -2780,12 +2783,13 @@ let instructions: [OpCode: Instruction] = [
         //
         // Add the 8-bit signed operand s8 (values -128 to +127) to the stack pointer SP, and store the result in register pair HL.
         //
-        //cpu.hl = data
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xF8))
+        let offset = try Int8(cpu.readNextByte())
+        let result = offset > 0 ? add(cpu.sp, UInt16(offset.toUInt8())) : sub(cpu.sp, UInt16(offset.toUInt8()))
+        cpu.hl = result.value
+        cpu.flags.zero = false
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     OpCode.byte(0xF9): Instruction.atomic(cycles: 2) { cpu in
         // LD SP, HL
@@ -2809,8 +2813,8 @@ let instructions: [OpCode: Instruction] = [
         //
         // Load into register A the contents of the internal RAM or register specified by the 16-bit immediate operand a16.
         //
-        //cpu.a = data
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xFA))
+        let address = try cpu.readNextWord()
+        cpu.a = try cpu.mmu.readByte(address: address)
     },
     OpCode.byte(0xFB): Instruction.atomic(cycles: 1) { cpu in
         // EI
@@ -2822,7 +2826,7 @@ let instructions: [OpCode: Instruction] = [
         // Set the interrupt master enable (IME) flag and enable maskable interrupts. This instruction can be used in an interrupt routine to enable higher-order interrupts.
         // The IME flag is reset immediately after an interrupt occurs. The IME flag reset remains in effect if coontrol is returned from the interrupt routine by a RET instruction. However, if an EI instruction is executed in the interrupt routine, control is returned with IME = 1.
         //
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xFB))
+        cpu.ime = true
     },
     OpCode.byte(0xFE): Instruction.atomic(cycles: 2) { cpu in
         // CP d8
@@ -2834,11 +2838,12 @@ let instructions: [OpCode: Instruction] = [
         // Compare the contents of register A and the contents of the 8-bit immediate operand d8 by calculating A - d8, and set the Z flag if they are equal.
         // The execution of this instruction does not affect the contents of register A.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xFE))
+        let data = try cpu.readNextByte()
+        let result = sub(cpu.a, data)
+        cpu.flags.zero = cpu.a == data
+        cpu.flags.subtract = result.subtract
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     OpCode.byte(0xFF): Instruction.atomic(cycles: 4) { cpu in
         // RST 7
@@ -2851,7 +2856,8 @@ let instructions: [OpCode: Instruction] = [
         // With the push, the contents of the stack pointer SP are decremented by 1, and the higher-order byte of PC is loaded in the memory address specified by the new SP value. The value of SP is then again decremented by 1, and the lower-order byte of the PC is loaded in the memory address specified by that value of SP.
         // The RST instruction can be used to jump to 1 of 8 addresses. Because all ofthe addresses are held in page 0 memory, 0x00 is loaded in the higher-orderbyte of the PC, and 0x38 is loaded in the lower-order byte.
         //
-        throw CPUError.instructionNotImplemented(OpCode.byte(0xFF))
+        try cpu.pushWordOnStack(word: cpu.pc)
+        cpu.pc = try cpu.mmu.readWord(address: 0x0038)
     },
     OpCode.word(0x00): Instruction.atomic(cycles: 2) { cpu in
         // RLC B
