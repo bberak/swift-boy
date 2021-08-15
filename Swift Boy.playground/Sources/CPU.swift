@@ -97,6 +97,7 @@ public class CPU: CustomStringConvertible {
     internal var l: UInt8
     internal var sp: UInt16
     internal var pc: UInt16
+    internal var ime: Bool
     internal var cycles: UInt
     
     internal var af: UInt16 {
@@ -148,7 +149,7 @@ public class CPU: CustomStringConvertible {
     }
     
     public var description: String {
-        return "a: \(a), f: (\(flags)), b: \(b), c: \(c), d: \(d), e: \(e), h: \(h), l: \(l), sp: \(sp), pc: \(pc), cycles: \(cycles)"
+        return "a: \(a), flags: (\(flags)), b: \(b), c: \(c), d: \(d), e: \(e), h: \(h), l: \(l), sp: \(sp), pc: \(pc), ime: \(ime), cycles: \(cycles)"
     }
     
     public init(mmu: MMU) {
@@ -163,12 +164,13 @@ public class CPU: CustomStringConvertible {
         l = 0
         sp = 0x0000
         pc = 0x0000
+        ime = false
         cycles = 0
     }
     
     func readNextByte() throws -> UInt8 {
         let byte = try mmu.readByte(address: pc)
-        pc+=1
+        pc = pc &+ 1
         
         return byte
     }
@@ -209,6 +211,10 @@ public class CPU: CustomStringConvertible {
     func pushWordOnStack(word: UInt16) throws -> Void {
         sp = sp &- 2
         try mmu.writeWord(address: sp, word: word)
+    }
+    
+    func addCycles(_ num: UInt) {
+        cycles = cycles &+ num
     }
         
     public func start() throws {
