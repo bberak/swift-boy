@@ -188,6 +188,28 @@ public class CPU: CustomStringConvertible {
         
         return OpCode.byte(value)
     }
+    
+    func popByteOffStack() throws -> UInt8 {
+        let byte = try mmu.readByte(address: sp)
+        sp = sp &+ 1
+        return byte
+    }
+    
+    func popWordOffStack() throws -> UInt16 {
+        let word = try mmu.readWord(address: sp)
+        sp = sp &+ 2
+        return word
+    }
+    
+    func pushByteOnStack(byte: UInt8) throws -> Void {
+        sp = sp &- 1
+        try mmu.writeByte(address: sp, byte: byte)
+    }
+    
+    func pushWordOnStack(word: UInt16) throws -> Void {
+        sp = sp &- 2
+        try mmu.writeWord(address: sp, word: word)
+    }
         
     public func start() throws {
         while true {
