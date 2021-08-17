@@ -3128,11 +3128,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register B to the left. That is, the contents of bit 0 are copied to bit 1, and the previous contents of bit 1 (before the copy operation) are copied to bit 2. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 0 of register B.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x10))
+        let carry = cpu.b.bit(7)
+        cpu.b = (cpu.b << 1) + (cpu.flags.carry ? 1 : 0)
+        cpu.flags.zero = cpu.b == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x11): Instruction.atomic(cycles: 2) { cpu in
         // RL C
@@ -3143,11 +3144,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register C to the left. That is, the contents of bit 0 are copied to bit 1, and the previous contents of bit 1 (before the copy operation) are copied to bit 2. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 0 of register C.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x11))
+        let carry = cpu.c.bit(7)
+        cpu.c = (cpu.c << 1) + (cpu.flags.carry ? 1 : 0)
+        cpu.flags.zero = cpu.c == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x12): Instruction.atomic(cycles: 2) { cpu in
         // RL D
@@ -3158,11 +3160,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register D to the left. That is, the contents of bit 0 are copied to bit 1, and the previous contents of bit 1 (before the copy operation) are copied to bit 2. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 0 of register D.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x12))
+        let carry = cpu.d.bit(7)
+        cpu.d = (cpu.d << 1) + (cpu.flags.carry ? 1 : 0)
+        cpu.flags.zero = cpu.d == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x13): Instruction.atomic(cycles: 2) { cpu in
         // RL E
@@ -3173,11 +3176,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register E to the left. That is, the contents of bit 0 are copied to bit 1, and the previous contents of bit 1 (before the copy operation) are copied to bit 2. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 0 of register E.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x13))
+        let carry = cpu.e.bit(7)
+        cpu.e = (cpu.e << 1) + (cpu.flags.carry ? 1 : 0)
+        cpu.flags.zero = cpu.e == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x14): Instruction.atomic(cycles: 2) { cpu in
         // RL H
@@ -3188,11 +3192,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register H to the left. That is, the contents of bit 0 are copied to bit 1, and the previous contents of bit 1 (before the copy operation) are copied to bit 2. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 0 of register H.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x14))
+        let carry = cpu.h.bit(7)
+        cpu.h = (cpu.h << 1) + (cpu.flags.carry ? 1 : 0)
+        cpu.flags.zero = cpu.h == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x15): Instruction.atomic(cycles: 2) { cpu in
         // RL L
@@ -3203,11 +3208,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register L to the left. That is, the contents of bit 0 are copied to bit 1, and the previous contents of bit 1 (before the copy operation) are copied to bit 2. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 0 of register L.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x15))
+        let carry = cpu.l.bit(7)
+        cpu.l = (cpu.l << 1) + (cpu.flags.carry ? 1 : 0)
+        cpu.flags.zero = cpu.l == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x16): Instruction.atomic(cycles: 4) { cpu in
         // RL (HL)
@@ -3218,11 +3224,14 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of memory specified by register pair HL to the left, through the carry flag. That is, the contents of bit 0 are copied to bit 1, and the previous contents of bit 1 (before the copy operation) are copied to bit 2. The same operation is repeated in sequence for the rest of the memory location. The previous contents of the CY flag are copied into bit 0 of (HL).
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x16))
+        var data = try cpu.mmu.readByte(address: cpu.hl)
+        let carry = data.bit(7)
+        data = (data << 1) + (cpu.flags.carry ? 1 : 0)
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
+        cpu.flags.zero = data == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x17): Instruction.atomic(cycles: 2) { cpu in
         // RL A
@@ -3233,11 +3242,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register A to the left. That is, the contents of bit 0 are copied to bit 1, and the previous contents of bit 1 (before the copy operation) are copied to bit 2. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 0 of register A.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x17))
+        let carry = cpu.a.bit(7)
+        cpu.a = (cpu.a << 1) + (cpu.flags.carry ? 1 : 0)
+        cpu.flags.zero = cpu.a == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x18): Instruction.atomic(cycles: 2) { cpu in
         // RR B
@@ -3248,11 +3258,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register B to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 7 of register B.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x18))
+        let carry = cpu.b.bit(0)
+        cpu.b = (cpu.b >> 1) + (cpu.flags.carry ? 0b10000000 : 0)
+        cpu.flags.zero = cpu.b == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x19): Instruction.atomic(cycles: 2) { cpu in
         // RR C
@@ -3263,11 +3274,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register C to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 7 of register C.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x19))
+        let carry = cpu.c.bit(0)
+        cpu.c = (cpu.c >> 1) + (cpu.flags.carry ? 0b10000000 : 0)
+        cpu.flags.zero = cpu.c == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x1A): Instruction.atomic(cycles: 2) { cpu in
         // RR D
@@ -3278,11 +3290,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register D to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 7 of register D.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x1A))
+        let carry = cpu.d.bit(0)
+        cpu.d = (cpu.d >> 1) + (cpu.flags.carry ? 0b10000000 : 0)
+        cpu.flags.zero = cpu.d == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x1B): Instruction.atomic(cycles: 2) { cpu in
         // RR E
@@ -3293,11 +3306,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register E to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 7 of register E.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x1B))
+        let carry = cpu.e.bit(0)
+        cpu.e = (cpu.e >> 1) + (cpu.flags.carry ? 0b10000000 : 0)
+        cpu.flags.zero = cpu.e == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x1C): Instruction.atomic(cycles: 2) { cpu in
         // RR H
@@ -3308,11 +3322,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register H to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 7 of register H.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x1C))
+        let carry = cpu.h.bit(0)
+        cpu.h = (cpu.h >> 1) + (cpu.flags.carry ? 0b10000000 : 0)
+        cpu.flags.zero = cpu.h == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x1D): Instruction.atomic(cycles: 2) { cpu in
         // RR L
@@ -3323,11 +3338,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register L to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 7 of register L.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x1D))
+        let carry = cpu.l.bit(0)
+        cpu.l = (cpu.l >> 1) + (cpu.flags.carry ? 0b10000000 : 0)
+        cpu.flags.zero = cpu.l == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x1E): Instruction.atomic(cycles: 4) { cpu in
         // RR (HL)
@@ -3338,11 +3354,14 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of memory specified by register pair HL to the right, through the carry flag. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the memory location. The previous contents of the CY flag are copied into bit 7 of (HL).
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x1E))
+        var data = try cpu.mmu.readByte(address: cpu.hl)
+        let carry = data.bit(0)
+        data = (data >> 1) + (cpu.flags.carry ? 0b10000000 : 0)
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
+        cpu.flags.zero = data == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x1F): Instruction.atomic(cycles: 2) { cpu in
         // RR A
@@ -3353,11 +3372,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Rotate the contents of register A to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The previous contents of the carry (CY) flag are copied to bit 7 of register A.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x1F))
+        let carry = cpu.a.bit(0)
+        cpu.a = (cpu.a >> 1) + (cpu.flags.carry ? 0b10000000 : 0)
+        cpu.flags.zero = cpu.a == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x20): Instruction.atomic(cycles: 2) { cpu in
         // SLA B
