@@ -55,6 +55,12 @@ public extension UInt8 {
         let mask = UInt8(0x01 << pos)
         return (self & mask) == mask
     }
+    
+    func swap() -> UInt8 {
+        let hb = self << 4
+        let lb = self >> 4
+        return hb + lb
+    }
 }
 
 public extension Int8 {

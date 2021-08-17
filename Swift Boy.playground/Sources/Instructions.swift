@@ -3519,7 +3519,7 @@ let instructions: [OpCode: Instruction] = [
         // Shift the contents of register B to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register B is unchanged.
         //
         let carry = cpu.b.bit(0)
-        cpu.b = cpu.b >> 1
+        cpu.b = (cpu.b >> 1) + (cpu.b & 0b10000000)
         cpu.flags.zero = cpu.b == 0
         cpu.flags.subtract = false
         cpu.flags.halfCarry = false
@@ -3535,7 +3535,7 @@ let instructions: [OpCode: Instruction] = [
         // Shift the contents of register C to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register C is unchanged.
         //
         let carry = cpu.c.bit(0)
-        cpu.c = cpu.c >> 1
+        cpu.c = (cpu.c >> 1) + (cpu.c & 0b10000000)
         cpu.flags.zero = cpu.c == 0
         cpu.flags.subtract = false
         cpu.flags.halfCarry = false
@@ -3551,7 +3551,7 @@ let instructions: [OpCode: Instruction] = [
         // Shift the contents of register D to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register D is unchanged.
         //
         let carry = cpu.d.bit(0)
-        cpu.d = cpu.d >> 1
+        cpu.d = (cpu.d >> 1) + (cpu.d & 0b10000000)
         cpu.flags.zero = cpu.d == 0
         cpu.flags.subtract = false
         cpu.flags.halfCarry = false
@@ -3567,7 +3567,7 @@ let instructions: [OpCode: Instruction] = [
         // Shift the contents of register E to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register E is unchanged.
         //
         let carry = cpu.e.bit(0)
-        cpu.e = cpu.e >> 1
+        cpu.e = (cpu.e >> 1) + (cpu.e & 0b10000000)
         cpu.flags.zero = cpu.e == 0
         cpu.flags.subtract = false
         cpu.flags.halfCarry = false
@@ -3583,7 +3583,7 @@ let instructions: [OpCode: Instruction] = [
         // Shift the contents of register H to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register H is unchanged.
         //
         let carry = cpu.h.bit(0)
-        cpu.h = cpu.h >> 1
+        cpu.h = (cpu.h >> 1) + (cpu.h & 0b10000000)
         cpu.flags.zero = cpu.h == 0
         cpu.flags.subtract = false
         cpu.flags.halfCarry = false
@@ -3599,7 +3599,7 @@ let instructions: [OpCode: Instruction] = [
         // Shift the contents of register L to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register L is unchanged.
         //
         let carry = cpu.l.bit(0)
-        cpu.l = cpu.l >> 1
+        cpu.l = (cpu.l >> 1) + (cpu.l & 0b10000000)
         cpu.flags.zero = cpu.l == 0
         cpu.flags.subtract = false
         cpu.flags.halfCarry = false
@@ -3616,7 +3616,7 @@ let instructions: [OpCode: Instruction] = [
         //
         var data = try cpu.mmu.readByte(address: cpu.hl)
         let carry = data.bit(0)
-        data = data >> 1
+        data = (data >> 1) + (data & 0b10000000)
         try cpu.mmu.writeByte(address: cpu.hl, byte: data)
         cpu.flags.zero = data == 0
         cpu.flags.subtract = false
@@ -3633,7 +3633,7 @@ let instructions: [OpCode: Instruction] = [
         // Shift the contents of register A to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register A is unchanged.
         //
         let carry = cpu.a.bit(0)
-        cpu.a = cpu.a >> 1
+        cpu.a = (cpu.a >> 1) + (cpu.a & 0b10000000)
         cpu.flags.zero = cpu.a == 0
         cpu.flags.subtract = false
         cpu.flags.halfCarry = false
@@ -3648,11 +3648,11 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of the lower-order four bits (0-3) of register B to the higher-order four bits (4-7) of the register, and shift the higher-order four bits to the lower-order four bits.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x30))
+        cpu.b = cpu.b.swap()
+        cpu.flags.zero = cpu.b == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = false
     },
     OpCode.word(0x31): Instruction.atomic(cycles: 2) { cpu in
         // SWAP C
@@ -3663,11 +3663,11 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of the lower-order four bits (0-3) of register C to the higher-order four bits (4-7) of the register, and shift the higher-order four bits to the lower-order four bits.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x31))
+        cpu.c = cpu.c.swap()
+        cpu.flags.zero = cpu.c == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = false
     },
     OpCode.word(0x32): Instruction.atomic(cycles: 2) { cpu in
         // SWAP D
@@ -3678,11 +3678,11 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of the lower-order four bits (0-3) of register D to the higher-order four bits (4-7) of the register, and shift the higher-order four bits to the lower-order four bits.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x32))
+        cpu.d = cpu.d.swap()
+        cpu.flags.zero = cpu.d == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = false
     },
     OpCode.word(0x33): Instruction.atomic(cycles: 2) { cpu in
         // SWAP E
@@ -3693,11 +3693,11 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of the lower-order four bits (0-3) of register E to the higher-order four bits (4-7) of the register, and shift the higher-order four bits to the lower-order four bits.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x33))
+        cpu.e = cpu.e.swap()
+        cpu.flags.zero = cpu.e == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = false
     },
     OpCode.word(0x34): Instruction.atomic(cycles: 2) { cpu in
         // SWAP H
@@ -3708,11 +3708,11 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of the lower-order four bits (0-3) of register H to the higher-order four bits (4-7) of the register, and shift the higher-order four bits to the lower-order four bits.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x34))
+        cpu.h = cpu.h.swap()
+        cpu.flags.zero = cpu.h == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = false
     },
     OpCode.word(0x35): Instruction.atomic(cycles: 2) { cpu in
         // SWAP L
@@ -3723,11 +3723,11 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of the lower-order four bits (0-3) of register L to the higher-order four bits (4-7) of the register, and shift the higher-order four bits to the lower-order four bits.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x35))
+        cpu.l = cpu.l.swap()
+        cpu.flags.zero = cpu.l == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = false
     },
     OpCode.word(0x36): Instruction.atomic(cycles: 4) { cpu in
         // SWAP (HL)
@@ -3738,11 +3738,13 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of the lower-order four bits (0-3) of the contents of memory specified by register pair HL to the higher-order four bits (4-7) of that memory location, and shift the contents of the higher-order four bits to the lower-order four bits.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x36))
+        var data = try cpu.mmu.readByte(address: cpu.hl)
+        data = data.swap()
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
+        cpu.flags.zero = data == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = false
     },
     OpCode.word(0x37): Instruction.atomic(cycles: 2) { cpu in
         // SWAP A
@@ -3753,11 +3755,11 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of the lower-order four bits (0-3) of register A to the higher-order four bits (4-7) of the register, and shift the higher-order four bits to the lower-order four bits.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x37))
+        cpu.a = cpu.a.swap()
+        cpu.flags.zero = cpu.a == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = false
     },
     OpCode.word(0x38): Instruction.atomic(cycles: 2) { cpu in
         // SRL B
@@ -3768,11 +3770,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of register B to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register B is reset to 0.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x38))
+        let carry = cpu.b.bit(0)
+        cpu.b = cpu.b >> 1
+        cpu.flags.zero = cpu.b == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x39): Instruction.atomic(cycles: 2) { cpu in
         // SRL C
@@ -3783,11 +3786,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of register C to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register C is reset to 0.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x39))
+        let carry = cpu.c.bit(0)
+        cpu.c = cpu.c >> 1
+        cpu.flags.zero = cpu.c == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x3A): Instruction.atomic(cycles: 2) { cpu in
         // SRL D
@@ -3798,11 +3802,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of register D to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register D is reset to 0.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x3A))
+        let carry = cpu.d.bit(0)
+        cpu.d = cpu.d >> 1
+        cpu.flags.zero = cpu.d == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x3B): Instruction.atomic(cycles: 2) { cpu in
         // SRL E
@@ -3813,11 +3818,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of register E to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register E is reset to 0.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x3B))
+        let carry = cpu.e.bit(0)
+        cpu.e = cpu.e >> 1
+        cpu.flags.zero = cpu.e == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x3C): Instruction.atomic(cycles: 2) { cpu in
         // SRL H
@@ -3828,11 +3834,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of register H to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register H is reset to 0.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x3C))
+        let carry = cpu.h.bit(0)
+        cpu.h = cpu.h >> 1
+        cpu.flags.zero = cpu.h == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x3D): Instruction.atomic(cycles: 2) { cpu in
         // SRL L
@@ -3843,11 +3850,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of register L to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register L is reset to 0.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x3D))
+        let carry = cpu.l.bit(0)
+        cpu.l = cpu.l >> 1
+        cpu.flags.zero = cpu.l == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x3E): Instruction.atomic(cycles: 4) { cpu in
         // SRL (HL)
@@ -3858,11 +3866,14 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of memory specified by register pair HL to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the memory location. The contents of bit 0 are copied to the CY flag, and bit 7 of (HL) is reset to 0.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x3E))
+        var data = try cpu.mmu.readByte(address: cpu.hl)
+        let carry = data.bit(0)
+        data = data >> 1
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
+        cpu.flags.zero = data == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x3F): Instruction.atomic(cycles: 2) { cpu in
         // SRL A
@@ -3873,11 +3884,12 @@ let instructions: [OpCode: Instruction] = [
         //
         // Shift the contents of register A to the right. That is, the contents of bit 7 are copied to bit 6, and the previous contents of bit 6 (before the copy operation) are copied to bit 5. The same operation is repeated in sequence for the rest of the register. The contents of bit 0 are copied to the CY flag, and bit 7 of register A is reset to 0.
         //
-        //cpu.flags.zero = result.zero
-        //cpu.flags.subtract = result.subtract
-        //cpu.flags.halfCarry = result.halfCarry
-        //cpu.flags.carry = result.carry
-        throw CPUError.instructionNotImplemented(OpCode.word(0x3F))
+        let carry = cpu.a.bit(0)
+        cpu.a = cpu.a >> 1
+        cpu.flags.zero = cpu.a == 0
+        cpu.flags.subtract = false
+        cpu.flags.halfCarry = false
+        cpu.flags.carry = carry
     },
     OpCode.word(0x40): Instruction.atomic(cycles: 2) { cpu in
         // BIT 0, B

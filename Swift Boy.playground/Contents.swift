@@ -5,8 +5,3 @@ let mmu = MMU()
 let cpu = CPU(mmu: mmu)
 
 try cpu.start()
-
-
-
-
-
