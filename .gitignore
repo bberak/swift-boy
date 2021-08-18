@@ -100,6 +100,7 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
-/gb-cpu-code-generator/out.swift
+/gb-cpu-code-generator/generated.swift
+/gb-cpu-code-generator/formatted.swift
 
 # End of custom additions

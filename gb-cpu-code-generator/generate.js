@@ -1,9 +1,10 @@
 const fetch = require("node-fetch");
 const fs = require("fs");
 const _ = require("lodash");
-const path = "out.swift";
+const outputPath = "generated.swift";
 
-if (fs.existsSync(path)) fs.unlinkSync(path);
+if (fs.existsSync(outputPath)) 
+	fs.unlinkSync(outputPath);
 
 fetch("https://gist.githubusercontent.com/bberak/ca001281bb8431d2706afd31401e802b/raw/118ac680ac43cc3153c3c33344a692d37d2fd5a7/gb-instructions-db.json")
 	.then((res) => res.json())
@@ -16,7 +17,7 @@ fetch("https://gist.githubusercontent.com/bberak/ca001281bb8431d2706afd31401e802
 	});
 
 const writeLine = (line) => {
-	fs.appendFileSync(path, `${line}\n`);
+	fs.appendFileSync(outputPath, `${line}\n`);
 };
 
 const writeInstruction = (op) => {
