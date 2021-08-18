@@ -22,21 +22,20 @@ const writeLine = (line) => {
 const writeInstruction = (op) => {
 	const cycles = op.cycles.length === 1 ? op.cycles : _.last(op.cycles.split("/"));
 
+	writeLine(`\t// ${op.mnemonic}`);
+	writeLine(`\t//`);
+	writeLine(`\t// Cycles: ${op.cycles}`);
+	writeLine(`\t// Bytes: ${op.bytes}`);
+	writeLine(`\t// Flags: ${sanitizeFlags(op.flags)}`);
+	writeLine(`\t//`);
+
+	(op.description || "").split("\n").forEach((x) => writeLine(`\t// ${_.trim(x)}`));
+
 	if (op.opCode.length === 2)
 		writeLine(`\tOpCode.byte(0x${op.opCode}): Instruction.atomic(cycles: ${cycles}) { cpu in`);
 	else 
 		writeLine(`\tOpCode.word(0x${op.opCode.replace("CB", "")}): Instruction.atomic(cycles: ${cycles}) { cpu in`);
 
-	writeLine(`\t\t// ${op.mnemonic}`);
-	writeLine(`\t\t//`);
-	writeLine(`\t\t// Cycles: ${op.cycles}`);
-	writeLine(`\t\t// Bytes: ${op.bytes}`);
-	writeLine(`\t\t// Flags: ${sanitizeFlags(op.flags)}`);
-	writeLine(`\t\t//`);
-
-	(op.description || "").split("\n").forEach((x) => writeLine(`\t\t// ${_.trim(x)}`));
-
-	writeLine(`\t\t//`);
 
 	if (op.mnemonic.startsWith("LD")) writeLD(op);
 	else writeFlags(op.flags);
