@@ -4,42 +4,6 @@ let cartridge = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"), tit
 let mmu = MMU()
 let cpu = CPU(mmu: mmu)
 
-class DynamicIterator<T> : IteratorProtocol {
-    private var items: [T] = []
-    private var index = 0;
-    
-    init(generator: (DynamicIterator<T>) -> Void) {
-        generator(self)
-    }
-    
-    func yield(_ item: T) {
-        self.items.append(item)
-    }
-    
-    func next() -> T? {
-        if index > (items.count-1) {
-            return nil
-        }
-        
-        let item = items[index]
-        index+=1
-        
-        return item
-    }
-}
-
-class DynamicSequence<T>: Sequence {
-    let generator: (DynamicIterator<T>) -> Void
-    
-    init(generator: @escaping (DynamicIterator<T>) -> Void) {
-        self.generator = generator
-    }
-    
-    func makeIterator() -> DynamicIterator<T> {
-        return DynamicIterator(generator: self.generator)
-    }
-}
-
 let actions = DynamicSequence<()->Void> { seq in
     seq.yield {
         print("You are in f1... :)")

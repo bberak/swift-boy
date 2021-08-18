@@ -132,3 +132,39 @@ public func sub(num1: UInt16, num2: UInt16) -> WordOp {
 public func sub(_ num1: UInt16, _ num2: UInt16) -> WordOp {
     return sub(num1: num1, num2: num2)
 }
+
+public class DynamicIterator<T> : IteratorProtocol {
+    private var items: [T] = []
+    private var index = 0;
+    
+    init(generator: (DynamicIterator<T>) -> Void) {
+        generator(self)
+    }
+    
+    public func yield(_ item: T) {
+        self.items.append(item)
+    }
+    
+    public func next() -> T? {
+        if index > (items.count-1) {
+            return nil
+        }
+        
+        let item = items[index]
+        index+=1
+        
+        return item
+    }
+}
+
+public class DynamicSequence<T>: Sequence {
+    let generator: (DynamicIterator<T>) -> Void
+    
+    public init(generator: @escaping (DynamicIterator<T>) -> Void) {
+        self.generator = generator
+    }
+    
+    public func makeIterator() -> DynamicIterator<T> {
+        return DynamicIterator(generator: self.generator)
+    }
+}
