@@ -9,17 +9,37 @@ struct Atom {
 }
 
 struct Instruction {
-    internal var atoms: (CPU) throws -> [Atom]
+    internal var atoms: (CPU) throws -> AnySequence<Atom>
+    
+    init(atoms: @escaping (CPU) throws -> AnySequence<Atom>) {
+        self.atoms = atoms
+    }
+    
+    init(atoms: @escaping (CPU) throws -> DynamicSequence<Atom>) {
+        let constructor: (CPU) throws -> AnySequence<Atom> = { cpu in
+            let seq = try atoms(cpu)
+            return AnySequence<Atom>(seq)
+        }
+        
+        self.init(atoms: constructor)
+    }
     
     init(atoms: @escaping (CPU) throws -> [Atom]) {
-        self.atoms = atoms
+        let constructor: (CPU) throws -> AnySequence<Atom> = { cpu in
+            let seq = try atoms(cpu)
+            return AnySequence<Atom>(seq)
+        }
+        
+        self.init(atoms: constructor)
     }
     
     static func atomic(cycles: UInt, command: @escaping (CPU) throws -> Void) -> Instruction {
         return Instruction { cpu in
-            return [Atom(cycles: cycles) {
-                try command(cpu)
-            }]
+            return DynamicSequence<Atom> { seq in
+                seq.yield(Atom(cycles: cycles) {
+                    try command(cpu)
+                })
+            }
         }
     }
 }

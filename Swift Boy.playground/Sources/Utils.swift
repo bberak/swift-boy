@@ -135,7 +135,7 @@ public func sub(_ num1: UInt16, _ num2: UInt16) -> WordOp {
 
 public class DynamicIterator<T> : IteratorProtocol {
     private var items: [T] = []
-    private var index = 0;
+    private var index = 0
     
     init(generator: (DynamicIterator<T>) -> Void) {
         generator(self)
@@ -168,3 +168,5 @@ public class DynamicSequence<T>: Sequence {
         return DynamicIterator(generator: self.generator)
     }
 }
+
+
