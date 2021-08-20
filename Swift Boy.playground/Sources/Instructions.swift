@@ -3774,11 +3774,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r0 0 1 -
     //
     // Copy the complement of the contents of bit 0 in register B to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x40): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x40))
     },
     // BIT 0, C
@@ -3788,11 +3787,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r0 0 1 -
     //
     // Copy the complement of the contents of bit 0 in register C to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x41): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x41))
     },
     // BIT 0, D
@@ -3802,11 +3800,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r0 0 1 -
     //
     // Copy the complement of the contents of bit 0 in register D to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x42): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x42))
     },
     // BIT 0, E
@@ -3816,11 +3813,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r0 0 1 -
     //
     // Copy the complement of the contents of bit 0 in register E to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x43): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x43))
     },
     // BIT 0, H
@@ -3830,11 +3826,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r0 0 1 -
     //
     // Copy the complement of the contents of bit 0 in register H to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x44): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x44))
     },
     // BIT 0, L
@@ -3844,11 +3839,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r0 0 1 -
     //
     // Copy the complement of the contents of bit 0 in register L to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x45): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x45))
     },
     // BIT 0, (HL)
@@ -3858,11 +3852,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !(HL)0 0 1 -
     //
     // Copy the complement of the contents of bit 0 in the memory location specified by register pair HL to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x46): Instruction.atomic(cycles: 3) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x46))
     },
     // BIT 0, A
@@ -3872,11 +3865,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r0 0 1 -
     //
     // Copy the complement of the contents of bit 0 in register A to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x47): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x47))
     },
     // BIT 1, B
@@ -3886,11 +3878,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r1 0 1 -
     //
     // Copy the complement of the contents of bit 1 in register B to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x48): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x48))
     },
     // BIT 1, C
@@ -3900,11 +3891,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r1 0 1 -
     //
     // Copy the complement of the contents of bit 1 in register C to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x49): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x49))
     },
     // BIT 1, D
@@ -3914,11 +3904,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r1 0 1 -
     //
     // Copy the complement of the contents of bit 1 in register D to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x4A): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x4A))
     },
     // BIT 1, E
@@ -3928,11 +3917,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r1 0 1 -
     //
     // Copy the complement of the contents of bit 1 in register E to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x4B): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x4B))
     },
     // BIT 1, H
@@ -3942,11 +3930,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r1 0 1 -
     //
     // Copy the complement of the contents of bit 1 in register H to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x4C): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x4C))
     },
     // BIT 1, L
@@ -3956,11 +3943,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r1 0 1 -
     //
     // Copy the complement of the contents of bit 1 in register L to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x4D): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x4D))
     },
     // BIT 1, (HL)
@@ -3970,11 +3956,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !(HL)1 0 1 -
     //
     // Copy the complement of the contents of bit 1 in the memory location specified by register pair HL to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x4E): Instruction.atomic(cycles: 3) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x4E))
     },
     // BIT 1, A
@@ -3984,11 +3969,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r1 0 1 -
     //
     // Copy the complement of the contents of bit 1 in register A to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x4F): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x4F))
     },
     // BIT 2, B
@@ -3998,11 +3982,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r2 0 1 -
     //
     // Copy the complement of the contents of bit 2 in register B to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x50): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x50))
     },
     // BIT 2, C
@@ -4012,11 +3995,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r2 0 1 -
     //
     // Copy the complement of the contents of bit 2 in register C to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x51): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x51))
     },
     // BIT 2, D
@@ -4026,11 +4008,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r2 0 1 -
     //
     // Copy the complement of the contents of bit 2 in register D to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x52): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x52))
     },
     // BIT 2, E
@@ -4040,11 +4021,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r2 0 1 -
     //
     // Copy the complement of the contents of bit 2 in register E to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x53): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x53))
     },
     // BIT 2, H
@@ -4054,11 +4034,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r2 0 1 -
     //
     // Copy the complement of the contents of bit 2 in register H to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x54): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x54))
     },
     // BIT 2, L
@@ -4068,11 +4047,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r2 0 1 -
     //
     // Copy the complement of the contents of bit 2 in register L to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x55): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x55))
     },
     // BIT 2, (HL)
@@ -4082,11 +4060,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !(HL)2 0 1 -
     //
     // Copy the complement of the contents of bit 2 in the memory location specified by register pair HL to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x56): Instruction.atomic(cycles: 3) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x56))
     },
     // BIT 2, A
@@ -4096,11 +4073,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r2 0 1 -
     //
     // Copy the complement of the contents of bit 2 in register A to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x57): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x57))
     },
     // BIT 3, B
@@ -4110,11 +4086,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r3 0 1 -
     //
     // Copy the complement of the contents of bit 3 in register B to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x58): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x58))
     },
     // BIT 3, C
@@ -4124,11 +4099,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r3 0 1 -
     //
     // Copy the complement of the contents of bit 3 in register C to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x59): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x59))
     },
     // BIT 3, D
@@ -4138,11 +4112,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r3 0 1 -
     //
     // Copy the complement of the contents of bit 3 in register D to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x5A): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x5A))
     },
     // BIT 3, E
@@ -4152,11 +4125,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r3 0 1 -
     //
     // Copy the complement of the contents of bit 3 in register E to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x5B): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x5B))
     },
     // BIT 3, H
@@ -4166,11 +4138,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r3 0 1 -
     //
     // Copy the complement of the contents of bit 3 in register H to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x5C): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x5C))
     },
     // BIT 3, L
@@ -4180,11 +4151,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r3 0 1 -
     //
     // Copy the complement of the contents of bit 3 in register L to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x5D): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x5D))
     },
     // BIT 3, (HL)
@@ -4194,11 +4164,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !(HL)3 0 1 -
     //
     // Copy the complement of the contents of bit 3 in the memory location specified by register pair HL to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x5E): Instruction.atomic(cycles: 3) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x5E))
     },
     // BIT 3, A
@@ -4208,11 +4177,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r3 0 1 -
     //
     // Copy the complement of the contents of bit 3 in register A to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x5F): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x5F))
     },
     // BIT 4, B
@@ -4222,11 +4190,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r4 0 1 -
     //
     // Copy the complement of the contents of bit 4 in register B to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x60): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x60))
     },
     // BIT 4, C
@@ -4236,11 +4203,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r4 0 1 -
     //
     // Copy the complement of the contents of bit 4 in register C to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x61): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x61))
     },
     // BIT 4, D
@@ -4250,11 +4216,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r4 0 1 -
     //
     // Copy the complement of the contents of bit 4 in register D to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x62): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x62))
     },
     // BIT 4, E
@@ -4264,11 +4229,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r4 0 1 -
     //
     // Copy the complement of the contents of bit 4 in register E to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x63): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x63))
     },
     // BIT 4, H
@@ -4278,11 +4242,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r4 0 1 -
     //
     // Copy the complement of the contents of bit 4 in register H to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x64): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x64))
     },
     // BIT 4, L
@@ -4292,11 +4255,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r4 0 1 -
     //
     // Copy the complement of the contents of bit 4 in register L to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x65): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x65))
     },
     // BIT 4, (HL)
@@ -4306,11 +4268,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !(HL)4 0 1 -
     //
     // Copy the complement of the contents of bit 4 in the memory location specified by register pair HL to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x66): Instruction.atomic(cycles: 3) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x66))
     },
     // BIT 4, A
@@ -4320,11 +4281,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r4 0 1 -
     //
     // Copy the complement of the contents of bit 4 in register A to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x67): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x67))
     },
     // BIT 5, B
@@ -4334,11 +4294,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r5 0 1 -
     //
     // Copy the complement of the contents of bit 5 in register B to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x68): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x68))
     },
     // BIT 5, C
@@ -4348,11 +4307,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r5 0 1 -
     //
     // Copy the complement of the contents of bit 5 in register C to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x69): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x69))
     },
     // BIT 5, D
@@ -4362,11 +4320,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r5 0 1 -
     //
     // Copy the complement of the contents of bit 5 in register D to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x6A): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x6A))
     },
     // BIT 5, E
@@ -4376,11 +4333,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r5 0 1 -
     //
     // Copy the complement of the contents of bit 5 in register E to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x6B): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x6B))
     },
     // BIT 5, H
@@ -4390,11 +4346,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r5 0 1 -
     //
     // Copy the complement of the contents of bit 5 in register H to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x6C): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x6C))
     },
     // BIT 5, L
@@ -4404,11 +4359,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r5 0 1 -
     //
     // Copy the complement of the contents of bit 5 in register L to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x6D): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x6D))
     },
     // BIT 5, (HL)
@@ -4418,11 +4372,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !(HL)5 0 1 -
     //
     // Copy the complement of the contents of bit 5 in the memory location specified by register pair HL to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x6E): Instruction.atomic(cycles: 3) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x6E))
     },
     // BIT 5, A
@@ -4432,11 +4385,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r5 0 1 -
     //
     // Copy the complement of the contents of bit 5 in register A to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x6F): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x6F))
     },
     // BIT 6, B
@@ -4446,11 +4398,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r6 0 1 -
     //
     // Copy the complement of the contents of bit 6 in register B to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x70): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x70))
     },
     // BIT 6, C
@@ -4460,11 +4411,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r6 0 1 -
     //
     // Copy the complement of the contents of bit 6 in register C to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x71): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x71))
     },
     // BIT 6, D
@@ -4474,11 +4424,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r6 0 1 -
     //
     // Copy the complement of the contents of bit 6 in register D to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x72): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x72))
     },
     // BIT 6, E
@@ -4488,11 +4437,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r6 0 1 -
     //
     // Copy the complement of the contents of bit 6 in register E to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x73): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x73))
     },
     // BIT 6, H
@@ -4502,11 +4450,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r6 0 1 -
     //
     // Copy the complement of the contents of bit 6 in register H to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x74): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x74))
     },
     // BIT 6, L
@@ -4516,11 +4463,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r6 0 1 -
     //
     // Copy the complement of the contents of bit 6 in register L to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x75): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x75))
     },
     // BIT 6, (HL)
@@ -4530,11 +4476,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !(HL)6 0 1 -
     //
     // Copy the complement of the contents of bit 6 in the memory location specified by register pair HL to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x76): Instruction.atomic(cycles: 3) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x76))
     },
     // BIT 6, A
@@ -4544,11 +4489,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r6 0 1 -
     //
     // Copy the complement of the contents of bit 6 in register A to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x77): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x77))
     },
     // BIT 7, B
@@ -4558,11 +4502,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r7 0 1 -
     //
     // Copy the complement of the contents of bit 7 in register B to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x78): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x78))
     },
     // BIT 7, C
@@ -4572,11 +4515,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r7 0 1 -
     //
     // Copy the complement of the contents of bit 7 in register C to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x79): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x79))
     },
     // BIT 7, D
@@ -4586,11 +4528,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r7 0 1 -
     //
     // Copy the complement of the contents of bit 7 in register D to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x7A): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x7A))
     },
     // BIT 7, E
@@ -4600,11 +4541,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r7 0 1 -
     //
     // Copy the complement of the contents of bit 7 in register E to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x7B): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x7B))
     },
     // BIT 7, H
@@ -4614,11 +4554,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r7 0 1 -
     //
     // Copy the complement of the contents of bit 7 in register H to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x7C): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x7C))
     },
     // BIT 7, L
@@ -4628,11 +4567,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r7 0 1 -
     //
     // Copy the complement of the contents of bit 7 in register L to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x7D): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x7D))
     },
     // BIT 7, (HL)
@@ -4642,11 +4580,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !(HL)7 0 1 -
     //
     // Copy the complement of the contents of bit 7 in the memory location specified by register pair HL to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x7E): Instruction.atomic(cycles: 3) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x7E))
     },
     // BIT 7, A
@@ -4656,11 +4593,10 @@ let instructions: [OpCode: Instruction] = [
     // Flags: !r7 0 1 -
     //
     // Copy the complement of the contents of bit 7 in register A to the Z flag of the program status word (PSW).
-    //
-    //cpu.flags.zero = result.zero
-    //cpu.flags.subtract = result.subtract
-    //cpu.flags.halfCarry = result.halfCarry
     OpCode.word(0x7F): Instruction.atomic(cycles: 2) { cpu in
+        //cpu.flags.zero = result.zero
+        //cpu.flags.subtract = result.subtract
+        //cpu.flags.halfCarry = result.halfCarry
         throw CPUError.instructionNotImplemented(OpCode.word(0x7F))
     },
     // RES 0, B
@@ -5944,3 +5880,4 @@ let instructions: [OpCode: Instruction] = [
         throw CPUError.instructionNotImplemented(OpCode.word(0xFF))
     },
 ]
+
