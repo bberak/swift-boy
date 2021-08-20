@@ -99,7 +99,7 @@ public class CPU: CustomStringConvertible {
     internal var sp: UInt16
     internal var pc: UInt16
     internal var ime: Bool
-    internal var cycles: UInt
+    private var cycles: UInt
     
     internal var af: UInt16 {
         get {
@@ -212,10 +212,6 @@ public class CPU: CustomStringConvertible {
     func pushWordOnStack(word: UInt16) throws -> Void {
         sp = sp &- 2
         try mmu.writeWord(address: sp, word: word)
-    }
-    
-    func addCycles(_ num: UInt) {
-        cycles = cycles &+ num
     }
         
     public func start() throws {

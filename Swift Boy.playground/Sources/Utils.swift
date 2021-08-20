@@ -66,7 +66,7 @@ public extension UInt8 {
         return hb + lb
     }
     
-    func signed() -> Int8 {
+    func toInt8() -> Int8 {
         return Int8(self)
     }
 }
