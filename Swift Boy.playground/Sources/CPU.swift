@@ -1,44 +1,25 @@
-struct Atom {
+struct Command {
     internal var cycles: UInt
-    internal var command: () throws -> Void
+    internal var run: () throws -> Command?
     
-    init(cycles: UInt, command: @escaping () throws -> Void) {
+    init(cycles: UInt, run: @escaping () throws -> Command?) {
         self.cycles = cycles;
-        self.command = command;
+        self.run = run;
     }
 }
 
 struct Instruction {
-    internal var atoms: (CPU) throws -> AnySequence<Atom>
+    internal var build: (CPU) throws -> Command
     
-    init(atoms: @escaping (CPU) throws -> AnySequence<Atom>) {
-        self.atoms = atoms
-    }
-    
-    init(atoms: @escaping (CPU) throws -> DynamicSequence<Atom>) {
-        let constructor: (CPU) throws -> AnySequence<Atom> = { cpu in
-            let seq = try atoms(cpu)
-            return AnySequence<Atom>(seq)
-        }
-        
-        self.init(atoms: constructor)
-    }
-    
-    init(atoms: @escaping (CPU) throws -> [Atom]) {
-        let constructor: (CPU) throws -> AnySequence<Atom> = { cpu in
-            let seq = try atoms(cpu)
-            return AnySequence<Atom>(seq)
-        }
-        
-        self.init(atoms: constructor)
+    init(build: @escaping (CPU) throws -> Command) {
+        self.build = build
     }
     
     static func atomic(cycles: UInt, command: @escaping (CPU) throws -> Void) -> Instruction {
         return Instruction { cpu in
-            return DynamicSequence<Atom> { seq in
-                seq.yield(Atom(cycles: cycles) {
-                    try command(cpu)
-                })
+            return Command(cycles: cycles) {
+                try command(cpu)
+                return nil
             }
         }
     }
@@ -244,11 +225,12 @@ public class CPU: CustomStringConvertible {
             print("opCode: \(opCode)")
             
             if let instruction = instructions[opCode] {
-                let atoms = try instruction.atoms(self)
+                var cmd: Command? = try instruction.build(self)
                 
-                try atoms.forEach { atom in
-                    try atom.command()
-                    cycles+=atom.cycles
+                while cmd != nil {
+                    let next = try cmd!.run()
+                    cycles = cycles &+ cmd!.cycles
+                    cmd = next
                 }
             } else {
                 throw CPUError.instructionNotFound(opCode)
