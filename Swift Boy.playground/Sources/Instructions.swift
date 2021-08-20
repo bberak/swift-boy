@@ -232,7 +232,7 @@ let instructions: [OpCode: Instruction] = [
         return Command(cycles: 2) {
             let offset = try cpu.readNextByte().toInt8()
 
-            if (cpu.flags.zero == false) {
+            if cpu.flags.zero == false {
                 return Command(cycles: 1) {
                     cpu.pc = cpu.pc &+ offset
                     return nil
@@ -283,21 +283,21 @@ let instructions: [OpCode: Instruction] = [
     // https://www.reddit.com/r/EmuDev/comments/cdtuyw/gameboy_emulator_fails_blargg_daa_test/
     OpCode.byte(0x27): Instruction.atomic(cycles: 1) { cpu in
         
-        if (!cpu.flags.subtract) {
-            if (cpu.flags.carry || cpu.a > 0x99) {
+        if cpu.flags.subtract == false {
+            if cpu.flags.carry || cpu.a > 0x99 {
                 cpu.a = cpu.a &+ 0x60
                 cpu.flags.carry = true
             }
-            if (cpu.flags.halfCarry || (cpu.a & 0x0F) > 0x09) {
+            if cpu.flags.halfCarry || (cpu.a & 0x0F) > 0x09 {
                 cpu.a = cpu.a &+ 0x06;
             }
         }
         else {
-            if (cpu.flags.carry) {
+            if cpu.flags.carry {
                 cpu.a = cpu.a &- 0x60;
                 cpu.flags.carry = true
             }
-            if (cpu.flags.halfCarry) {
+            if cpu.flags.halfCarry {
                 cpu.a = cpu.a &- 0x06;
             }
         }
@@ -312,7 +312,7 @@ let instructions: [OpCode: Instruction] = [
         return Command(cycles: 2) {
             let offset = try cpu.readNextByte().toInt8()
             
-            if (cpu.flags.zero) {
+            if cpu.flags.zero {
                 return Command(cycles: 1) {
                     cpu.pc = cpu.pc &+ offset
                     return nil
@@ -373,7 +373,7 @@ let instructions: [OpCode: Instruction] = [
         return Command(cycles: 2) {
             let offset = try cpu.readNextByte().toInt8()
             
-            if (cpu.flags.carry == false) {
+            if cpu.flags.carry == false {
                 return Command(cycles: 1) {
                     cpu.pc = cpu.pc &+ offset
                     return nil
@@ -436,7 +436,7 @@ let instructions: [OpCode: Instruction] = [
         return Command(cycles:2) {
             let offset = try cpu.readNextByte().toInt8()
             
-            if (cpu.flags.carry) {
+            if cpu.flags.carry {
                 return Command(cycles: 1) {
                     cpu.pc = cpu.pc &+ offset
                     return nil
@@ -2015,7 +2015,7 @@ let instructions: [OpCode: Instruction] = [
     // The contents of the address specified by the stack pointer SP are loaded in the lower-order byte of PC, and the contents of SP are incremented by 1. The contents of the address specified by the new SP value are then loaded in the higher-order byte of PC, and the contents of SP are incremented by 1 again. (THe value of SP is 2 larger than before instruction execution.) The next instruction is fetched from the address specified by the content of PC (as usual).
     OpCode.byte(0xC0): Instruction { cpu in
         return Command(cycles: 2) {
-            if (cpu.flags.zero == false) {
+            if cpu.flags.zero == false {
                 return Command(cycles: 3) {
                     cpu.pc = try cpu.popWordOffStack()
                     return nil
@@ -2050,7 +2050,7 @@ let instructions: [OpCode: Instruction] = [
         return Command(cycles: 3) {
             let address = try cpu.readNextWord()
             
-            if (cpu.flags.zero == false) {
+            if cpu.flags.zero == false {
                 return Command(cycles: 1) {
                     cpu.pc = address
                     return nil
@@ -2083,7 +2083,7 @@ let instructions: [OpCode: Instruction] = [
         return Command(cycles: 3) {
             let address = try cpu.readNextWord()
             
-            if (cpu.flags.zero == false) {
+            if cpu.flags.zero == false {
                 return Command(cycles: 3) {
                     try cpu.pushWordOnStack(word: cpu.pc)
                     cpu.pc = address
@@ -2145,7 +2145,7 @@ let instructions: [OpCode: Instruction] = [
     // The contents of the address specified by the stack pointer SP are loaded in the lower-order byte of PC, and the contents of SP are incremented by 1. The contents of the address specified by the new SP value are then loaded in the higher-order byte of PC, and the contents of SP are incremented by 1 again. (THe value of SP is 2 larger than before instruction execution.) The next instruction is fetched from the address specified by the content of PC (as usual).
     OpCode.byte(0xC8): Instruction { cpu in
         return Command(cycles: 2) {
-            if (cpu.flags.zero) {
+            if cpu.flags.zero {
                 return Command(cycles: 3) {
                     cpu.pc = try cpu.popWordOffStack()
                     return nil
@@ -2178,7 +2178,7 @@ let instructions: [OpCode: Instruction] = [
         return Command(cycles: 3) {
             let address = try cpu.readNextWord()
             
-            if (cpu.flags.zero) {
+            if cpu.flags.zero {
                 return Command(cycles: 1) {
                     cpu.pc = address
                     return nil
@@ -2200,7 +2200,7 @@ let instructions: [OpCode: Instruction] = [
         return Command(cycles: 3) {
             let address = try cpu.readNextWord()
             
-            if (cpu.flags.zero) {
+            if cpu.flags.zero {
                 return Command(cycles: 3) {
                     try cpu.pushWordOnStack(word: cpu.pc)
                     cpu.pc = address
@@ -2265,7 +2265,7 @@ let instructions: [OpCode: Instruction] = [
     // The contents of the address specified by the stack pointer SP are loaded in the lower-order byte of PC, and the contents of SP are incremented by 1. The contents of the address specified by the new SP value are then loaded in the higher-order byte of PC, and the contents of SP are incremented by 1 again. (THe value of SP is 2 larger than before instruction execution.) The next instruction is fetched from the address specified by the content of PC (as usual).
     OpCode.byte(0xD0): Instruction { cpu in
         return Command(cycles: 2) {
-            if (cpu.flags.carry == false) {
+            if cpu.flags.carry == false {
                 return Command(cycles: 3) {
                     cpu.pc = try cpu.popWordOffStack()
                     return nil
@@ -2300,7 +2300,7 @@ let instructions: [OpCode: Instruction] = [
         return Command(cycles: 3) {
             let address = try cpu.readNextWord()
             
-            if (cpu.flags.carry == false) {
+            if cpu.flags.carry == false {
                 return Command(cycles: 1) {
                     cpu.pc = address
                     return nil
@@ -2322,7 +2322,7 @@ let instructions: [OpCode: Instruction] = [
         return Command(cycles: 3) {
             let address = try cpu.readNextWord()
             
-            if (cpu.flags.carry == false) {
+            if cpu.flags.carry == false {
                 return Command(cycles: 3) {
                     try cpu.pushWordOnStack(word: cpu.pc)
                     cpu.pc = address
@@ -2384,7 +2384,7 @@ let instructions: [OpCode: Instruction] = [
     // The contents of the address specified by the stack pointer SP are loaded in the lower-order byte of PC, and the contents of SP are incremented by 1. The contents of the address specified by the new SP value are then loaded in the higher-order byte of PC, and the contents of SP are incremented by 1 again. (THe value of SP is 2 larger than before instruction execution.) The next instruction is fetched from the address specified by the content of PC (as usual).
     OpCode.byte(0xD8): Instruction { cpu in
         return Command(cycles: 2) {
-            if (cpu.flags.carry) {
+            if cpu.flags.carry {
                 return Command(cycles: 3) {
                     cpu.pc = try cpu.popWordOffStack()
                     return nil
@@ -2418,7 +2418,7 @@ let instructions: [OpCode: Instruction] = [
         return Command(cycles: 3) {
             let address = try cpu.readNextWord()
             
-            if (cpu.flags.carry) {
+            if cpu.flags.carry {
                 return Command(cycles: 1) {
                     cpu.pc = address
                     return nil
@@ -2440,7 +2440,7 @@ let instructions: [OpCode: Instruction] = [
         return Command(cycles: 3) {
             let address = try cpu.readNextWord()
             
-            if (cpu.flags.carry) {
+            if cpu.flags.carry {
                 return Command(cycles: 3) {
                     try cpu.pushWordOnStack(word: cpu.pc)
                     cpu.pc = address
