@@ -30,6 +30,10 @@ public extension Array where Element == UInt8 {
     }
 }
 
+public func &+(left: UInt16, right: Int8) -> UInt16 {
+    return right > 0 ? left &+ UInt16(right.toUInt8()) : left &- UInt16(right.toUInt8())
+}
+
 public extension UInt16 {
     func toBytes() -> [UInt8] {
         return [UInt8(0x00FF & self), UInt8((0xFF00 & self) >> 8)]
@@ -61,11 +65,15 @@ public extension UInt8 {
         let lb = self >> 4
         return hb + lb
     }
+    
+    func signed() -> Int8 {
+        return Int8(self)
+    }
 }
 
 public extension Int8 {
     func toUInt8() -> UInt8 {
-        return UInt8(self & 0b01111111)
+        return self < 0 ? UInt8((self * -1) & 0b01111111) : UInt8(self & 0b01111111)
     }
 }
 

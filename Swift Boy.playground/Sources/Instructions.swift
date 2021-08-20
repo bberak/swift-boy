@@ -228,12 +228,18 @@ let instructions: [OpCode: Instruction] = [
     // If the Z flag is 0, jump s8 steps from the current address stored in the
     // program counter (PC). If not, the instruction following the current JP
     // instruction is executed (as usual).
-    OpCode.byte(0x20): Instruction.atomic(cycles: 2) { cpu in
-        let offset = Int8(try cpu.readNextByte())
-        
-        if (!cpu.flags.zero) {
-            cpu.pc = offset > 0 ? cpu.pc &+ UInt16(offset.toUInt8()) : cpu.pc &- UInt16(offset.toUInt8())
-            cpu.cycles = cpu.cycles &+ 1
+    OpCode.byte(0x20): Instruction { cpu in
+        return Command(cycles: 2) {
+            let offset = try cpu.readNextByte().signed()
+
+            if (cpu.flags.zero == false) {
+                return Command(cycles: 1) {
+                    cpu.pc = cpu.pc &+ offset
+                    return nil
+                }
+            }
+
+            return nil
         }
     },
     // Load the 2 bytes of immediate data into register pair HL.
