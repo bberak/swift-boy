@@ -65,6 +65,11 @@ public extension UInt8 {
         return self & mask
     }
     
+    func set(_ bit: UInt8) -> UInt8 {
+        let mask = UInt8(0x01 << bit)
+        return self | mask
+    }
+    
     func swap() -> UInt8 {
         let hb = self << 4
         let lb = self >> 4

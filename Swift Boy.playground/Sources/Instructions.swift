@@ -5375,7 +5375,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 0 in register B to 1.
     OpCode.word(0xC0): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xC0))
+        var data = cpu.b
+        data = data.set(0)
+        cpu.b = data
     },
     // SET 0, C
     //
@@ -5385,7 +5387,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 0 in register C to 1.
     OpCode.word(0xC1): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xC1))
+        var data = cpu.c
+        data = data.set(0)
+        cpu.c = data
     },
     // SET 0, D
     //
@@ -5395,7 +5399,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 0 in register D to 1.
     OpCode.word(0xC2): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xC2))
+        var data = cpu.d
+        data = data.set(0)
+        cpu.d = data
     },
     // SET 0, E
     //
@@ -5405,7 +5411,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 0 in register E to 1.
     OpCode.word(0xC3): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xC3))
+        var data = cpu.e
+        data = data.set(0)
+        cpu.e = data
     },
     // SET 0, H
     //
@@ -5415,7 +5423,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 0 in register H to 1.
     OpCode.word(0xC4): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xC4))
+        var data = cpu.h
+        data = data.set(0)
+        cpu.h = data
     },
     // SET 0, L
     //
@@ -5425,7 +5435,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 0 in register L to 1.
     OpCode.word(0xC5): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xC5))
+        var data = cpu.l
+        data = data.set(0)
+        cpu.l = data
     },
     // SET 0, (HL)
     //
@@ -5435,7 +5447,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 0 in the memory location specified by register pair HL to 1.
     OpCode.word(0xC6): Instruction.atomic(cycles: 4) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xC6))
+        var data = try cpu.mmu.readByte(address: cpu.hl)
+        data = data.set(0)
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     // SET 0, A
     //
@@ -5445,7 +5459,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 0 in register A to 1.
     OpCode.word(0xC7): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xC7))
+        var data = cpu.a
+        data = data.set(0)
+        cpu.a = data
     },
     // SET 1, B
     //
@@ -5455,7 +5471,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 1 in register B to 1.
     OpCode.word(0xC8): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xC8))
+        var data = cpu.b
+        data = data.set(1)
+        cpu.b = data
     },
     // SET 1, C
     //
@@ -5465,7 +5483,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 1 in register C to 1.
     OpCode.word(0xC9): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xC9))
+        var data = cpu.c
+        data = data.set(1)
+        cpu.c = data
     },
     // SET 1, D
     //
@@ -5475,7 +5495,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 1 in register D to 1.
     OpCode.word(0xCA): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xCA))
+        var data = cpu.d
+        data = data.set(1)
+        cpu.d = data
     },
     // SET 1, E
     //
@@ -5485,7 +5507,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 1 in register E to 1.
     OpCode.word(0xCB): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xCB))
+        var data = cpu.e
+        data = data.set(1)
+        cpu.e = data
     },
     // SET 1, H
     //
@@ -5495,7 +5519,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 1 in register H to 1.
     OpCode.word(0xCC): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xCC))
+        var data = cpu.h
+        data = data.set(1)
+        cpu.h = data
     },
     // SET 1, L
     //
@@ -5505,7 +5531,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 1 in register L to 1.
     OpCode.word(0xCD): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xCD))
+        var data = cpu.l
+        data = data.set(1)
+        cpu.l = data
     },
     // SET 1, (HL)
     //
@@ -5515,7 +5543,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 1 in the memory location specified by register pair HL to 1.
     OpCode.word(0xCE): Instruction.atomic(cycles: 4) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xCE))
+        var data = try cpu.mmu.readByte(address: cpu.hl)
+        data = data.set(1)
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     // SET 1, A
     //
@@ -5525,7 +5555,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 1 in register A to 1.
     OpCode.word(0xCF): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xCF))
+        var data = cpu.a
+        data = data.set(1)
+        cpu.a = data
     },
     // SET 2, B
     //
@@ -5535,7 +5567,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 2 in register B to 1.
     OpCode.word(0xD0): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xD0))
+        var data = cpu.b
+        data = data.set(2)
+        cpu.b = data
     },
     // SET 2, C
     //
@@ -5545,7 +5579,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 2 in register C to 1.
     OpCode.word(0xD1): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xD1))
+        var data = cpu.c
+        data = data.set(2)
+        cpu.c = data
     },
     // SET 2, D
     //
@@ -5555,7 +5591,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 2 in register D to 1.
     OpCode.word(0xD2): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xD2))
+        var data = cpu.d
+        data = data.set(2)
+        cpu.d = data
     },
     // SET 2, E
     //
@@ -5565,7 +5603,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 2 in register E to 1.
     OpCode.word(0xD3): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xD3))
+        var data = cpu.e
+        data = data.set(2)
+        cpu.e = data
     },
     // SET 2, H
     //
@@ -5575,7 +5615,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 2 in register H to 1.
     OpCode.word(0xD4): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xD4))
+        var data = cpu.h
+        data = data.set(2)
+        cpu.h = data
     },
     // SET 2, L
     //
@@ -5585,7 +5627,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 2 in register L to 1.
     OpCode.word(0xD5): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xD5))
+        var data = cpu.l
+        data = data.set(2)
+        cpu.l = data
     },
     // SET 2, (HL)
     //
@@ -5595,7 +5639,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 2 in the memory location specified by register pair HL to 1.
     OpCode.word(0xD6): Instruction.atomic(cycles: 4) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xD6))
+        var data = try cpu.mmu.readByte(address: cpu.hl)
+        data = data.set(2)
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     // SET 2, A
     //
@@ -5605,7 +5651,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 2 in register A to 1.
     OpCode.word(0xD7): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xD7))
+        var data = cpu.a
+        data = data.set(2)
+        cpu.a = data
     },
     // SET 3, B
     //
@@ -5615,7 +5663,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 3 in register B to 1.
     OpCode.word(0xD8): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xD8))
+        var data = cpu.b
+        data = data.set(3)
+        cpu.b = data
     },
     // SET 3, C
     //
@@ -5625,7 +5675,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 3 in register C to 1.
     OpCode.word(0xD9): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xD9))
+        var data = cpu.c
+        data = data.set(3)
+        cpu.c = data
     },
     // SET 3, D
     //
@@ -5635,7 +5687,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 3 in register D to 1.
     OpCode.word(0xDA): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xDA))
+        var data = cpu.d
+        data = data.set(3)
+        cpu.d = data
     },
     // SET 3, E
     //
@@ -5645,7 +5699,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 3 in register E to 1.
     OpCode.word(0xDB): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xDB))
+        var data = cpu.e
+        data = data.set(3)
+        cpu.e = data
     },
     // SET 3, H
     //
@@ -5655,7 +5711,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 3 in register H to 1.
     OpCode.word(0xDC): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xDC))
+        var data = cpu.h
+        data = data.set(3)
+        cpu.h = data
     },
     // SET 3, L
     //
@@ -5665,7 +5723,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 3 in register L to 1.
     OpCode.word(0xDD): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xDD))
+        var data = cpu.l
+        data = data.set(3)
+        cpu.l = data
     },
     // SET 3, (HL)
     //
@@ -5675,7 +5735,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 3 in the memory location specified by register pair HL to 1.
     OpCode.word(0xDE): Instruction.atomic(cycles: 4) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xDE))
+        var data = try cpu.mmu.readByte(address: cpu.hl)
+        data = data.set(3)
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     // SET 3, A
     //
@@ -5685,7 +5747,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 3 in register A to 1.
     OpCode.word(0xDF): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xDF))
+        var data = cpu.a
+        data = data.set(3)
+        cpu.a = data
     },
     // SET 4, B
     //
@@ -5695,7 +5759,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 4 in register B to 1.
     OpCode.word(0xE0): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xE0))
+        var data = cpu.b
+        data = data.set(4)
+        cpu.b = data
     },
     // SET 4, C
     //
@@ -5705,7 +5771,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 4 in register C to 1.
     OpCode.word(0xE1): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xE1))
+        var data = cpu.c
+        data = data.set(4)
+        cpu.c = data
     },
     // SET 4, D
     //
@@ -5715,7 +5783,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 4 in register D to 1.
     OpCode.word(0xE2): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xE2))
+        var data = cpu.d
+        data = data.set(4)
+        cpu.d = data
     },
     // SET 4, E
     //
@@ -5725,7 +5795,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 4 in register E to 1.
     OpCode.word(0xE3): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xE3))
+        var data = cpu.e
+        data = data.set(4)
+        cpu.e = data
     },
     // SET 4, H
     //
@@ -5735,7 +5807,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 4 in register H to 1.
     OpCode.word(0xE4): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xE4))
+        var data = cpu.h
+        data = data.set(4)
+        cpu.h = data
     },
     // SET 4, L
     //
@@ -5745,7 +5819,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 4 in register L to 1.
     OpCode.word(0xE5): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xE5))
+        var data = cpu.l
+        data = data.set(4)
+        cpu.l = data
     },
     // SET 4, (HL)
     //
@@ -5755,7 +5831,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 4 in the memory location specified by register pair HL to 1.
     OpCode.word(0xE6): Instruction.atomic(cycles: 4) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xE6))
+        var data = try cpu.mmu.readByte(address: cpu.hl)
+        data = data.set(4)
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     // SET 4, A
     //
@@ -5765,7 +5843,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 4 in register A to 1.
     OpCode.word(0xE7): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xE7))
+        var data = cpu.a
+        data = data.set(4)
+        cpu.a = data
     },
     // SET 5, B
     //
@@ -5775,7 +5855,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 5 in register B to 1.
     OpCode.word(0xE8): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xE8))
+        var data = cpu.b
+        data = data.set(5)
+        cpu.b = data
     },
     // SET 5, C
     //
@@ -5785,7 +5867,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 5 in register C to 1.
     OpCode.word(0xE9): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xE9))
+        var data = cpu.c
+        data = data.set(5)
+        cpu.c = data
     },
     // SET 5, D
     //
@@ -5795,7 +5879,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 5 in register D to 1.
     OpCode.word(0xEA): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xEA))
+        var data = cpu.d
+        data = data.set(5)
+        cpu.d = data
     },
     // SET 5, E
     //
@@ -5805,7 +5891,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 5 in register E to 1.
     OpCode.word(0xEB): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xEB))
+        var data = cpu.e
+        data = data.set(5)
+        cpu.e = data
     },
     // SET 5, H
     //
@@ -5815,7 +5903,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 5 in register H to 1.
     OpCode.word(0xEC): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xEC))
+        var data = cpu.h
+        data = data.set(5)
+        cpu.h = data
     },
     // SET 5, L
     //
@@ -5825,7 +5915,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 5 in register L to 1.
     OpCode.word(0xED): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xED))
+        var data = cpu.l
+        data = data.set(5)
+        cpu.l = data
     },
     // SET 5, (HL)
     //
@@ -5835,7 +5927,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 5 in the memory location specified by register pair HL to 1.
     OpCode.word(0xEE): Instruction.atomic(cycles: 4) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xEE))
+        var data = try cpu.mmu.readByte(address: cpu.hl)
+        data = data.set(5)
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     // SET 5, A
     //
@@ -5845,7 +5939,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 5 in register A to 1.
     OpCode.word(0xEF): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xEF))
+        var data = cpu.a
+        data = data.set(5)
+        cpu.a = data
     },
     // SET 6, B
     //
@@ -5855,7 +5951,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 6 in register B to 1.
     OpCode.word(0xF0): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xF0))
+        var data = cpu.b
+        data = data.set(6)
+        cpu.b = data
     },
     // SET 6, C
     //
@@ -5865,7 +5963,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 6 in register C to 1.
     OpCode.word(0xF1): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xF1))
+        var data = cpu.c
+        data = data.set(6)
+        cpu.c = data
     },
     // SET 6, D
     //
@@ -5875,7 +5975,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 6 in register D to 1.
     OpCode.word(0xF2): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xF2))
+        var data = cpu.d
+        data = data.set(6)
+        cpu.d = data
     },
     // SET 6, E
     //
@@ -5885,7 +5987,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 6 in register E to 1.
     OpCode.word(0xF3): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xF3))
+        var data = cpu.e
+        data = data.set(6)
+        cpu.e = data
     },
     // SET 6, H
     //
@@ -5895,7 +5999,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 6 in register H to 1.
     OpCode.word(0xF4): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xF4))
+        var data = cpu.h
+        data = data.set(6)
+        cpu.h = data
     },
     // SET 6, L
     //
@@ -5905,7 +6011,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 6 in register L to 1.
     OpCode.word(0xF5): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xF5))
+        var data = cpu.l
+        data = data.set(6)
+        cpu.l = data
     },
     // SET 6, (HL)
     //
@@ -5915,7 +6023,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 6 in the memory location specified by register pair HL to 1.
     OpCode.word(0xF6): Instruction.atomic(cycles: 4) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xF6))
+        var data = try cpu.mmu.readByte(address: cpu.hl)
+        data = data.set(6)
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     // SET 6, A
     //
@@ -5925,7 +6035,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 6 in register A to 1.
     OpCode.word(0xF7): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xF7))
+        var data = cpu.a
+        data = data.set(6)
+        cpu.a = data
     },
     // SET 7, B
     //
@@ -5935,7 +6047,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 7 in register B to 1.
     OpCode.word(0xF8): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xF8))
+        var data = cpu.b
+        data = data.set(7)
+        cpu.b = data
     },
     // SET 7, C
     //
@@ -5945,7 +6059,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 7 in register C to 1.
     OpCode.word(0xF9): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xF9))
+        var data = cpu.c
+        data = data.set(7)
+        cpu.c = data
     },
     // SET 7, D
     //
@@ -5955,7 +6071,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 7 in register D to 1.
     OpCode.word(0xFA): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xFA))
+        var data = cpu.d
+        data = data.set(7)
+        cpu.d = data
     },
     // SET 7, E
     //
@@ -5965,7 +6083,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 7 in register E to 1.
     OpCode.word(0xFB): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xFB))
+        var data = cpu.e
+        data = data.set(7)
+        cpu.e = data
     },
     // SET 7, H
     //
@@ -5975,7 +6095,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 7 in register H to 1.
     OpCode.word(0xFC): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xFC))
+        var data = cpu.h
+        data = data.set(7)
+        cpu.h = data
     },
     // SET 7, L
     //
@@ -5985,7 +6107,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 7 in register L to 1.
     OpCode.word(0xFD): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xFD))
+        var data = cpu.l
+        data = data.set(7)
+        cpu.l = data
     },
     // SET 7, (HL)
     //
@@ -5995,7 +6119,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 7 in the memory location specified by register pair HL to 1.
     OpCode.word(0xFE): Instruction.atomic(cycles: 4) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xFE))
+        var data = try cpu.mmu.readByte(address: cpu.hl)
+        data = data.set(7)
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     // SET 7, A
     //
@@ -6005,7 +6131,9 @@ let instructions: [OpCode: Instruction] = [
     //
     // Set bit 7 in register A to 1.
     OpCode.word(0xFF): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.word(0xFF))
+        var data = cpu.a
+        data = data.set(7)
+        cpu.a = data
     },
 ]
 
