@@ -67,7 +67,7 @@ public extension UInt8 {
     }
     
     func toInt8() -> Int8 {
-        return Int8(self)
+        return Int8(bitPattern: self)
     }
 }
 

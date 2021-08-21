@@ -38,13 +38,18 @@ const writeInstruction = (op) => {
 		writeLine(`\tOpCode.word(0x${op.opCode.replace("CB", "")}): Instruction.atomic(cycles: ${cycles}) { cpu in`);
 
 
-	if (op.mnemonic.startsWith("LD")) writeLD(op);
-	else writeFlags(op.flags);
-
-	if (op.opCode.length === 2)
-		writeLine(`\t\tthrow CPUError.instructionNotImplemented(OpCode.byte(0x${op.opCode}))`);
-	else 
-		writeLine(`\t\tthrow CPUError.instructionNotImplemented(OpCode.word(0x${op.opCode.replace("CB", "")}))`);
+	if (op.mnemonic.startsWith("LD")) {
+		writeLD(op);
+		writeNotImplementedError(op);
+	}
+	else if (op.mnemonic.startsWith("BIT")) {
+		writeBIT(op);
+		//-- Pretty confident these instruction are generated correctly..
+	}
+	else {
+		writeFlags(op.flags);
+		writeNotImplementedError(op);
+	}
 
 	writeLine(`\t},`);
 };
@@ -57,7 +62,6 @@ const writeLD = (op) => {
 	a16 - 16-bit immediate address value
 	s8 - 8-bit signed immediate data value
 	*/
-
 	const operands = op.mnemonic.replace(",", "").split(" ");
 
 	if (operands.length === 3) {
@@ -151,11 +155,81 @@ const writeLD = (op) => {
 	writeFlags(op.flags);
 };
 
+const writeBIT = (op) => {
+	const operands = op.mnemonic.replace(",", "").split(" ");
+
+	if (operands.length === 3) {
+		const bit = operands[1];
+		const source = operands[2];
+
+		if (source === "A")
+			writeLine("\t\tlet data = cpu.a")
+
+		if (source === "F")
+			writeLine("\t\tlet data = cpu.f")
+
+		if (source === "AF")
+			 writeLine("\t\tlet data = cpu.af");
+
+		if (source === "(AF)")
+			writeLine("\t\tlet data = try cpu.mmu.readByte(address: cpu.af)");
+
+		if (source === "B")
+			writeLine("\t\tlet data = cpu.b")
+
+		if (source === "C")
+			writeLine("\t\tlet data = cpu.c")
+
+		if (source === "BC")
+			 writeLine("\t\tlet data = cpu.bc");
+
+		if (source === "(BC)")
+			writeLine("\t\tlet data = try cpu.mmu.readByte(address: cpu.bc)");
+
+		if (source === "D")
+			writeLine("\t\tlet data = cpu.d")
+
+		if (source === "E")
+			writeLine("\t\tlet data = cpu.e")
+
+		if (source === "DE")
+			 writeLine("\t\tlet data = cpu.de");
+
+		if (source === "(DE)")
+			writeLine("\t\tlet data = try cpu.mmu.readByte(address: cpu.de)");
+
+		if (source === "H")
+			writeLine("\t\tlet data = cpu.h")
+
+		if (source === "L")
+			writeLine("\t\tlet data = cpu.l")
+
+		if (source === "HL")
+			 writeLine("\t\tlet data = cpu.hl");
+
+		if (source === "(HL)")
+			writeLine("\t\tlet data = try cpu.mmu.readByte(address: cpu.hl)");
+
+		writeLine(`\t\tcpu.flags.carry = !data.bit(${bit})`);
+		writeLine(`\t\tcpu.flags.subtract = false`);
+		writeLine(`\t\tcpu.flags.halfCarry = true`);
+	} else {
+		writeFlags(op.flags);
+	}
+};
+
 const writeFlags = (flags) => {
 	if (flags.Z) writeLine("\t\t//cpu.flags.zero = result.zero");
 	if (flags.N) writeLine("\t\t//cpu.flags.subtract = result.subtract");
 	if (flags.H) writeLine("\t\t//cpu.flags.halfCarry = result.halfCarry");
 	if (flags.CY) writeLine("\t\t//cpu.flags.carry = result.carry");
+};
+
+const writeNotImplementedError = (op) => {
+	if (op.opCode.length === 2)
+		writeLine(`\t\tthrow CPUError.instructionNotImplemented(OpCode.byte(0x${op.opCode}))`);
+	else 
+		writeLine(`\t\tthrow CPUError.instructionNotImplemented(OpCode.word(0x${op.opCode.replace("CB", "")}))`);
 };
 
 const sanitizeFlags = (flags) => {
