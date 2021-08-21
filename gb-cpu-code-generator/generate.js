@@ -217,7 +217,7 @@ const writeBIT = (op) => {
 		if (source === "(HL)")
 			writeLine("\t\tlet data = try cpu.mmu.readByte(address: cpu.hl)");
 
-		writeLine(`\t\tcpu.flags.carry = !data.bit(${bit})`);
+		writeLine(`\t\tcpu.flags.zero = !data.bit(${bit})`);
 		writeLine("\t\tcpu.flags.subtract = false");
 		writeLine("\t\tcpu.flags.halfCarry = true");
 	} else {
