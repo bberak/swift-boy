@@ -46,6 +46,10 @@ const writeInstruction = (op) => {
 		writeBIT(op);
 		//-- Pretty confident these instruction are generated correctly..
 	}
+	else if (op.mnemonic.startsWith("RES")) {
+		writeRES(op);
+		//-- Pretty confident these instruction are generated correctly..
+	}
 	else {
 		writeFlags(op.flags);
 		writeNotImplementedError(op);
@@ -66,7 +70,6 @@ const writeLD = (op) => {
 
 	if (operands.length === 3) {
 		const destination = operands[1];
-		const destinationSanitized = sanitizeDestination(destination)
 		const wordOperation = countLetters(destination) == 2;
 		const source = operands[2];
 
@@ -145,11 +148,11 @@ const writeLD = (op) => {
 		}
 
 		if (destination.indexOf("(") !== -1) {
-			if (wordOperation) writeLine(`\t\t//try cpu.mmu.writeWord(address: cpu.${destinationSanitized}, word: data)`)
-			else writeLine(`\t\t//try cpu.mmu.writeByte(address: cpu.${destinationSanitized}, byte: data)`)
+			if (wordOperation) writeLine(`\t\t//try cpu.mmu.writeWord(address: cpu.${sanitizeRegister(destination)}, word: data)`)
+			else writeLine(`\t\t//try cpu.mmu.writeByte(address: cpu.${sanitizeRegister(destination)}, byte: data)`)
 		}
 		else
-			writeLine(`\t\t//cpu.${destinationSanitized} = data`)
+			writeLine(`\t\t//cpu.${sanitizeRegister(destination)} = data`)
 	}
 
 	writeFlags(op.flags);
@@ -211,10 +214,74 @@ const writeBIT = (op) => {
 			writeLine("\t\tlet data = try cpu.mmu.readByte(address: cpu.hl)");
 
 		writeLine(`\t\tcpu.flags.carry = !data.bit(${bit})`);
-		writeLine(`\t\tcpu.flags.subtract = false`);
-		writeLine(`\t\tcpu.flags.halfCarry = true`);
+		writeLine("\t\tcpu.flags.subtract = false");
+		writeLine("\t\tcpu.flags.halfCarry = true");
 	} else {
 		writeFlags(op.flags);
+	}
+};
+
+const writeRES = (op) => {
+	const operands = op.mnemonic.replace(",", "").split(" ");
+
+	if (operands.length === 3) {
+		const bit = operands[1];
+		const source = operands[2];
+
+		if (source === "A")
+			writeLine("\t\tvar data = cpu.a")
+
+		if (source === "F")
+			writeLine("\t\tvar data = cpu.f")
+
+		if (source === "AF")
+			 writeLine("\t\tvar data = cpu.af");
+
+		if (source === "(AF)")
+			writeLine("\t\tvar data = try cpu.mmu.readByte(address: cpu.af)");
+
+		if (source === "B")
+			writeLine("\t\tvar data = cpu.b")
+
+		if (source === "C")
+			writeLine("\t\tvar data = cpu.c")
+
+		if (source === "BC")
+			 writeLine("\t\tvar data = cpu.bc");
+
+		if (source === "(BC)")
+			writeLine("\t\tvar data = try cpu.mmu.readByte(address: cpu.bc)");
+
+		if (source === "D")
+			writeLine("\t\tvar data = cpu.d")
+
+		if (source === "E")
+			writeLine("\t\tvar data = cpu.e")
+
+		if (source === "DE")
+			 writeLine("\t\tvar data = cpu.de");
+
+		if (source === "(DE)")
+			writeLine("\t\tvar data = try cpu.mmu.readByte(address: cpu.de)");
+
+		if (source === "H")
+			writeLine("\t\tvar data = cpu.h")
+
+		if (source === "L")
+			writeLine("\t\tvar data = cpu.l")
+
+		if (source === "HL")
+			 writeLine("\t\tvar data = cpu.hl");
+
+		if (source === "(HL)")
+			writeLine("\t\tvar data = try cpu.mmu.readByte(address: cpu.hl)");
+
+		writeLine(`\t\tdata = data.reset(${bit})`);
+
+		if (source.indexOf("(") !== -1)
+			writeLine(`\t\ttry cpu.mmu.writeByte(address: cpu.${sanitizeRegister(source)}, byte: data)`)
+		else 
+			writeLine(`\t\tcpu.${sanitizeRegister(source)} = data`)
 	}
 };
 
@@ -260,7 +327,7 @@ const countLetters = (destination) => {
 	return (destination.match(/is/g) || []).length;
 };
 
-const sanitizeDestination = (destination) => {
+const sanitizeRegister = (destination) => {
 	let result = destination
 	let arr = ["+", "-", "(", ")"]
 	

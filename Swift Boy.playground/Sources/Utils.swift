@@ -55,9 +55,14 @@ public extension UInt8 {
         return String(format:"%02X", self)
     }
     
-    func bit(_ pos: UInt8) -> Bool {
-        let mask = UInt8(0x01 << pos)
+    func bit(_ bit: UInt8) -> Bool {
+        let mask = UInt8(0x01 << bit)
         return (self & mask) == mask
+    }
+    
+    func reset(_ bit: UInt8) -> UInt8 {
+        let mask = ~UInt8(0x01 << bit)
+        return self & mask
     }
     
     func swap() -> UInt8 {
@@ -69,6 +74,8 @@ public extension UInt8 {
     func toInt8() -> Int8 {
         return Int8(bitPattern: self)
     }
+    
+    
 }
 
 public extension Int8 {
