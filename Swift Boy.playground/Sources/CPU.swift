@@ -84,6 +84,7 @@ enum OpCode: Hashable, CustomStringConvertible {
 enum CPUError: Error {
     case instructionNotFound(OpCode)
     case instructionNotImplemented(OpCode)
+    case debug
 }
 
 public class CPU: CustomStringConvertible {
@@ -100,6 +101,7 @@ public class CPU: CustomStringConvertible {
     internal var pc: UInt16
     internal var ime: Bool
     private var cycles: UInt
+    private let ppu: PPU
     
     internal var af: UInt16 {
         get {
@@ -153,8 +155,9 @@ public class CPU: CustomStringConvertible {
         return "a: \(a), flags: (\(flags)), b: \(b), c: \(c), d: \(d), e: \(e), h: \(h), l: \(l), sp: \(sp), pc: \(pc), ime: \(ime), cycles: \(cycles)"
     }
     
-    public init(mmu: MMU) {
+    public init(_ mmu: MMU, _ ppu: PPU) {
         self.mmu = mmu
+        self.ppu = ppu
         flags = Flags()
         a = 0
         b = 0
@@ -213,12 +216,44 @@ public class CPU: CustomStringConvertible {
         sp = sp &- 2
         try mmu.writeWord(address: sp, word: word)
     }
-        
+    
     public func start() throws {
+        var history = [UInt16]()
+        let match = [UInt16]([
+            0x0055,// – LD H, A # H=0 is taken as the ‘scroll count’
+            0x0056,// – LD A, $0x64 # …
+            0x0058,// – LD D, A # D=0x64 is taken as a ‘loop count’
+            0x0059,// – LD ($0xFF00+$0x42), A # set the vertical scroll register
+            0x005B,// – LD A, $0x91 # …
+            0x005D,// – LD ($0xFF00+$0x40), A # turn on LCD Display and background
+            0x005F,// – INC B # B=1
+            0x0060,// – LD E, $0x02 # …
+            0x0062,// – LD C, $0x0C # …
+            0x0064,// – LD A, ($0xFF00+$44) # wait for vertical-blank period
+            0x0066,// – CP $0x90 # value at 0xFF44 used to determine vertical-blank period
+            0x0068,// – JRNZ .+0xfa # jump to 0x0064 (loop) if not at vertical-blank period
+            0x0064,// - Looping, waiting for V-Blank to be set (LY register 0xFF44 = 0x90)
+            0x0066,// - Looping, waiting for V-Blank to be set (LY register 0xFF44 = 0x90)
+            0x0068,// - Looping, waiting for V-Blank to be set (LY register 0xFF44 = 0x90)
+        ])
+        
         while true {
-            let opCode = try readNextOpCode()
+            if match.firstIndex(of: pc) != nil {
+                history.append(pc)
+            }
+            else {
+                history.removeAll()
+            }
             
-            print("opCode: \(opCode)")
+            if history == match {
+                print("matched", history)
+                print(self)
+                let next = try readNextOpCode()
+                print("op", next)
+                throw CPUError.debug
+            }
+            
+            let opCode = try readNextOpCode()
             
             if let instruction = instructions[opCode] {
                 var cmd: Command? = try instruction.build(self)
@@ -231,8 +266,6 @@ public class CPU: CustomStringConvertible {
             } else {
                 throw CPUError.instructionNotFound(opCode)
             }
-            
-            print(self)
         }
     }
 }

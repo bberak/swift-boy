@@ -1,10 +1,21 @@
 import Foundation
 
-let cartridge = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"), title: "Blargg CPU Test")
+let cart = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"), title: "Blargg CPU Test")
 let mmu = MMU()
-let cpu = CPU(mmu: mmu)
+let ppu = PPU(mmu)
+let cpu = CPU(mmu, ppu)
 
 try cpu.start()
+
+
+
+
+
+
+
+
+
+
 
 
 

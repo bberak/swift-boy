@@ -185,9 +185,24 @@ public class MMU: MemoryAccess {
     }
     
     func writeByte(address: UInt16, byte: UInt8) throws {
-        //-- Map or unmap bios
         if address == 0xFF50 {
             byte == 1 ? bios.disable() : bios.enable()
+        }
+        
+        if address == 0xFF40 {
+            print("LCD control:", byte.toHexString())
+        }
+        
+        if address == 0xFF42 {
+            print("Vertical scroll register:", byte.toHexString())
+        }
+                
+        if address == 0xFFFF {
+            print("Interrupt Enable (R/W):", byte.toHexString())
+        }
+        
+        if address == 0xFF0F {
+            print("Interrupt Flag (R/W):", byte.toHexString())
         }
         
         try memory.writeByte(address: address, byte: byte)
