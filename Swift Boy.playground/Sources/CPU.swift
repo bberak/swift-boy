@@ -158,18 +158,24 @@ public class CPU: CustomStringConvertible {
     public init(_ mmu: MMU, _ ppu: PPU) {
         self.mmu = mmu
         self.ppu = ppu
-        flags = Flags()
-        a = 0
-        b = 0
-        c = 0
-        d = 0
-        e = 0
-        h = 0
-        l = 0
-        sp = 0x0000
-        pc = 0x0000
-        ime = false
-        cycles = 0
+        self.flags = Flags()
+        self.a = 0
+        self.b = 0
+        self.c = 0
+        self.d = 0
+        self.e = 0
+        self.h = 0
+        self.l = 0
+        self.sp = 0x0000
+        self.pc = 0x0000
+        self.ime = false
+        self.cycles = 0
+        self.mmu.subscribe(address: 0xFFFF) { byte in
+            print("Interrupt Enable (R/W):", byte.toHexString())
+        }
+        self.mmu.subscribe(address: 0xFF0F) { byte in
+            print("Interrupt Flag (R/W):", byte.toHexString())
+        }
     }
     
     func readNextByte() throws -> UInt8 {

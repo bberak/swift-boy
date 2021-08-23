@@ -144,17 +144,32 @@ public class MMU: MemoryAccess {
     private let bios: MemoryBlock
     private let wram: MemoryBlock
     private let memory: [MemoryAccess]
+    private var subscribers: [UInt16: [(UInt8)->Void]]
     
     public init() {
-        cartridge = nil
-        bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
-        wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false, enabled: true)
-        memory = [
+        self.cartridge = nil
+        self.bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
+        self.wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false, enabled: true)
+        self.memory = [
             bios,
             wram,
             MemoryBlock(range: 0xE000...0xFDFF, block: wram), //-- Shadow RAM
             MemoryBlock(range: 0x0000...0xFFFF, readOnly: false, enabled: true), //-- Catch-all
         ]
+        self.subscribers = [:]
+        self.subscribe(address: 0xFF50) { byte in
+            byte == 1 ? self.bios.disable() : self.bios.enable()
+        }
+    }
+    
+    func subscribe(address: UInt16, handler: @escaping (UInt8)->Void) {
+        let list = self.subscribers[address];
+
+        if list == nil {
+            self.subscribers[address] = [handler]
+        } else {
+            self.subscribers[address]!.append(handler)
+        }
     }
     
     func contains(address: UInt16)-> Bool {
@@ -166,26 +181,12 @@ public class MMU: MemoryAccess {
     }
     
     func writeByte(address: UInt16, byte: UInt8) throws {
-        if address == 0xFF50 {
-            byte == 1 ? bios.disable() : bios.enable()
-        }
-        
-        if address == 0xFF40 {
-            print("LCD control:", byte.toHexString())
-        }
-        
-        if address == 0xFF42 {
-            print("Vertical scroll register:", byte.toHexString())
-        }
-                
-        if address == 0xFFFF {
-            print("Interrupt Enable (R/W):", byte.toHexString())
-        }
-        
-        if address == 0xFF0F {
-            print("Interrupt Flag (R/W):", byte.toHexString())
-        }
-        
         try memory.writeByte(address: address, byte: byte)
+        
+        let callbacks = self.subscribers[address]
+        
+        if callbacks != nil {
+            callbacks!.forEach { $0(byte) }
+        }
     }
 }
