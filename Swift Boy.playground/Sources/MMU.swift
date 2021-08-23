@@ -88,6 +88,10 @@ class MemoryBlock: MemoryAccess {
         self.init(range: range, buffer: [UInt8](repeating: 0, count: range.count), readOnly: readOnly, enabled: enabled)
     }
     
+    convenience init(range: ClosedRange<UInt16>, block: MemoryBlock) {
+        self.init(range: range, buffer: block.buffer, readOnly: block.readOnly, enabled: block.enabled)
+    }
+    
     func enable() {
         enabled = true
     }
@@ -109,6 +113,9 @@ class MemoryBlock: MemoryAccess {
             throw MemoryAccessError.addressOutOfRange
         }
         
+        //-- Might have to check the buffer indexes here, and skip any out-of-bounds reads
+        //-- in order to support memory shadowing
+        
         return buffer[Int(address - range.lowerBound)]
     }
     
@@ -125,54 +132,28 @@ class MemoryBlock: MemoryAccess {
             throw MemoryAccessError.addressOutOfRange
         }
         
+        //-- Might have to check the buffer indexes here, and skip any out-of-bounds writes
+        //-- in order to support memory shadowing
+        
         buffer[Int(address - range.lowerBound)] = byte
-    }
-}
-
-class MultiRangeMemoryBlock: MemoryBlock {
-    private var ranges: [ClosedRange<UInt16>]
-    
-    init(ranges: [ClosedRange<UInt16>], readOnly: Bool, enabled: Bool) {
-        self.ranges = ranges
-        super.init(range: ranges[0], buffer: [UInt8](repeating: 0, count: ranges[0].count), readOnly: readOnly, enabled: enabled)
-    }
-    
-    func normalize(address: UInt16) throws -> UInt16 {
-        if let range = ranges.first(where: { r in r.contains(address)}) {
-            let offset = range.lowerBound - ranges[0].lowerBound
-            return address - offset
-        }
-    
-        throw MemoryAccessError.addressOutOfRange
-    }
-    
-    override func contains(address: UInt16) -> Bool {
-        return enabled && (ranges.first { $0.contains(address) } != nil)
-    }
-    
-    override func readByte(address: UInt16) throws -> UInt8 {
-        return try super.readByte(address: normalize(address: address))
-    }
-    
-    override func writeByte(address: UInt16, byte: UInt8) throws {
-        try super.writeByte(address: normalize(address: address), byte: byte)
     }
 }
 
 public class MMU: MemoryAccess {
     private let cartridge: Cartridge?
     private let bios: MemoryBlock
+    private let wram: MemoryBlock
     private let memory: [MemoryAccess]
     
     public init() {
         cartridge = nil
         bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
+        wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false, enabled: true)
         memory = [
             bios,
-            //-- Internal RAM and Echo RAM
-            MultiRangeMemoryBlock(ranges: [0xC000...0xCFFF, 0xE000...0xFDFF], readOnly: false, enabled: true),
-            //-- Catch-all
-            MemoryBlock(range: 0x0000...0xFFFF, readOnly: false, enabled: true),
+            wram,
+            MemoryBlock(range: 0xE000...0xFDFF, block: wram), //-- Shadow RAM
+            MemoryBlock(range: 0x0000...0xFFFF, readOnly: false, enabled: true), //-- Catch-all
         ]
     }
     
