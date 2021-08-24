@@ -70,10 +70,10 @@ extension UIImage {
     }
 }
 
-public class Screen: UIViewController {
+public class LCD: UIViewController {
     private let imageView = UIImageView()
     private var displayLink: CADisplayLink?
-    internal var bitmap = Bitmap(width: 160, height: 144, pixel: Pixel(r: 0, g: 0, b: 255))
+    internal var bitmap = Bitmap(width: 160, height: 144, pixel: Pixel(r: 0, g: 0, b: 0))
     
     public init() {
         super.init(nibName: nil, bundle: nil)
@@ -125,7 +125,7 @@ enum Mode {
 }
 
 public class PPU {
-    public let screen: Screen
+    public let lcd: LCD
     private let mmu: MMU
     private var state: [Mode: UInt16]
     private var cycles: Int16 = 0
@@ -141,12 +141,12 @@ public class PPU {
         get { return _enabled }
         set {
             _enabled = newValue
-            _enabled ? screen.on() : screen.off()
+            _enabled ? lcd.on() : lcd.off()
         }
     }
     
     public init(_ mmu: MMU) {
-        self.screen = Screen()
+        self.lcd = LCD()
         self.mmu = mmu
         self.state = [
             Mode.one: 0,
@@ -171,9 +171,9 @@ public class PPU {
     
     func fetchNextCommand() -> Command {
         return Command(cycles: 2) {
-            let x = Int.random(in: 0..<self.screen.bitmap.width)
-            let y = Int.random(in: 0..<self.screen.bitmap.height)
-            self.screen.bitmap[x, y] = Pixel(r: 255, g: 0, b: 0)
+            let x = Int.random(in: 0..<self.lcd.bitmap.width)
+            let y = Int.random(in: 0..<self.lcd.bitmap.height)
+            self.lcd.bitmap[x, y] = Pixel(r: UInt8.random(in: 0...255), g: UInt8.random(in: 0...255), b: UInt8.random(in: 0...255))
             return nil
         }
     }
