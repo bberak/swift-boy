@@ -6,9 +6,13 @@ let mmu = MMU()
 let ppu = PPU(mmu)
 let cpu = CPU(mmu, ppu)
 
-try? cpu.start()
+try? cpu.run()
 
 PlaygroundPage.current.setLiveView(ppu.screen)
+
+
+
+
 
 
 
