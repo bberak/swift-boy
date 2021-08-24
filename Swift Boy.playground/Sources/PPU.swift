@@ -72,6 +72,7 @@ extension UIImage {
 
 public class Screen: UIViewController {
     private let imageView = UIImageView()
+    private var displayLink: CADisplayLink?
     internal var bitmap = Bitmap(width: 160, height: 144, pixel: Pixel(r: 0, g: 0, b: 255))
     
     public init() {
@@ -96,7 +97,22 @@ public class Screen: UIViewController {
         imageView.layer.magnificationFilter = .nearest
     }
     
-    func draw() {
+    func on() {
+        if displayLink == nil {
+            displayLink = CADisplayLink(target: self, selector: #selector(draw))
+            displayLink!.add(to: .main, forMode: .common)
+        }
+        
+        displayLink!.isPaused = false
+    }
+    
+    func off() {
+        if displayLink != nil {
+            displayLink?.isPaused = true
+        }
+    }
+    
+    @objc func draw(_ displayLink: CADisplayLink) {
         imageView.image = UIImage(bitmap: bitmap)
     }
 }
@@ -112,7 +128,22 @@ public class PPU {
     public let screen: Screen
     private let mmu: MMU
     private var state: [Mode: UInt16]
-    private var cycles: Int16
+    private var cycles: Int16 = 0
+    private var windowTileMapRange: ClosedRange<UInt16> = 0...0
+    private var windowEnabled: Bool = false
+    private var bgAndWindowTileDataRange: ClosedRange<UInt16> = 0...0
+    private var bgTileMapRange: ClosedRange<UInt16> = 0...0
+    private var objSize: [UInt16] = [0, 0]
+    private var objEnabled: Bool = false
+    private var bgAndWindowPriorityEnabled: Bool = false
+    private var _enabled = false
+    private var enabled: Bool {
+        get { return _enabled }
+        set {
+            _enabled = newValue
+            _enabled ? screen.on() : screen.off()
+        }
+    }
     
     public init(_ mmu: MMU) {
         self.screen = Screen()
@@ -123,41 +154,42 @@ public class PPU {
             Mode.three: 0,
             Mode.four: 0
         ]
-        self.cycles = 0
         self.mmu.subscribe(address: 0xFF40) { byte in
-            print("LCD control:", byte.toHexString())
-            self.screen.bitmap[0, 0] = Pixel(r: 255, g: 0, b: 0)
-            self.screen.bitmap[1, 1] = Pixel(r: 255, g: 0, b: 0)
-            self.screen.bitmap[2, 2] = Pixel(r: 255, g: 0, b: 0)
-            self.screen.bitmap[3, 3] = Pixel(r: 255, g: 0, b: 0)
-            self.screen.bitmap[4, 4] = Pixel(r: 255, g: 0, b: 0)
+            self.enabled = byte.bit(7)
+            self.windowTileMapRange = byte.bit(6) ? 0x9C00...0x9FFF : 0x9800...0x9BFF
+            self.windowEnabled = byte.bit(5)
+            self.bgAndWindowTileDataRange = byte.bit(4) ? 0x8000...0x8FFF : 0x8800...0x97FF
+            self.bgTileMapRange = byte.bit(3) ? 0x9C00...0x9FFF : 0x9800...0x9BFF
+            self.objSize = byte.bit(2) ? [8, 16] : [8, 8]
+            self.objEnabled = byte.bit(1)
+            self.bgAndWindowPriorityEnabled = byte.bit(0)
         }
         self.mmu.subscribe(address: 0xFF42) { byte in
-            print("Vertical scroll register:", byte.toHexString())
-            self.screen.bitmap[20, 20] = Pixel(r: 255, g: 0, b: 0)
-            self.screen.bitmap[20, 21] = Pixel(r: 255, g: 0, b: 0)
-            self.screen.bitmap[20, 22] = Pixel(r: 255, g: 0, b: 0)
-            self.screen.bitmap[20, 23] = Pixel(r: 255, g: 0, b: 0)
-            self.screen.bitmap[20, 24] = Pixel(r: 255, g: 0, b: 0)
+            //-- Scroll y register
         }
     }
     
     func fetchNextCommand() -> Command {
         return Command(cycles: 2) {
+            let x = Int.random(in: 0..<self.screen.bitmap.width)
+            let y = Int.random(in: 0..<self.screen.bitmap.height)
+            self.screen.bitmap[x, y] = Pixel(r: 255, g: 0, b: 0)
             return nil
         }
     }
     
     public func run(for time: Int16) throws {
-        cycles = cycles + time
-        
-        while cycles > 0 {
-            var cmd: Command? = fetchNextCommand()
+        if enabled {
+            cycles = cycles + time
             
-            while cmd != nil {
-               let next = try cmd!.run()
-               cycles = cycles - Int16(cmd!.cycles)
-               cmd = next
+            while cycles > 0 {
+                var cmd: Command? = fetchNextCommand()
+                
+                while cmd != nil {
+                   let next = try cmd!.run()
+                   cycles = cycles - Int16(cmd!.cycles)
+                   cmd = next
+                }
             }
         }
     }
