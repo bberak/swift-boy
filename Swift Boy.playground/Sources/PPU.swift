@@ -72,7 +72,7 @@ extension UIImage {
 
 public class Screen: UIViewController {
     private let imageView = UIImageView()
-    internal var bitmap = Bitmap(width: 160, height: 144, pixel: Pixel(r: 0, g: 255, b: 255))
+    internal var bitmap = Bitmap(width: 160, height: 144, pixel: Pixel(r: 0, g: 0, b: 255))
     
     public init() {
         super.init(nibName: nil, bundle: nil)
@@ -101,25 +101,64 @@ public class Screen: UIViewController {
     }
 }
 
+enum Mode {
+    case one
+    case two
+    case three
+    case four
+}
+
 public class PPU {
+    public let screen: Screen
     private let mmu: MMU
-    public let screen = Screen()
+    private var state: [Mode: UInt16]
+    private var cycles: Int16
     
     public init(_ mmu: MMU) {
+        self.screen = Screen()
         self.mmu = mmu
+        self.state = [
+            Mode.one: 0,
+            Mode.two: 0,
+            Mode.three: 0,
+            Mode.four: 0
+        ]
+        self.cycles = 0
         self.mmu.subscribe(address: 0xFF40) { byte in
             print("LCD control:", byte.toHexString())
-            self.screen.bitmap[0, 0] = Pixel(r: 0, g: 0, b: 255)
-            self.screen.draw()
+            self.screen.bitmap[0, 0] = Pixel(r: 255, g: 0, b: 0)
+            self.screen.bitmap[1, 1] = Pixel(r: 255, g: 0, b: 0)
+            self.screen.bitmap[2, 2] = Pixel(r: 255, g: 0, b: 0)
+            self.screen.bitmap[3, 3] = Pixel(r: 255, g: 0, b: 0)
+            self.screen.bitmap[4, 4] = Pixel(r: 255, g: 0, b: 0)
         }
         self.mmu.subscribe(address: 0xFF42) { byte in
             print("Vertical scroll register:", byte.toHexString())
-            self.screen.bitmap[20, 20] = Pixel(r: 0, g: 0, b: 255)
-            self.screen.draw()
+            self.screen.bitmap[20, 20] = Pixel(r: 255, g: 0, b: 0)
+            self.screen.bitmap[20, 21] = Pixel(r: 255, g: 0, b: 0)
+            self.screen.bitmap[20, 22] = Pixel(r: 255, g: 0, b: 0)
+            self.screen.bitmap[20, 23] = Pixel(r: 255, g: 0, b: 0)
+            self.screen.bitmap[20, 24] = Pixel(r: 255, g: 0, b: 0)
         }
     }
     
-    public func run(for cycles: UInt) {
+    func fetchNextCommand() -> Command {
+        return Command(cycles: 2) {
+            return nil
+        }
+    }
+    
+    public func run(for time: Int16) throws {
+        cycles = cycles + time
         
+        while cycles > 0 {
+            var cmd: Command? = fetchNextCommand()
+            
+            while cmd != nil {
+               let next = try cmd!.run()
+               cycles = cycles - Int16(cmd!.cycles)
+               cmd = next
+            }
+        }
     }
 }

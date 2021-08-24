@@ -189,4 +189,26 @@ public class DynamicSequence<T>: Sequence {
     }
 }
 
+public struct Command {
+    public let cycles: UInt16
+    public let run: () throws -> Command?
+    
+    public init(cycles: UInt16, run: @escaping () throws -> Command?) {
+        self.cycles = cycles;
+        self.run = run;
+    }
+}
+
+extension DispatchQueue {
+    public static func background(delay: Double = 0.0, background: (()->Void)? = nil, completion: (() -> Void)? = nil) {
+        DispatchQueue.global(qos: .background).async {
+            background?()
+            if let completion = completion {
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: {
+                    completion()
+                })
+            }
+        }
+    }
+}
 

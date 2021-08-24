@@ -1,13 +1,3 @@
-struct Command {
-    internal var cycles: UInt
-    internal var run: () throws -> Command?
-    
-    init(cycles: UInt, run: @escaping () throws -> Command?) {
-        self.cycles = cycles;
-        self.run = run;
-    }
-}
-
 struct Instruction {
     internal var build: (CPU) throws -> Command
     
@@ -15,7 +5,7 @@ struct Instruction {
         self.build = build
     }
     
-    static func atomic(cycles: UInt, command: @escaping (CPU) throws -> Void) -> Instruction {
+    static func atomic(cycles: UInt16, command: @escaping (CPU) throws -> Void) -> Instruction {
         return Instruction { cpu in
             return Command(cycles: cycles) {
                 try command(cpu)
@@ -100,7 +90,7 @@ public class CPU: CustomStringConvertible {
     internal var sp: UInt16
     internal var pc: UInt16
     internal var ime: Bool
-    private var cycles: UInt
+    private var cycles: Int16
     private let ppu: PPU
     
     internal var af: UInt16 {
@@ -223,8 +213,10 @@ public class CPU: CustomStringConvertible {
         try mmu.writeWord(address: sp, word: word)
     }
     
-    public func run() throws {
-        while true {
+    public func run(for time: Int16) throws {
+        cycles = cycles + time
+        
+        while cycles > 0 {
             let opCode = try readNextOpCode()
             
             if let instruction = instructions[opCode] {
@@ -232,10 +224,8 @@ public class CPU: CustomStringConvertible {
                 
                 while cmd != nil {
                     let next = try cmd!.run()
-                    cycles = cycles &+ cmd!.cycles
+                    cycles = cycles - Int16(cmd!.cycles)
                     cmd = next
-                    ppu.run(for: 2 * cycles) //-- PPU runs twice as fast as CPU
-                    cycles = 0
                 }
             } else {
                 throw CPUError.instructionNotFound(opCode)
