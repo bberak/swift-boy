@@ -1,6 +1,5 @@
 import Foundation
 import PlaygroundSupport
-import SwiftUI
 
 let cart = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"), title: "Blargg's CPU Test")
 let mmu = MMU()
