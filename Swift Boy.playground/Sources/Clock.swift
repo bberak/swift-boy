@@ -1,12 +1,14 @@
 import Foundation
 
 public class Clock {
-    private let cpu: CPU
+    private let mmu: MMU
     private let ppu: PPU
-    
-    public init(_ cpu: CPU, _ ppu: PPU) {
-        self.cpu = cpu
+    private let cpu: CPU
+   
+    public init(_ mmu: MMU, _ ppu: PPU, _ cpu: CPU) {
+        self.mmu = mmu
         self.ppu = ppu
+        self.cpu = cpu
     }
     
     public func start() {
@@ -20,7 +22,12 @@ public class Clock {
     }
     
     public func tick() throws {
-        try cpu.run(for: 8)
-        try ppu.run(for: 16)
+        //-- 70224 clock cycles = 1 frame = 1/60 sec
+        //-- 456 clock cycles = 1 scanline
+        let cycles: Int16 = 32
+        
+        try cpu.run(for: cycles / 4)
+        try mmu.run(for: cycles / 4)
+        try ppu.run(for: cycles / 2)
     }
 }

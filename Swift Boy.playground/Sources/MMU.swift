@@ -144,7 +144,9 @@ public class MMU: MemoryAccess {
     private let bios: MemoryBlock
     private let wram: MemoryBlock
     private let memory: [MemoryAccess]
-    private var subscribers: [UInt16: [(UInt8)->Void]]
+    private var subscribers: [UInt16: [(UInt8)->Void]] = [:]
+    private var queue: [Command] = []
+    private var cycles: Int16 = 0
     
     public init() {
         self.cartridge = nil
@@ -156,9 +158,22 @@ public class MMU: MemoryAccess {
             MemoryBlock(range: 0xE000...0xFDFF, block: wram), //-- Shadow RAM
             MemoryBlock(range: 0x0000...0xFFFF, readOnly: false, enabled: true), //-- Catch-all
         ]
-        self.subscribers = [:]
         self.subscribe(address: 0xFF50) { byte in
             byte == 1 ? self.bios.disable() : self.bios.enable()
+        }
+        self.subscribe(address: 0xFF46) { byte in
+            self.startDMATransfer(byte: byte)
+        }
+    }
+    
+    func startDMATransfer(byte: UInt8) {
+        let start = UInt16(byte) << 8
+        for offset in 0..<0xA0 {
+            self.queue.append(Command(cycles: 1) {
+                let data = try self.readByte(address: start + UInt16(offset))
+                try self.writeByte(address: 0xFE00 + UInt16(offset), byte: data)
+                return nil
+            })
         }
     }
     
@@ -187,6 +202,27 @@ public class MMU: MemoryAccess {
         
         if callbacks != nil {
             callbacks!.forEach { $0(byte) }
+        }
+    }
+    
+     public func run(for time: Int16) throws {
+        if queue.count > 0 {
+            cycles = cycles + time
+         
+             while cycles > 0 && queue.count > 0 {
+                let cmd = queue.removeFirst()
+                let next = try cmd.run()
+                 
+                cycles = cycles - Int16(cmd.cycles)
+                 
+                if next != nil {
+                    queue.insert(next!, at: 0)
+                }
+            }
+            
+            if cycles > 0 {
+                cycles = 0
+            }
         }
     }
 }

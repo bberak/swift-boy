@@ -79,19 +79,20 @@ enum CPUError: Error {
 
 public class CPU: CustomStringConvertible {
     internal let mmu: MMU
-    internal let flags: Flags
-    internal var a: UInt8
-    internal var b: UInt8
-    internal var c: UInt8
-    internal var d: UInt8
-    internal var e: UInt8
-    internal var h: UInt8
-    internal var l: UInt8
-    internal var sp: UInt16
-    internal var pc: UInt16
-    internal var ime: Bool
-    private var cycles: Int16
+    internal let flags: Flags = Flags()
+    internal var a: UInt8 = 0
+    internal var b: UInt8 = 0
+    internal var c: UInt8 = 0
+    internal var d: UInt8 = 0
+    internal var e: UInt8 = 0
+    internal var h: UInt8 = 0
+    internal var l: UInt8 = 0
+    internal var sp: UInt16 = 0x0000
+    internal var pc: UInt16 = 0x0000
+    internal var ime: Bool = false
     private let ppu: PPU
+    private var queue: [Command] = []
+    private var cycles: Int16 = 0
     
     internal var af: UInt16 {
         get {
@@ -148,18 +149,6 @@ public class CPU: CustomStringConvertible {
     public init(_ mmu: MMU, _ ppu: PPU) {
         self.mmu = mmu
         self.ppu = ppu
-        self.flags = Flags()
-        self.a = 0
-        self.b = 0
-        self.c = 0
-        self.d = 0
-        self.e = 0
-        self.h = 0
-        self.l = 0
-        self.sp = 0x0000
-        self.pc = 0x0000
-        self.ime = false
-        self.cycles = 0
         self.mmu.subscribe(address: 0xFFFF) { byte in
             print("Interrupt Enable (R/W):", byte.toHexString())
         }
@@ -213,22 +202,28 @@ public class CPU: CustomStringConvertible {
         try mmu.writeWord(address: sp, word: word)
     }
     
+    func fetchNextInstruction() throws -> Instruction {
+        let opCode = try readNextOpCode()
+        let instruction = instructions[opCode]
+        
+        if instruction == nil {
+            throw CPUError.instructionNotFound(opCode)
+        }
+        
+        return instruction!
+    }
+    
     public func run(for time: Int16) throws {
         cycles = cycles + time
-        
+     
         while cycles > 0 {
-            let opCode = try readNextOpCode()
-            
-            if let instruction = instructions[opCode] {
-                var cmd: Command? = try instruction.build(self)
-                
-                while cmd != nil {
-                    let next = try cmd!.run()
-                    cycles = cycles - Int16(cmd!.cycles)
-                    cmd = next
-                }
-            } else {
-                throw CPUError.instructionNotFound(opCode)
+            let cmd = queue.count > 0 ? queue.removeFirst() : try fetchNextInstruction().build(self)
+            let next = try cmd.run()
+             
+            cycles = cycles - Int16(cmd.cycles)
+             
+            if next != nil {
+                queue.insert(next!, at: 0)
             }
         }
     }

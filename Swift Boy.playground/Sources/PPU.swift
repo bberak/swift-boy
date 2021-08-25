@@ -12,6 +12,14 @@ public struct Pixel {
     }
 }
 
+public extension Pixel {
+    static let white = Pixel(r: 255, g: 255, b: 255)
+    static let lightGray = Pixel(r: 192, g: 192, b: 192)
+    static let darkGray = Pixel(r: 96, g: 96, b: 96)
+    static let black = Pixel(r: 0, g: 0, b: 0)
+    static let transparent = Pixel(r: 0, g: 0, b: 0, a: 0)
+}
+
 public struct Bitmap {
     public private(set) var pixels: [Pixel]
     public let width: Int
@@ -131,28 +139,40 @@ enum Mode {
     case verticalBlanking
 }
 
+let defaultPalette: [UInt8: Pixel] = [
+    0: Pixel.white,
+    1: Pixel.lightGray,
+    2: Pixel.darkGray,
+    3: Pixel.black
+]
+
 public class PPU {
     public let lcd: LCD
     private let mmu: MMU
-    private var state: [Mode: UInt16]
+    private var queue: [Command] = []
     private var cycles: Int16 = 0
-    private var windowTileMap = 0
+    private var windowTileMap: UInt8 = 0
     private var windowEnabled = false
-    private var backgroundTileSet = 0
-    private var backgroundTileMap = 0
+    private var backgroundTileSet: UInt8 = 0
+    private var backgroundTileMap: UInt8 = 0
     private var spriteSize = [8, 8]
     private var spritesEnabled = false
     private var backgroundEnabled = false
+    private var scrollX: UInt8 = 0
+    private var scrollY: UInt8 = 0
+    private var backgroundPalette = defaultPalette
+    private var spritePalette0 = defaultPalette
+    private var spritePalette1 = defaultPalette
+    private var state: [Mode: UInt16] = [
+        Mode.oamSearch: 0,
+        Mode.activePicture: 0,
+        Mode.horizontalBlanking: 0,
+        Mode.verticalBlanking: 0
+    ]
         
     public init(_ mmu: MMU) {
         self.lcd = LCD()
         self.mmu = mmu
-        self.state = [
-            Mode.oamSearch: 0,
-            Mode.activePicture: 0,
-            Mode.horizontalBlanking: 0,
-            Mode.verticalBlanking: 0
-        ]
         self.mmu.subscribe(address: 0xFF40) { byte in
             self.lcd.enabled = byte.bit(7)
             self.windowTileMap = byte.bit(6) ? 1 : 0
@@ -164,7 +184,28 @@ public class PPU {
             self.backgroundEnabled = byte.bit(0)
         }
         self.mmu.subscribe(address: 0xFF42) { byte in
-            //-- Scroll y register
+            self.scrollY = byte
+        }
+        self.mmu.subscribe(address: 0xFF43) { byte in
+            self.scrollX = byte
+        }
+        self.mmu.subscribe(address: 0xFF47) { byte in
+            self.backgroundPalette[0] = defaultPalette[byte.crumb(0)]
+            self.backgroundPalette[1] = defaultPalette[byte.crumb(1)]
+            self.backgroundPalette[2] = defaultPalette[byte.crumb(2)]
+            self.backgroundPalette[3] = defaultPalette[byte.crumb(3)]
+        }
+        self.mmu.subscribe(address: 0xFF48) { byte in
+            self.spritePalette0[0] = Pixel.transparent
+            self.spritePalette0[1] = defaultPalette[byte.crumb(1)]
+            self.spritePalette0[2] = defaultPalette[byte.crumb(2)]
+            self.spritePalette0[3] = defaultPalette[byte.crumb(3)]
+        }
+        self.mmu.subscribe(address: 0xFF49) { byte in
+            self.spritePalette1[0] = Pixel.transparent
+            self.spritePalette1[1] = defaultPalette[byte.crumb(1)]
+            self.spritePalette1[2] = defaultPalette[byte.crumb(2)]
+            self.spritePalette1[3] = defaultPalette[byte.crumb(3)]
         }
     }
     
@@ -178,18 +219,19 @@ public class PPU {
     }
     
     public func run(for time: Int16) throws {
-        if lcd.enabled {
-            cycles = cycles + time
-            
+       if lcd.enabled {
+           cycles = cycles + time
+        
             while cycles > 0 {
-                var cmd: Command? = fetchNextCommand()
+                let cmd = queue.count > 0 ? queue.removeFirst() : fetchNextCommand()
+                let next = try cmd.run()
                 
-                while cmd != nil {
-                   let next = try cmd!.run()
-                   cycles = cycles - Int16(cmd!.cycles)
-                   cmd = next
+                cycles = cycles - Int16(cmd.cycles)
+                
+                if next != nil {
+                    queue.insert(next!, at: 0)
                 }
             }
-        }
-    }
+       }
+   }
 }

@@ -60,6 +60,16 @@ public extension UInt8 {
         return (self & mask) == mask
     }
     
+    func crumb(_ crumb: UInt8) -> UInt8 {
+        let mask = UInt8(0b00000011)
+        return (self >> (crumb * 2)) & mask
+    }
+    
+    func nibble(_ nibble: UInt8) -> UInt8 {
+        let mask = UInt8(0b00001111)
+        return (self >> (nibble * 4)) & mask
+    }
+    
     func reset(_ bit: UInt8) -> UInt8 {
         let mask = ~UInt8(0x01 << bit)
         return self & mask

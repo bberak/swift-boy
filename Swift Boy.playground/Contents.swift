@@ -5,11 +5,15 @@ let cart = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"), title: "
 let mmu = MMU()
 let ppu = PPU(mmu)
 let cpu = CPU(mmu, ppu)
-let clock = Clock(cpu, ppu)
+let clock = Clock(mmu, ppu, cpu)
 
 clock.start()
 
 PlaygroundPage.current.setLiveView(ppu.lcd)
+
+
+
+
 
 
 
