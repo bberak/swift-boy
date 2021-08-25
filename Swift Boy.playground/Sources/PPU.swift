@@ -75,6 +75,13 @@ public class LCD: UIViewController {
     private var displayLink: CADisplayLink?
     internal var bitmap = Bitmap(width: 160, height: 144, pixel: Pixel(r: 0, g: 0, b: 0))
     
+    internal var enabled: Bool {
+        get { return displayLink != nil ? displayLink!.isPaused == false : false }
+        set {
+            newValue ? on() : off()
+        }
+    }
+    
     public init() {
         super.init(nibName: nil, bundle: nil)
     }
@@ -97,7 +104,7 @@ public class LCD: UIViewController {
         imageView.layer.magnificationFilter = .nearest
     }
     
-    func on() {
+    private func on() {
         if displayLink == nil {
             displayLink = CADisplayLink(target: self, selector: #selector(draw))
             displayLink!.add(to: .main, forMode: .common)
@@ -106,7 +113,7 @@ public class LCD: UIViewController {
         displayLink!.isPaused = false
     }
     
-    func off() {
+    private func off() {
         if displayLink != nil {
             displayLink?.isPaused = true
         }
@@ -118,10 +125,10 @@ public class LCD: UIViewController {
 }
 
 enum Mode {
-    case one
-    case two
-    case three
-    case four
+    case oamSearch
+    case activePicture
+    case horizontalBlanking
+    case verticalBlanking
 }
 
 public class PPU {
@@ -129,40 +136,32 @@ public class PPU {
     private let mmu: MMU
     private var state: [Mode: UInt16]
     private var cycles: Int16 = 0
-    private var windowTileMapRange: ClosedRange<UInt16> = 0...0
-    private var windowEnabled: Bool = false
-    private var bgAndWindowTileDataRange: ClosedRange<UInt16> = 0...0
-    private var bgTileMapRange: ClosedRange<UInt16> = 0...0
-    private var objSize: [UInt16] = [0, 0]
-    private var objEnabled: Bool = false
-    private var bgAndWindowPriorityEnabled: Bool = false
-    private var _enabled = false
-    private var enabled: Bool {
-        get { return _enabled }
-        set {
-            _enabled = newValue
-            _enabled ? lcd.on() : lcd.off()
-        }
-    }
-    
+    private var windowTileMap = 0
+    private var windowEnabled = false
+    private var backgroundTileSet = 0
+    private var backgroundTileMap = 0
+    private var spriteSize = [8, 8]
+    private var spritesEnabled = false
+    private var backgroundEnabled = false
+        
     public init(_ mmu: MMU) {
         self.lcd = LCD()
         self.mmu = mmu
         self.state = [
-            Mode.one: 0,
-            Mode.two: 0,
-            Mode.three: 0,
-            Mode.four: 0
+            Mode.oamSearch: 0,
+            Mode.activePicture: 0,
+            Mode.horizontalBlanking: 0,
+            Mode.verticalBlanking: 0
         ]
         self.mmu.subscribe(address: 0xFF40) { byte in
-            self.enabled = byte.bit(7)
-            self.windowTileMapRange = byte.bit(6) ? 0x9C00...0x9FFF : 0x9800...0x9BFF
+            self.lcd.enabled = byte.bit(7)
+            self.windowTileMap = byte.bit(6) ? 1 : 0
             self.windowEnabled = byte.bit(5)
-            self.bgAndWindowTileDataRange = byte.bit(4) ? 0x8000...0x8FFF : 0x8800...0x97FF
-            self.bgTileMapRange = byte.bit(3) ? 0x9C00...0x9FFF : 0x9800...0x9BFF
-            self.objSize = byte.bit(2) ? [8, 16] : [8, 8]
-            self.objEnabled = byte.bit(1)
-            self.bgAndWindowPriorityEnabled = byte.bit(0)
+            self.backgroundTileSet = byte.bit(4) ? 1 : 0
+            self.backgroundTileMap = byte.bit(3) ? 1 : 0
+            self.spriteSize = byte.bit(2) ? [8, 16] : [8, 8]
+            self.spritesEnabled = byte.bit(1)
+            self.backgroundEnabled = byte.bit(0)
         }
         self.mmu.subscribe(address: 0xFF42) { byte in
             //-- Scroll y register
@@ -179,7 +178,7 @@ public class PPU {
     }
     
     public func run(for time: Int16) throws {
-        if enabled {
+        if lcd.enabled {
             cycles = cycles + time
             
             while cycles > 0 {
