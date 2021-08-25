@@ -112,7 +112,7 @@ public class LCD: UIViewController {
         }
     }
     
-    @objc func draw(_ displayLink: CADisplayLink) {
+    @objc private func draw(_ displayLink: CADisplayLink) {
         imageView.image = UIImage(bitmap: bitmap)
     }
 }
