@@ -10,39 +10,34 @@ public struct Pixel {
         self.b = b
         self.a = a
     }
-}
-
-public extension Pixel {
-    static let white = Pixel(r: 255, g: 255, b: 255)
-    static let lightGray = Pixel(r: 192, g: 192, b: 192)
-    static let darkGray = Pixel(r: 96, g: 96, b: 96)
-    static let black = Pixel(r: 0, g: 0, b: 0)
-    static let transparent = Pixel(r: 0, g: 0, b: 0, a: 0)
+    
+    public static let white = Pixel(r: 255, g: 255, b: 255)
+    public static let lightGray = Pixel(r: 192, g: 192, b: 192)
+    public static let darkGray = Pixel(r: 96, g: 96, b: 96)
+    public static let black = Pixel(r: 0, g: 0, b: 0)
+    public static let transparent = Pixel(r: 0, g: 0, b: 0, a: 0)
 }
 
 public struct Bitmap {
     public private(set) var pixels: [Pixel]
     public let width: Int
+    public var height: Int {
+        return pixels.count / width
+    }
     
     public init(width: Int, pixels: [Pixel]) {
         self.width = width
         self.pixels = pixels
     }
-}
-
-public extension Bitmap {
-    var height: Int {
-        return pixels.count / width
+    
+    public init(width: Int, height: Int, pixel: Pixel) {
+        self.pixels = Array(repeating: pixel, count: width * height)
+        self.width = width
     }
     
     subscript(x: Int, y: Int) -> Pixel {
         get { return pixels[y * width + x] }
         set { pixels[y * width + x] = newValue }
-    }
-
-    init(width: Int, height: Int, pixel: Pixel) {
-        self.pixels = Array(repeating: pixel, count: width * height)
-        self.width = width
     }
 }
 
@@ -182,13 +177,9 @@ public class PPU {
             self.spriteSize = byte.bit(2) ? [8, 16] : [8, 8]
             self.spritesEnabled = byte.bit(1)
             self.backgroundEnabled = byte.bit(0)
-            
-            print("0xFF40", byte)
         }
         self.mmu.subscribe(address: 0xFF42) { byte in
             self.scrollY = byte
-            
-            print("0xFF42", byte)
         }
         self.mmu.subscribe(address: 0xFF43) { byte in
             self.scrollX = byte
