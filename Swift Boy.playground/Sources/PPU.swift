@@ -182,9 +182,13 @@ public class PPU {
             self.spriteSize = byte.bit(2) ? [8, 16] : [8, 8]
             self.spritesEnabled = byte.bit(1)
             self.backgroundEnabled = byte.bit(0)
+            
+            print("0xFF40", byte)
         }
         self.mmu.subscribe(address: 0xFF42) { byte in
             self.scrollY = byte
+            
+            print("0xFF42", byte)
         }
         self.mmu.subscribe(address: 0xFF43) { byte in
             self.scrollX = byte

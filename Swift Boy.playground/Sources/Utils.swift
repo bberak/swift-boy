@@ -209,3 +209,23 @@ public struct Command {
     }
 }
 
+//-- https://stackoverflow.com/a/45777692/138392
+struct MemoryAddress<T>: CustomStringConvertible {
+    let intValue: Int
+
+    var description: String {
+        let length = 2 + 2 * MemoryLayout<UnsafeRawPointer>.size
+        return String(format: "%0\(length)p", intValue)
+    }
+
+    init(of structPointer: UnsafePointer<T>) {
+        intValue = Int(bitPattern: structPointer)
+    }
+}
+
+//-- https://stackoverflow.com/a/45777692/138392
+extension MemoryAddress where T: AnyObject {
+    init(of classInstance: T) {
+        intValue = unsafeBitCast(classInstance, to: Int.self)
+    }
+}

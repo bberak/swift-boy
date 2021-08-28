@@ -22,10 +22,9 @@ let biosProgram: [UInt8] = [
 enum MemoryAccessError: Error {
     case addressOutOfRange
     case readOnly
-    case disabled
 }
 
-protocol MemoryAccess {
+protocol MemoryAccess: class {
     func contains(address: UInt16) -> Bool
     func readByte(address: UInt16) throws -> UInt8
     func writeByte(address: UInt16, byte: UInt8) throws -> Void
@@ -44,9 +43,25 @@ extension MemoryAccess {
     }
 }
 
-extension Array: MemoryAccess where Element == MemoryAccess {
+class MemoryAccessArray: MemoryAccess {
+    private var arr: [MemoryAccess]
+    
+    init(_ arr: [MemoryAccess]) {
+        self.arr = arr
+    }
+    
     func find(address: UInt16) -> MemoryAccess? {
-        return first { $0.contains(address: address) }
+        return arr.first { $0.contains(address: address) }
+    }
+    
+    func remove(item: MemoryAccess) {
+        let index = arr.firstIndex { x in
+            return x === item
+        }
+        
+        if index != nil {
+            arr.remove(at: index!)
+        }
     }
     
     func contains(address: UInt16) -> Bool {
@@ -75,48 +90,33 @@ class MemoryBlock: MemoryAccess {
     private let range: ClosedRange<UInt16>
     private var buffer: [UInt8]
     private var readOnly: Bool
-    internal var enabled: Bool
     
-    init(range: ClosedRange<UInt16>, buffer: [UInt8], readOnly: Bool, enabled: Bool) {
+    init(range: ClosedRange<UInt16>, buffer: [UInt8], readOnly: Bool) {
         self.range = range
         self.buffer = buffer
         self.readOnly = readOnly
-        self.enabled = enabled
     }
     
-    convenience init(range: ClosedRange<UInt16>, readOnly: Bool, enabled: Bool) {
-        self.init(range: range, buffer: [UInt8](repeating: 0, count: range.count), readOnly: readOnly, enabled: enabled)
+    convenience init(range: ClosedRange<UInt16>, readOnly: Bool) {
+        self.init(range: range, buffer: [UInt8](repeating: 0, count: range.count), readOnly: readOnly)
     }
     
     convenience init(range: ClosedRange<UInt16>, block: MemoryBlock) {
-        self.init(range: range, buffer: block.buffer, readOnly: block.readOnly, enabled: block.enabled)
-    }
-    
-    func enable() {
-        enabled = true
-    }
-    
-    func disable() {
-        enabled = false
+        self.init(range: range, buffer: block.buffer, readOnly: block.readOnly)
     }
     
     func contains(address: UInt16)-> Bool {
-        return enabled && range.contains(address)
+        return range.contains(address)
     }
     
     func readByte(address: UInt16) throws -> UInt8 {
-        if enabled == false {
-            throw MemoryAccessError.disabled
-        }
-        
         if range.contains(address) == false {
             throw MemoryAccessError.addressOutOfRange
         }
         
-        //-- Might have to check the buffer indexes here, and skip any out-of-bounds reads
-        //-- in order to support memory shadowing
+        let index = Int(address - range.lowerBound)
         
-        return buffer[Int(address - range.lowerBound)]
+        return buffer[index % buffer.count]
     }
     
     func writeByte(address: UInt16, byte: UInt8) throws {
@@ -124,18 +124,13 @@ class MemoryBlock: MemoryAccess {
             throw MemoryAccessError.readOnly
         }
         
-        if enabled == false {
-            throw MemoryAccessError.disabled
-        }
-        
         if range.contains(address) == false {
             throw MemoryAccessError.addressOutOfRange
         }
         
-        //-- Might have to check the buffer indexes here, and skip any out-of-bounds writes
-        //-- in order to support memory shadowing
+        let index = Int(address - range.lowerBound)
         
-        buffer[Int(address - range.lowerBound)] = byte
+        buffer[index % buffer.count] = byte
     }
 }
 
@@ -143,23 +138,30 @@ public class MMU: MemoryAccess {
     private let cartridge: Cartridge?
     private let bios: MemoryBlock
     private let wram: MemoryBlock
-    private let memory: [MemoryAccess]
+    private let echo: MemoryBlock
+    private let hram: MemoryBlock
+    private var memory: MemoryAccessArray
     private var subscribers: [UInt16: [(UInt8)->Void]] = [:]
     private var queue: [Command] = []
     private var cycles: Int16 = 0
     
     public init() {
         self.cartridge = nil
-        self.bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
-        self.wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false, enabled: true)
-        self.memory = [
+        self.bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true)
+        self.wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false)
+        self.echo = MemoryBlock(range: 0xE000...0xFDFF, block: wram)
+        self.hram = MemoryBlock(range: 0xFF80...0xFFFE, readOnly: false)
+        self.memory = MemoryAccessArray([
             bios,
             wram,
-            MemoryBlock(range: 0xE000...0xFDFF, block: wram), //-- Shadow RAM
-            MemoryBlock(range: 0x0000...0xFFFF, readOnly: false, enabled: true), //-- Catch-all
-        ]
+            echo,
+            hram,
+            MemoryBlock(range: 0x0000...0xFFFF, readOnly: false), //-- Catch-all
+        ])
         self.subscribe(address: 0xFF50) { byte in
-            byte == 1 ? self.bios.disable() : self.bios.enable()
+            if byte == 1 {
+                self.memory.remove(item: self.bios)
+            }
         }
         self.subscribe(address: 0xFF46) { byte in
             self.startDMATransfer(byte: byte)
@@ -167,6 +169,8 @@ public class MMU: MemoryAccess {
     }
     
     func startDMATransfer(byte: UInt8) {
+        //-- TODO: Make sure only HRAM is accessible to the CPU
+        //-- during the DMA transfer process
         let start = UInt16(byte) << 8
         for offset in 0..<0xA0 {
             self.queue.append(Command(cycles: 1) {
