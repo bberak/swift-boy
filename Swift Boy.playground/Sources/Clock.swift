@@ -26,11 +26,10 @@ public class Clock {
             })
         }
     }
-            
+       
+    // 70224 clock cycles = 1 frame
+    // 456 clock cycles = 1 scanline
     public func frame() throws {
-        // 70224 clock cycles = 1 frame
-        // 456 clock cycles = 1 scanline
-        
         var total: Int = 0
         let cycles: Int16 = 48
         

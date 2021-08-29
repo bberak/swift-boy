@@ -169,9 +169,9 @@ public class MMU: MemoryAccess {
         }
     }
     
+    // TODO: Make sure only HRAM is accessible to the CPU
+    // during the DMA transfer process
     func startDMATransfer(byte: UInt8) {
-        // TODO: Make sure only HRAM is accessible to the CPU
-        // during the DMA transfer process
         let start = UInt16(byte) << 8
         for offset in 0..<0xA0 {
             self.queue.append(Command(cycles: 1) {
