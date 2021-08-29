@@ -16,6 +16,10 @@ public struct Pixel {
     public static let darkGray = Pixel(r: 96, g: 96, b: 96)
     public static let black = Pixel(r: 0, g: 0, b: 0)
     public static let transparent = Pixel(r: 0, g: 0, b: 0, a: 0)
+    
+    public static func random() -> Pixel {
+        return Pixel(r: UInt8.random(in: 0...255), g: UInt8.random(in: 0...255), b: UInt8.random(in: 0...255))
+    }
 }
 
 public struct Bitmap {
@@ -112,7 +116,7 @@ public class LCD: UIViewController {
             displayLink = CADisplayLink(target: self, selector: #selector(draw))
             displayLink!.add(to: .main, forMode: .common)
         }
-        
+
         displayLink!.isPaused = false
     }
     
@@ -125,13 +129,6 @@ public class LCD: UIViewController {
     @objc private func draw(_ displayLink: CADisplayLink) {
         imageView.image = UIImage(bitmap: bitmap)
     }
-}
-
-enum Mode {
-    case oamSearch
-    case activePicture
-    case horizontalBlanking
-    case verticalBlanking
 }
 
 let defaultPalette: [UInt8: Pixel] = [
@@ -158,12 +155,15 @@ public class PPU {
     private var backgroundPalette = defaultPalette
     private var spritePalette0 = defaultPalette
     private var spritePalette1 = defaultPalette
-    private var state: [Mode: UInt16] = [
-        Mode.oamSearch: 0,
-        Mode.activePicture: 0,
-        Mode.horizontalBlanking: 0,
-        Mode.verticalBlanking: 0
-    ]
+    
+    private var ly: UInt8 {
+        get {
+            return try! mmu.readByte(address: 0xFF44)
+        }
+        set {
+            try! mmu.writeByte(address: 0xFF44, byte: newValue)
+        }
+    }
         
     public init(_ mmu: MMU) {
         self.lcd = LCD()
@@ -205,11 +205,38 @@ public class PPU {
     }
     
     func fetchNextCommand() -> Command {
-        return Command(cycles: 2) {
-            let x = Int.random(in: 0..<self.lcd.bitmap.width)
-            let y = Int.random(in: 0..<self.lcd.bitmap.height)
-            self.lcd.bitmap[x, y] = Pixel(r: UInt8.random(in: 0...255), g: UInt8.random(in: 0...255), b: UInt8.random(in: 0...255))
-            return nil
+        if self.ly < self.lcd.bitmap.height {
+            // OAM Scan
+            return Command(cycles: 40) {
+                let px = Pixel.random()
+                
+                // Drawing Pixels
+                return Command(cycles: 144) {
+                    for x in 0..<self.lcd.bitmap.width {
+                        self.lcd.bitmap[x, Int(self.ly)] = px
+                    }
+                    
+                    // Horizontal blank
+                    return Command(cycles: 44) {
+                        
+                        // Increment ly
+                        return Command(cycles: 0) {
+                            self.ly = self.ly + 1
+                            return nil
+                        }
+                    }
+                }
+            }
+        } else {
+            // Vertical blank
+            return Command(cycles: 228) {
+                
+                // Increment or reset ly
+                return Command(cycles: 0) {
+                    self.ly = self.ly < 153 ? self.ly + 1 : 0
+                    return nil
+                }
+            }
         }
     }
     

@@ -93,6 +93,7 @@ public class CPU: CustomStringConvertible {
     private let ppu: PPU
     private var queue: [Command] = []
     private var cycles: Int16 = 0
+    public var printOpcodes = false
     
     internal var af: UInt16 {
         get {
@@ -208,6 +209,10 @@ public class CPU: CustomStringConvertible {
         
         if instruction == nil {
             throw CPUError.instructionNotFound(opCode)
+        }
+        
+        if printOpcodes {
+            print(opCode)
         }
         
         return instruction!

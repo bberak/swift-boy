@@ -171,8 +171,8 @@ let instructions: [OpCode: Instruction] = [
     },
     // Jump s8 steps from the current address in the program counter (PC). (Jump relative.)
     OpCode.byte(0x18): Instruction.atomic(cycles: 3) { cpu in
-        let offset = Int8(try cpu.readNextByte())
-        cpu.pc = offset > 0 ? cpu.pc &+ UInt16(offset.toUInt8()) : cpu.pc &- UInt16(offset.toUInt8())
+        let offset = try cpu.readNextByte().toInt8()
+        cpu.pc = cpu.pc &+ offset
     },
     // Add the contents of register pair DE to the contents of register pair HL,
     // and store the results in register pair HL.
@@ -909,11 +909,9 @@ let instructions: [OpCode: Instruction] = [
     // Flags: - - - -
     //
     // Store the contents of register H in the memory location specified by register pair HL.
-    //
-    //let data = cpu.h
-    //try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     OpCode.byte(0x74): Instruction.atomic(cycles: 2) { cpu in
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x74))
+        let data = cpu.h
+        try cpu.mmu.writeByte(address: cpu.hl, byte: data)
     },
     // LD (HL), L
     //
@@ -2570,7 +2568,7 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of the 8-bit signed (2's complement) immediate operand s8 and the stack pointer SP and store the results in SP.
     OpCode.byte(0xE8): Instruction.atomic(cycles: 4) { cpu in
-        let offset = try Int8(cpu.readNextByte())
+        let offset = try cpu.readNextByte().toInt8()
         let result = offset > 0 ? add(cpu.sp, UInt16(offset.toUInt8())) : sub(cpu.sp, UInt16(offset.toUInt8()))
         cpu.sp = result.value
         cpu.flags.zero = false
@@ -2728,7 +2726,7 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the 8-bit signed operand s8 (values -128 to +127) to the stack pointer SP, and store the result in register pair HL.
     OpCode.byte(0xF8): Instruction.atomic(cycles: 3) { cpu in
-        let offset = try Int8(cpu.readNextByte())
+        let offset = try cpu.readNextByte().toInt8()
         let result = offset > 0 ? add(cpu.sp, UInt16(offset.toUInt8())) : sub(cpu.sp, UInt16(offset.toUInt8()))
         cpu.hl = result.value
         cpu.flags.zero = false

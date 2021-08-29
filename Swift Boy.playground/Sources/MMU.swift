@@ -156,7 +156,8 @@ public class MMU: MemoryAccess {
             wram,
             echo,
             hram,
-            MemoryBlock(range: 0x0000...0xFFFF, readOnly: false), //-- Catch-all
+            // Catch-all
+            MemoryBlock(range: 0x0000...0xFFFF, readOnly: false)
         ])
         self.subscribe(address: 0xFF50) { byte in
             if byte == 1 {
@@ -169,8 +170,8 @@ public class MMU: MemoryAccess {
     }
     
     func startDMATransfer(byte: UInt8) {
-        //-- TODO: Make sure only HRAM is accessible to the CPU
-        //-- during the DMA transfer process
+        // TODO: Make sure only HRAM is accessible to the CPU
+        // during the DMA transfer process
         let start = UInt16(byte) << 8
         for offset in 0..<0xA0 {
             self.queue.append(Command(cycles: 1) {
@@ -204,9 +205,7 @@ public class MMU: MemoryAccess {
         
         let callbacks = self.subscribers[address]
         
-        if callbacks != nil {
-            callbacks!.forEach { $0(byte) }
-        }
+        callbacks?.forEach { $0(byte) }
     }
     
      public func run(for time: Int16) throws {

@@ -12,22 +12,34 @@ public class Clock {
     }
     
     public func start() {
+        let fps: Double = 60
+        let target: Double = 1 / fps
+
         DispatchQueue.global(qos: .userInteractive).async {
-            try! self.tick()
-            
-            DispatchQueue.main.async {
+            let start = CFAbsoluteTimeGetCurrent()
+            try! self.frame()
+            let diff = CFAbsoluteTimeGetCurrent() - start
+            let delay = diff > target ? 0 : target - diff
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: {
                 self.start()
-            }
+            })
         }
     }
-    
-    public func tick() throws {
-        //-- 70224 clock cycles = 1 frame = 1/60 sec
-        //-- 456 clock cycles = 1 scanline
-        let cycles: Int16 = 32
+            
+    public func frame() throws {
+        // 70224 clock cycles = 1 frame
+        // 456 clock cycles = 1 scanline
         
-        try cpu.run(for: cycles / 4)
-        try mmu.run(for: cycles / 4)
-        try ppu.run(for: cycles / 2)
+        var total: Int = 0
+        let cycles: Int16 = 48
+        
+        while total < 70224 {
+            try cpu.run(for: cycles / 4)
+            try mmu.run(for: cycles / 4)
+            try ppu.run(for: cycles / 2)
+            
+            total = total + Int(cycles)
+        }
     }
 }

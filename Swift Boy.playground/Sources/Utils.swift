@@ -89,13 +89,11 @@ public extension UInt8 {
     func toInt8() -> Int8 {
         return Int8(bitPattern: self)
     }
-    
-    
 }
 
 public extension Int8 {
     func toUInt8() -> UInt8 {
-        return self < 0 ? UInt8((self * -1) & 0b01111111) : UInt8(self & 0b01111111)
+        return self < 0 ? UInt8(self * -1) : UInt8(self)
     }
 }
 
