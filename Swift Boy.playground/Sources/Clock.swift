@@ -4,25 +4,30 @@ public class Clock {
     private let mmu: MMU
     private let ppu: PPU
     private let cpu: CPU
-   
+    private let fps: Double
+    private let frameTime: Double
+    
     public init(_ mmu: MMU, _ ppu: PPU, _ cpu: CPU) {
         self.mmu = mmu
         self.ppu = ppu
         self.cpu = cpu
+        self.fps = 60
+        self.frameTime = 1 / fps
     }
     
-    public func start() {
-        let fps: Double = 60
-        let target: Double = 1 / fps
-
+    public func start(_ current: DispatchTime = .now()) {
+        var next = current + frameTime
+        
         DispatchQueue.global(qos: .userInteractive).async {
-            let start = CFAbsoluteTimeGetCurrent()
             try! self.frame()
-            let diff = CFAbsoluteTimeGetCurrent() - start
-            let delay = diff > target ? 0 : target - diff
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: {
-                self.start()
+            let now = DispatchTime.now()
+            
+            if now > next {
+                next = now
+            }
+   
+            DispatchQueue.main.asyncAfter(deadline: next, execute: {
+                self.start(next)
             })
         }
     }
