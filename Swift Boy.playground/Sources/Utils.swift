@@ -22,7 +22,7 @@ public extension Array where Element == UInt8 {
 }
 
 public func &+(left: UInt16, right: Int8) -> UInt16 {
-    return right > 0 ? left &+ UInt16(right.toUInt8()) : left &- UInt16(right.toUInt8())
+    return left.offset(by: right)
 }
 
 public extension UInt16 {
@@ -38,6 +38,14 @@ public extension UInt16 {
     func bit(_ pos: UInt8) -> Bool {
         let mask = UInt16(0x0001 << pos)
         return (self & mask) == mask
+    }
+    
+    func offset(by delta: Int8) -> UInt16 {
+        return delta > 0 ? self &+ UInt16(delta.toUInt8()) : self &- UInt16(delta.toUInt8())
+    }
+    
+    func offset(by delta: Int16) -> UInt16 {
+        return delta > 0 ? self &+ delta.toUInt16() : self &- delta.toUInt16()
     }
 }
 

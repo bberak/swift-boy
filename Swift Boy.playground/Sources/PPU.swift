@@ -231,8 +231,8 @@ public class PPU {
                 let bgTileDataPointer: UInt16 = self.backgroundTileSet == 1 ? 0x8000 : 0x9000
                 let bgTileData: [UInt16] = try bgTileIndices.map { idx in
                     if bgTileDataPointer == 0x9000 {
-                        let offset = Int16(idx.toInt8() * 16) + Int16(line % 8) * 2
-                        let address = offset > 0 ? bgTileDataPointer &+ offset.toUInt16() : bgTileDataPointer &- offset.toUInt16()
+                        let delta = Int16(idx.toInt8() * 16) + Int16(line % 8) * 2
+                        let address = bgTileDataPointer.offset(by: delta)
                         return try self.mmu.readWord(address: address)
                     } else {
                         let offset = UInt16(idx * 16) + UInt16(line % 8) * 2
