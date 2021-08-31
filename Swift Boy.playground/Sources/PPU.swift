@@ -150,11 +150,27 @@ public class PPU {
     private var spriteSize = [8, 8]
     private var spritesEnabled = false
     private var backgroundEnabled = false
-    private var scrollX: UInt8 = 0
-    private var scrollY: UInt8 = 0
     private var backgroundPalette = defaultPalette
     private var spritePalette0 = defaultPalette
     private var spritePalette1 = defaultPalette
+    
+    private var scx: UInt8 {
+        get {
+            return try! mmu.readByte(address: 0xFF43)
+        }
+        set {
+            try! mmu.writeByte(address: 0xFF43, byte: newValue)
+        }
+    }
+    
+    private var scy: UInt8 {
+        get {
+            return try! mmu.readByte(address: 0xFF42)
+        }
+        set {
+            try! mmu.writeByte(address: 0xFF42, byte: newValue)
+        }
+    }
     
     private var ly: UInt8 {
         get {
@@ -178,12 +194,6 @@ public class PPU {
             self.spritesEnabled = byte.bit(1)
             self.backgroundEnabled = byte.bit(0)
         }
-        self.mmu.subscribe(address: 0xFF42) { byte in
-            self.scrollY = byte
-        }
-        self.mmu.subscribe(address: 0xFF43) { byte in
-            self.scrollX = byte
-        }
         self.mmu.subscribe(address: 0xFF47) { byte in
             self.backgroundPalette[0] = defaultPalette[byte.crumb(0)]
             self.backgroundPalette[1] = defaultPalette[byte.crumb(1)]
@@ -203,17 +213,53 @@ public class PPU {
             self.spritePalette1[3] = defaultPalette[byte.crumb(3)]
         }
     }
-    
+        
     func fetchNextCommand() -> Command {
-        if self.ly < self.lcd.bitmap.height {
+        let ly = self.ly
+        let scx = self.scx
+        let scy = self.scy
+        
+        if ly < self.lcd.bitmap.height {
             // OAM Scan
             return Command(cycles: 40) {
-                let px = Pixel.random()
+                let line = ly &+ scy
+                let bgTileMapRow = Int16(line / 8)
+                let bgTileMapStartIndex = UInt16(bgTileMapRow * 32)
+                let bgTileMapPointer: UInt16 = self.backgroundTileMap == 1 ? 0x9C00 : 0x9800
+                let bgTileIndices: [UInt8] = try self.mmu.readBytes(address: bgTileMapPointer &+ bgTileMapStartIndex, count: 32 )
+                
+                let bgTileDataPointer: UInt16 = self.backgroundTileSet == 1 ? 0x8000 : 0x9000
+                let bgTileData: [UInt16] = try bgTileIndices.map { idx in
+                    if bgTileDataPointer == 0x9000 {
+                        let offset = Int16(idx.toInt8() * 16) + Int16(line % 8) * 2
+                        let address = offset > 0 ? bgTileDataPointer &+ offset.toUInt16() : bgTileDataPointer &- offset.toUInt16()
+                        return try self.mmu.readWord(address: address)
+                    } else {
+                        let offset = UInt16(idx * 16) + UInt16(line % 8) * 2
+                        let address = bgTileDataPointer &+ offset
+                        return try self.mmu.readWord(address: address)
+                    }
+                }
                 
                 // Drawing Pixels
                 return Command(cycles: 144) {
+                    var pixels = [Pixel]()
+
+                    for data in bgTileData {
+                        let arr = data.toBytes()
+                        let lsb = arr[0]
+                        let hsb = arr[1]
+                        
+                        for idx in (0...7).reversed() {
+                            let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
+                            let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
+                            
+                            pixels.append(self.backgroundPalette[v1 + v2]!)
+                        }
+                    }
+                    
                     for x in 0..<self.lcd.bitmap.width {
-                        self.lcd.bitmap[x, Int(self.ly)] = px
+                        self.lcd.bitmap[x, Int(ly)] = pixels[(x + Int(scx)) % pixels.count]
                     }
                     
                     // Horizontal blank
@@ -221,7 +267,7 @@ public class PPU {
                         
                         // Increment ly
                         return Command(cycles: 0) {
-                            self.ly = self.ly + 1
+                            self.ly = ly + 1
                             return nil
                         }
                     }
@@ -233,7 +279,7 @@ public class PPU {
                 
                 // Increment or reset ly
                 return Command(cycles: 0) {
-                    self.ly = self.ly < 153 ? self.ly + 1 : 0
+                    self.ly = ly < 153 ? ly + 1 : 0
                     return nil
                 }
             }

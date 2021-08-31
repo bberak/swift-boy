@@ -41,6 +41,12 @@ extension MemoryAccess {
         try writeByte(address: address, byte: bytes[0])
         try writeByte(address: address + 1, byte: bytes[1])
     }
+    
+    func readBytes(address: UInt16, count: UInt16) throws -> [UInt8] {
+        return try (0..<count).map { idx in
+            return try readByte(address: address &+ idx)
+        }
+    }
 }
 
 class MemoryAccessArray: MemoryAccess {

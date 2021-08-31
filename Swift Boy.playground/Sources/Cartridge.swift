@@ -17,7 +17,7 @@ public class Cartridge: MemoryAccess {
     }
     
     public convenience init(path: URL, title: String) {
-        self.init(rom: readBytes(path: path), title: title)
+        self.init(rom: readPath(path: path), title: title)
     }
     
     func contains(address: UInt16) -> Bool {

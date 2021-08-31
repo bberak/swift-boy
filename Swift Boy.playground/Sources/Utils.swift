@@ -1,6 +1,6 @@
 import Foundation
 
-public func readBytes(path: URL) -> Data {
+public func readPath(path: URL) -> Data {
     do {
         let handle = try FileHandle(forReadingFrom: path)
         let bytes = handle.readDataToEndOfFile()
@@ -11,15 +11,6 @@ public func readBytes(path: URL) -> Data {
     }
     
     return Data()
-}
-
-public func calculateTime(block : (() -> Void)) {
-    let start = DispatchTime.now()
-    block()
-    let end = DispatchTime.now()
-    let nanoTime = end.uptimeNanoseconds - start.uptimeNanoseconds
-    let timeInterval = Double(nanoTime) / 1_000_000_000
-    print("Time: \(timeInterval) seconds")
 }
 
 public extension Array where Element == UInt8 {
@@ -94,6 +85,12 @@ public extension UInt8 {
 public extension Int8 {
     func toUInt8() -> UInt8 {
         return self < 0 ? UInt8(self * -1) : UInt8(self)
+    }
+}
+
+public extension Int16 {
+    func toUInt16() -> UInt16 {
+        return self < 0 ? UInt16(self * -1) : UInt16(self)
     }
 }
 
