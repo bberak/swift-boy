@@ -282,7 +282,6 @@ let instructions: [OpCode: Instruction] = [
     // https://ehaskins.com/2018-01-30%20Z80%20DAA/
     // https://www.reddit.com/r/EmuDev/comments/cdtuyw/gameboy_emulator_fails_blargg_daa_test/
     OpCode.byte(0x27): Instruction.atomic(cycles: 1) { cpu in
-        
         if cpu.flags.subtract == false {
             if cpu.flags.carry || cpu.a > 0x99 {
                 cpu.a = cpu.a &+ 0x60
@@ -1058,7 +1057,7 @@ let instructions: [OpCode: Instruction] = [
     // Add the contents of register B to the contents of register A, and store the results in register A.
     OpCode.byte(0x80): Instruction.atomic(cycles: 1) { cpu in
         let result = add(cpu.a, cpu.b)
-        cpu.b = result.value
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1118,6 +1117,7 @@ let instructions: [OpCode: Instruction] = [
     // Add the contents of register H to the contents of register A, and store the results in register A.
     OpCode.byte(0x84): Instruction.atomic(cycles: 1) { cpu in
         let result = add(cpu.a, cpu.h)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1132,6 +1132,7 @@ let instructions: [OpCode: Instruction] = [
     // Add the contents of register L to the contents of register A, and store the results in register A.
     OpCode.byte(0x85): Instruction.atomic(cycles: 1) { cpu in
         let result = add(cpu.a, cpu.l)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1147,6 +1148,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0x86): Instruction.atomic(cycles: 2) { cpu in
         let data = try cpu.mmu.readByte(address: cpu.hl)
         let result = add(cpu.a, data)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1161,6 +1163,7 @@ let instructions: [OpCode: Instruction] = [
     // Add the contents of register A to the contents of register A, and store the results in register A.
     OpCode.byte(0x87): Instruction.atomic(cycles: 1) { cpu in
         let result = add(cpu.a, cpu.a)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1304,6 +1307,7 @@ let instructions: [OpCode: Instruction] = [
     // Subtract the contents of register B from the contents of register A, and store the results in register A.
     OpCode.byte(0x90): Instruction.atomic(cycles: 1) { cpu in
         let result = sub(cpu.a, cpu.b)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1318,6 +1322,7 @@ let instructions: [OpCode: Instruction] = [
     // Subtract the contents of register C from the contents of register A, and store the results in register A.
     OpCode.byte(0x91): Instruction.atomic(cycles: 1) { cpu in
         let result = sub(cpu.a, cpu.c)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1332,6 +1337,7 @@ let instructions: [OpCode: Instruction] = [
     // Subtract the contents of register D from the contents of register A, and store the results in register A.
     OpCode.byte(0x92): Instruction.atomic(cycles: 1) { cpu in
         let result = sub(cpu.a, cpu.d)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1346,6 +1352,7 @@ let instructions: [OpCode: Instruction] = [
     // Subtract the contents of register E from the contents of register A, and store the results in register A.
     OpCode.byte(0x93): Instruction.atomic(cycles: 1) { cpu in
         let result = sub(cpu.a, cpu.e)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1360,6 +1367,7 @@ let instructions: [OpCode: Instruction] = [
     // Subtract the contents of register H from the contents of register A, and store the results in register A.
     OpCode.byte(0x94): Instruction.atomic(cycles: 1) { cpu in
         let result = sub(cpu.a, cpu.h)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1374,6 +1382,7 @@ let instructions: [OpCode: Instruction] = [
     // Subtract the contents of register L from the contents of register A, and store the results in register A.
     OpCode.byte(0x95): Instruction.atomic(cycles: 1) { cpu in
         let result = sub(cpu.a, cpu.l)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1389,6 +1398,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0x96): Instruction.atomic(cycles: 2) { cpu in
         let data = try cpu.mmu.readByte(address: cpu.hl)
         let result = sub(cpu.a, data)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1403,6 +1413,7 @@ let instructions: [OpCode: Instruction] = [
     // Subtract the contents of register A from the contents of register A, and store the results in register A.
     OpCode.byte(0x97): Instruction.atomic(cycles: 1) { cpu in
         let result = sub(cpu.a, cpu.a)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1418,6 +1429,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0x98): Instruction.atomic(cycles: 1) { cpu in
         let decrement = sub(cpu.b, cpu.flags.carry ? 1 : 0)
         let result = sub(cpu.a, decrement.value)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
@@ -1433,6 +1445,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0x99): Instruction.atomic(cycles: 1) { cpu in
         let decrement = sub(cpu.c, cpu.flags.carry ? 1 : 0)
         let result = sub(cpu.a, decrement.value)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
@@ -1448,6 +1461,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0x9A): Instruction.atomic(cycles: 1) { cpu in
         let decrement = sub(cpu.d, cpu.flags.carry ? 1 : 0)
         let result = sub(cpu.a, decrement.value)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
@@ -1463,6 +1477,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0x9B): Instruction.atomic(cycles: 1) { cpu in
         let decrement = sub(cpu.e, cpu.flags.carry ? 1 : 0)
         let result = sub(cpu.a, decrement.value)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
@@ -1478,6 +1493,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0x9C): Instruction.atomic(cycles: 1) { cpu in
         let decrement = sub(cpu.h, cpu.flags.carry ? 1 : 0)
         let result = sub(cpu.a, decrement.value)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
@@ -1493,6 +1509,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0x9D): Instruction.atomic(cycles: 1) { cpu in
         let decrement = sub(cpu.l, cpu.flags.carry ? 1 : 0)
         let result = sub(cpu.a, decrement.value)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
@@ -1509,6 +1526,7 @@ let instructions: [OpCode: Instruction] = [
         let data = try cpu.mmu.readByte(address: cpu.hl)
         let decrement = sub(data, cpu.flags.carry ? 1 : 0)
         let result = sub(cpu.a, decrement.value)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
@@ -1524,6 +1542,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0x9F): Instruction.atomic(cycles: 1) { cpu in
         let decrement = sub(cpu.a, cpu.flags.carry ? 1 : 0)
         let result = sub(cpu.a, decrement.value)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
@@ -2125,6 +2144,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0xC6): Instruction.atomic(cycles: 2) { cpu in
         let data = try cpu.readNextByte()
         let result = add(cpu.a, data)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -2245,6 +2265,7 @@ let instructions: [OpCode: Instruction] = [
         let data = try cpu.readNextByte()
         let increment = add(data, cpu.flags.carry ? 1 : 0)
         let result = add(cpu.a, increment.value)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
@@ -2364,6 +2385,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0xD6): Instruction.atomic(cycles: 2) { cpu in
         let data = try cpu.readNextByte()
         let result = sub(cpu.a, data)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -2470,6 +2492,7 @@ let instructions: [OpCode: Instruction] = [
         let data = try cpu.readNextByte()
         let decrement = sub(data, cpu.flags.carry ? 1 : 0)
         let result = sub(cpu.a, decrement.value)
+        cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry

@@ -213,7 +213,7 @@ public class PPU {
             self.spritePalette1[3] = defaultPalette[byte.crumb(3)]
         }
     }
-        
+    
     func fetchNextCommand() -> Command {
         let ly = self.ly
         let scx = self.scx
@@ -222,20 +222,19 @@ public class PPU {
         if ly < self.lcd.bitmap.height {
             // OAM Scan
             return Command(cycles: 40) {
-                let line = ly &+ scy
-                let bgTileMapRow = Int16(line / 8)
+                let bgY = scy &+ ly
+                let bgTileMapRow = Int16(bgY / 8)
                 let bgTileMapStartIndex = UInt16(bgTileMapRow * 32)
                 let bgTileMapPointer: UInt16 = self.backgroundTileMap == 1 ? 0x9C00 : 0x9800
                 let bgTileIndices: [UInt8] = try self.mmu.readBytes(address: bgTileMapPointer &+ bgTileMapStartIndex, count: 32 )
-                
                 let bgTileDataPointer: UInt16 = self.backgroundTileSet == 1 ? 0x8000 : 0x9000
                 let bgTileData: [UInt16] = try bgTileIndices.map { idx in
                     if bgTileDataPointer == 0x9000 {
-                        let delta = Int16(idx.toInt8() * 16) + Int16(line % 8) * 2
+                        let delta = Int16(Int16(idx.toInt8()) * 16) + Int16(bgY % 8) * 2
                         let address = bgTileDataPointer.offset(by: delta)
                         return try self.mmu.readWord(address: address)
                     } else {
-                        let offset = UInt16(idx * 16) + UInt16(line % 8) * 2
+                        let offset = UInt16(UInt16(idx) * 16) + UInt16(bgY % 8) * 2
                         let address = bgTileDataPointer &+ offset
                         return try self.mmu.readWord(address: address)
                     }
@@ -258,8 +257,9 @@ public class PPU {
                         }
                     }
                     
-                    for x in 0..<self.lcd.bitmap.width {
-                        self.lcd.bitmap[x, Int(ly)] = pixels[(x + Int(scx)) % pixels.count]
+                    for col in 0..<self.lcd.bitmap.width {
+                        let bgX = (Int(scx) + col) % pixels.count
+                        self.lcd.bitmap[col, Int(ly)] = pixels[bgX]
                     }
                     
                     // Horizontal blank

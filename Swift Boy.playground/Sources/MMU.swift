@@ -104,7 +104,7 @@ class MemoryBlock: MemoryAccess {
     }
     
     convenience init(range: ClosedRange<UInt16>, readOnly: Bool) {
-        self.init(range: range, buffer: [UInt8](repeating: 0, count: range.count), readOnly: readOnly)
+        self.init(range: range, buffer: [UInt8](repeating: 255, count: range.count), readOnly: readOnly)
     }
     
     convenience init(range: ClosedRange<UInt16>, block: MemoryBlock) {

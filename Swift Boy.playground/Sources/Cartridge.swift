@@ -7,7 +7,7 @@ public class Cartridge: MemoryAccess {
     private var title: String
     
     public init(rom: Data, title: String) {
-        self.rom = MemoryBlock(range: 0x0000...0x7FFF, buffer: rom.map { $0 }, readOnly: true)
+        self.rom = MemoryBlock(range: 0x0000...0x7FFF, buffer: rom.map { $0 }, readOnly: false)
         self.ram = MemoryBlock(range: 0xA000...0xBFFF, readOnly: false)
         self.memory = MemoryAccessArray([
             self.rom,
