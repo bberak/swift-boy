@@ -201,13 +201,13 @@ public class PPU {
             self.backgroundPalette[3] = defaultPalette[byte.crumb(3)]
         }
         self.mmu.subscribe(address: 0xFF48) { byte in
-            self.spritePalette0[0] = Pixel.transparent
+            self.spritePalette0[0] = defaultPalette[byte.crumb(0)]
             self.spritePalette0[1] = defaultPalette[byte.crumb(1)]
             self.spritePalette0[2] = defaultPalette[byte.crumb(2)]
             self.spritePalette0[3] = defaultPalette[byte.crumb(3)]
         }
         self.mmu.subscribe(address: 0xFF49) { byte in
-            self.spritePalette1[0] = Pixel.transparent
+            self.spritePalette1[0] = defaultPalette[byte.crumb(0)]
             self.spritePalette1[1] = defaultPalette[byte.crumb(1)]
             self.spritePalette1[2] = defaultPalette[byte.crumb(2)]
             self.spritePalette1[3] = defaultPalette[byte.crumb(3)]
