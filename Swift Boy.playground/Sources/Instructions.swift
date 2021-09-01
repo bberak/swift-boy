@@ -387,11 +387,16 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0x31): Instruction.atomic(cycles: 3) { cpu in
         cpu.sp = try cpu.readNextWord()
     },
-    // Store the contents of register A into the memory location specified by register
-    // pair HL, and simultaneously decrement the contents of HL.
+    // LD (HL-), A
+    //
+    // Cycles: 2
+    // Bytes: 1
+    // Flags: - - - -
+    //
+    // Store the contents of register A into the memory location specified by register pair HL, and simultaneously decrement the contents of HL.
     OpCode.byte(0x32): Instruction.atomic(cycles: 2) { cpu in
-        try cpu.mmu.writeByte(address: cpu.hl, byte: cpu.a)
         cpu.hl = cpu.hl &- 1
+        try cpu.mmu.writeByte(address: cpu.hl, byte: cpu.a)
     },
     // Increment the contents of register pair SP by 1.
     OpCode.byte(0x33): Instruction.atomic(cycles: 2) { cpu in
@@ -455,11 +460,16 @@ let instructions: [OpCode: Instruction] = [
         cpu.flags.halfCarry = result.halfCarry
         cpu.flags.carry = result.carry
     },
-    // Load the contents of memory specified by register pair HL into register A,
-    // and simultaneously decrement the contents of HL.
+    // LD A, (HL-)
+    //
+    // Cycles: 2
+    // Bytes: 1
+    // Flags: - - - -
+    //
+    // Load the contents of memory specified by register pair HL into register A, and simultaneously decrement the contents of HL.
     OpCode.byte(0x3A): Instruction.atomic(cycles: 2) { cpu in
-        cpu.a = try cpu.mmu.readByte(address: cpu.hl)
         cpu.hl = cpu.hl &- 1
+        cpu.a = try cpu.mmu.readByte(address: cpu.hl)
     },
     // Decrement the contents of register pair SP by 1.
     OpCode.byte(0x3B): Instruction.atomic(cycles: 2) { cpu in
