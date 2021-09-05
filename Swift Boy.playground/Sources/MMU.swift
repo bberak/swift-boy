@@ -139,6 +139,11 @@ class MemoryBlock: MemoryAccess {
     }
 }
 
+struct Subscriber {
+    let predicate: (UInt16) -> Bool
+    let handler: (UInt8)->Void
+}
+
 public class MMU: MemoryAccess {
     private let cartridge: Cartridge?
     private let bios: MemoryBlock
@@ -146,7 +151,7 @@ public class MMU: MemoryAccess {
     private let echo: MemoryBlock
     private let hram: MemoryBlock
     private var memory: MemoryAccessArray
-    private var subscribers: [UInt16: [(UInt8)->Void]] = [:]
+    private var subscribers: [Subscriber] = []
     private var queue: [Command] = []
     private var cycles: Int16 = 0
     
@@ -158,7 +163,7 @@ public class MMU: MemoryAccess {
         self.hram = MemoryBlock(range: 0xFF80...0xFFFE, readOnly: false)
         self.memory = MemoryAccessArray([
             bios,
-            cartridge,
+            //cartridge,
             wram,
             echo,
             hram,
@@ -172,6 +177,10 @@ public class MMU: MemoryAccess {
         }
         self.subscribe(address: 0xFF46) { byte in
             self.startDMATransfer(byte: byte)
+        }
+        
+        self.subscribe({ $0 == 0x0000 }) { byte in
+            
         }
     }
     
@@ -188,14 +197,12 @@ public class MMU: MemoryAccess {
         }
     }
     
+    func subscribe(_ predicate: @escaping (UInt16) -> Bool, handler: @escaping (UInt8) -> Void) {
+        subscribers.append(Subscriber(predicate: predicate, handler: handler))
+    }
+    
     func subscribe(address: UInt16, handler: @escaping (UInt8)->Void) {
-        let list = self.subscribers[address];
-
-        if list == nil {
-            self.subscribers[address] = [handler]
-        } else {
-            self.subscribers[address]!.append(handler)
-        }
+        self.subscribe({ $0 == address }, handler: handler)
     }
     
     func contains(address: UInt16)-> Bool {
@@ -209,9 +216,9 @@ public class MMU: MemoryAccess {
     func writeByte(address: UInt16, byte: UInt8) throws {
         try memory.writeByte(address: address, byte: byte)
         
-        let callbacks = self.subscribers[address]
-        
-        callbacks?.forEach { $0(byte) }
+        let filtered = subscribers.filter({ $0.predicate(address) })
+                
+        filtered.forEach { $0.handler(byte) }
     }
     
      public func run(for time: Int16) throws {
