@@ -13,6 +13,12 @@ public func readPath(path: URL) -> Data {
     return Data()
 }
 
+public extension Data {
+    func extract(_ range: ClosedRange<Int>) -> [UInt8] {
+        return range.map({ self[$0] })
+    }
+}
+
 public extension Array where Element == UInt8 {
     func toWord() -> UInt16 {
         let hb = self[1]

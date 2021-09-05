@@ -14,12 +14,18 @@ public class Cartridge: MemoryAccess {
         switch self.mbc {
         case .zero:
             self.memory = MemoryAccessArray([
+                // ROM
                 MemoryBlock(range: 0x0000...0x7FFF, buffer: rom.map { $0 }, readOnly: true),
+                // RAM
                 MemoryBlock(range: 0xA000...0xBFFF, readOnly: false)
             ])
         case .one:
             self.memory = MemoryAccessArray([
-                MemoryBlock(range: 0x0000...0x7FFF, buffer: rom.map { $0 }, readOnly: true),
+                // ROM Bank 0
+                MemoryBlock(range: 0x0000...0x3FFF, buffer: rom.extract(0x0000...0x3FFF), readOnly: true),
+                // Switchable ROM Banks
+                MemoryBlock(range: 0x4000...0x7FFF, buffer: rom.extract(0x4000...0x7FFF), readOnly: true),
+                // RAM
                 MemoryBlock(range: 0xA000...0xBFFF, readOnly: false)
             ])
         }
