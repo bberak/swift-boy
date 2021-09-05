@@ -131,6 +131,13 @@ public class LCD: UIViewController {
     }
 }
 
+struct Sprite {
+    let x: UInt8
+    let y: UInt8
+    let index: UInt8
+    let attributes: UInt8
+}
+
 let defaultPalette: [UInt8: Pixel] = [
     0: Pixel.white,
     1: Pixel.lightGray,
@@ -147,7 +154,7 @@ public class PPU {
     private var windowEnabled = false
     private var backgroundTileSet: UInt8 = 0
     private var backgroundTileMap: UInt8 = 0
-    private var spriteSize = [8, 8]
+    private var spriteSize: [UInt8] = [8, 8]
     private var spritesEnabled = false
     private var backgroundEnabled = false
     private var backgroundPalette = defaultPalette
@@ -230,15 +237,26 @@ public class PPU {
                 let bgTileDataPointer: UInt16 = self.backgroundTileSet == 1 ? 0x8000 : 0x9000
                 let bgTileData: [UInt16] = try bgTileIndices.map { idx in
                     if bgTileDataPointer == 0x9000 {
-                        let delta = Int16(Int16(idx.toInt8()) * 16) + Int16(bgY % 8) * 2
+                        let delta = Int16(idx.toInt8()) * 16 + Int16(bgY % 8) * 2
                         let address = bgTileDataPointer.offset(by: delta)
                         return try self.mmu.readWord(address: address)
                     } else {
-                        let offset = UInt16(UInt16(idx) * 16) + UInt16(bgY % 8) * 2
+                        let offset = UInt16(idx) * 16 + UInt16(bgY % 8) * 2
                         let address = bgTileDataPointer &+ offset
                         return try self.mmu.readWord(address: address)
                     }
                 }
+                
+//                let sprites = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
+//                    return Sprite(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
+//                }
+//                let spriteTilePointer: UInt16 = 0x8000
+//                let spritesWithTileData = try sprites.map ({ (s: Sprite) -> (sprite: Sprite, data: [UInt8])  in
+//                    let offset = UInt16(s.index) * 16
+//                    let address = spriteTilePointer &+ offset
+//                    let data = try self.mmu.readBytes(address: address, count: UInt16(self.spriteSize[1]) * 2)
+//                    return (sprite: s, data: data)
+//                })
                 
                 // Drawing Pixels
                 return Command(cycles: 144) {
@@ -256,6 +274,27 @@ public class PPU {
                             pixels.append(self.backgroundPalette[v1 + v2]!)
                         }
                     }
+                    
+//                    for obj in spritesWithTileData {
+//                        let spriteX = obj.sprite.x
+//                        let spriteY = obj.sprite.y
+//                        let sizeX = self.spriteSize[0]
+//                        let sizeY = self.spriteSize[1]
+//                        let palette = obj.sprite.attributes.bit(4) ? self.spritePalette1 : self.spritePalette0
+//
+//                        if bgY >= (spriteY - sizeY) && bgY < spriteY {
+//                            let line = (Int(sizeY) - (Int(spriteY) - Int(bgY))) * 2
+//                            let lsb = obj.data[line]
+//                            let hsb = obj.data[line + 1]
+//
+//                            for idx in (0...7).reversed() {
+//                                let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
+//                                let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
+//
+//                                pixels[Int(spriteX) + idx - Int(sizeX)] = palette[v1 + v2]!
+//                            }
+//                        }
+//                    }
                     
                     for col in 0..<self.lcd.bitmap.width {
                         let bgX = (Int(scx) + col) % pixels.count

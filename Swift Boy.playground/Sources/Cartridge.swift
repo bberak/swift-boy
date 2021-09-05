@@ -1,18 +1,29 @@
 import Foundation
 
+enum MBC: UInt8 {
+    case zero = 0x00
+    case one = 0x01
+}
+
 public class Cartridge: MemoryAccess {
-    private var rom: MemoryBlock
-    private var ram: MemoryBlock
     private var memory: MemoryAccessArray
     private var title: String
+    private let mbc: MBC
     
     public init(rom: Data, title: String) {
-        self.rom = MemoryBlock(range: 0x0000...0x7FFF, buffer: rom.map { $0 }, readOnly: false)
-        self.ram = MemoryBlock(range: 0xA000...0xBFFF, readOnly: false)
-        self.memory = MemoryAccessArray([
-            self.rom,
-            self.ram
-        ])
+        self.mbc = MBC(rawValue: rom[0x0147])!
+        switch self.mbc {
+        case .zero:
+            self.memory = MemoryAccessArray([
+                MemoryBlock(range: 0x0000...0x7FFF, buffer: rom.map { $0 }, readOnly: true),
+                MemoryBlock(range: 0xA000...0xBFFF, readOnly: false)
+            ])
+        case .one:
+            self.memory = MemoryAccessArray([
+                MemoryBlock(range: 0x0000...0x7FFF, buffer: rom.map { $0 }, readOnly: true),
+                MemoryBlock(range: 0xA000...0xBFFF, readOnly: false)
+            ])
+        }
         self.title = title
     }
     

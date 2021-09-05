@@ -6,6 +6,7 @@ public class Clock {
     private let cpu: CPU
     private let fps: Double
     private let frameTime: Double
+    public var printFrameDuration = false
     
     public init(_ mmu: MMU, _ ppu: PPU, _ cpu: CPU) {
         self.mmu = mmu
@@ -19,8 +20,16 @@ public class Clock {
         var next = current + frameTime
         
         DispatchQueue.global(qos: .userInteractive).async {
+            let start = DispatchTime.now()
+            
             try! self.frame()
+            
             let now = DispatchTime.now()
+            
+            if self.printFrameDuration {
+                let ns = now.uptimeNanoseconds - start.uptimeNanoseconds
+                print("ms", ns / 1000 / 1000)
+            }
             
             if now > next {
                 next = now
