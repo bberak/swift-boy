@@ -151,10 +151,10 @@ public class CPU: CustomStringConvertible {
         self.mmu = mmu
         self.ppu = ppu
         self.mmu.subscribe(address: 0xFFFF) { byte in
-            print("Interrupt Enable (R/W):", byte.toHexString())
+            //print("Interrupt Enable (R/W):", byte.toHexString())
         }
         self.mmu.subscribe(address: 0xFF0F) { byte in
-            print("Interrupt Flag (R/W):", byte.toHexString())
+            //print("Interrupt Flag (R/W):", byte.toHexString())
         }
     }
     

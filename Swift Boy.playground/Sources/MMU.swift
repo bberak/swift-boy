@@ -163,7 +163,7 @@ public class MMU: MemoryAccess {
         self.hram = MemoryBlock(range: 0xFF80...0xFFFE, readOnly: false)
         self.memory = MemoryAccessArray([
             bios,
-            //cartridge,
+            cartridge,
             wram,
             echo,
             hram,

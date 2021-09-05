@@ -7,10 +7,9 @@ enum MBC: UInt8 {
 
 public class Cartridge: MemoryAccess {
     private var memory: MemoryAccessArray
-    private var title: String
     private let mbc: MBC
     
-    public init(rom: Data, title: String) {
+    public init(rom: Data) {
         self.mbc = MBC(rawValue: rom[0x0147])!
         switch self.mbc {
         case .zero:
@@ -24,11 +23,10 @@ public class Cartridge: MemoryAccess {
                 MemoryBlock(range: 0xA000...0xBFFF, readOnly: false)
             ])
         }
-        self.title = title
     }
     
-    public convenience init(path: URL, title: String) {
-        self.init(rom: readPath(path: path), title: title)
+    public convenience init(path: URL) {
+        self.init(rom: readPath(path: path))
     }
     
     func contains(address: UInt16) -> Bool {

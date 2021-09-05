@@ -656,8 +656,8 @@ let instructions: [OpCode: Instruction] = [
     //
     // Store the contents of register A into the memory location specified by register pair HL, and simultaneously decrement the contents of HL.
     OpCode.byte(0x32): Instruction.atomic(cycles: 2) { cpu in
-        cpu.hl = cpu.hl &- 1
         try cpu.mmu.writeByte(address: cpu.hl, byte: cpu.a)
+        cpu.hl = cpu.hl &- 1
     },
     // INC SP
     //
@@ -767,8 +767,8 @@ let instructions: [OpCode: Instruction] = [
     //
     // Load the contents of memory specified by register pair HL into register A, and simultaneously decrement the contents of HL.
     OpCode.byte(0x3A): Instruction.atomic(cycles: 2) { cpu in
-        cpu.hl = cpu.hl &- 1
         cpu.a = try cpu.mmu.readByte(address: cpu.hl)
+        cpu.hl = cpu.hl &- 1
     },
     // DEC SP
     //
