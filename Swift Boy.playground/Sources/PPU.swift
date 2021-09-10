@@ -208,13 +208,13 @@ public class PPU {
             self.backgroundPalette[3] = defaultPalette[byte.crumb(3)]
         }
         self.mmu.subscribe(address: 0xFF48) { byte in
-            self.spritePalette0[0] = defaultPalette[byte.crumb(0)]
+            self.spritePalette0[0] = Pixel.transparent
             self.spritePalette0[1] = defaultPalette[byte.crumb(1)]
             self.spritePalette0[2] = defaultPalette[byte.crumb(2)]
             self.spritePalette0[3] = defaultPalette[byte.crumb(3)]
         }
         self.mmu.subscribe(address: 0xFF49) { byte in
-            self.spritePalette1[0] = defaultPalette[byte.crumb(0)]
+            self.spritePalette1[0] = Pixel.transparent
             self.spritePalette1[1] = defaultPalette[byte.crumb(1)]
             self.spritePalette1[2] = defaultPalette[byte.crumb(2)]
             self.spritePalette1[3] = defaultPalette[byte.crumb(3)]
@@ -282,18 +282,20 @@ public class PPU {
                         let sizeY = self.spriteSize[1]
                         let palette = obj.sprite.attributes.bit(4) ? self.spritePalette1 : self.spritePalette0
 
-                        if bgY >= (spriteY - sizeY) && bgY < spriteY {
-                            let line = (Int(sizeY) - (Int(spriteY) - Int(bgY))) * 2
+                        //if bgY >= (spriteY - sizeY) && bgY < spriteY {
+                            let end = Int(self.spriteSize[1]) - 2
+                            let line = Int.random(in: 0...end) //(Int(sizeY) - (Int(spriteY) - Int(bgY))) * 2
                             let lsb = obj.data[line]
                             let hsb = obj.data[line + 1]
 
                             for idx in (0...7).reversed() {
                                 let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
                                 let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
-
-                                pixels[Int(spriteX) + idx - Int(sizeX)] = palette[v1 + v2]!
+                                let x = (idx + Int(spriteX)) % pixels.count
+                                
+                                pixels[x] = palette[v1 + v2]!
                             }
-                        }
+                        //}
                     }
                     
                     for col in 0..<self.lcd.bitmap.width {
