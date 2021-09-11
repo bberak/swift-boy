@@ -13,9 +13,11 @@ class ViewController: UIViewController {
         super.viewDidLoad()
 
         let blargg = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"))
+        let bitOps = Cartridge(path: #fileLiteral(resourceName: "10-bit ops.gb"))
+        let sphl = Cartridge(path: #fileLiteral(resourceName: "03-op sp,hl.gb"))
         let tetris = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
-        let mmu = MMU(blargg)
+        let mmu = MMU(sphl)
         let ppu = PPU(mmu)
         let cpu = CPU(mmu, ppu)
         let clock = Clock(mmu, ppu, cpu)

@@ -140,7 +140,7 @@ class MemoryBlock: MemoryAccess {
 }
 
 struct Subscriber {
-    let predicate: (UInt16) -> Bool
+    let predicate: (UInt16, UInt8) -> Bool
     let handler: (UInt8)->Void
 }
 
@@ -178,10 +178,6 @@ public class MMU: MemoryAccess {
         self.subscribe(address: 0xFF46) { byte in
             self.startDMATransfer(byte: byte)
         }
-        
-        self.subscribe({ $0 == 0x0000 }) { byte in
-            
-        }
     }
     
     // TODO: Make sure only HRAM is accessible to the CPU
@@ -197,12 +193,12 @@ public class MMU: MemoryAccess {
         }
     }
     
-    func subscribe(_ predicate: @escaping (UInt16) -> Bool, handler: @escaping (UInt8) -> Void) {
+    func subscribe(_ predicate: @escaping (UInt16, UInt8) -> Bool, handler: @escaping (UInt8) -> Void) {
         subscribers.append(Subscriber(predicate: predicate, handler: handler))
     }
     
     func subscribe(address: UInt16, handler: @escaping (UInt8)->Void) {
-        self.subscribe({ $0 == address }, handler: handler)
+        self.subscribe({ (a, b) in a == address }, handler: handler)
     }
     
     func contains(address: UInt16)-> Bool {
@@ -216,7 +212,7 @@ public class MMU: MemoryAccess {
     func writeByte(address: UInt16, byte: UInt8) throws {
         try memory.writeByte(address: address, byte: byte)
         
-        let filtered = subscribers.filter({ $0.predicate(address) })
+        let filtered = subscribers.filter({ $0.predicate(address, byte) })
                 
         filtered.forEach { $0.handler(byte) }
     }

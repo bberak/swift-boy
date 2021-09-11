@@ -22,6 +22,8 @@
 		A1B4014E26EB5DB3002F4512 /* CPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4014626EB5DB3002F4512 /* CPU.swift */; };
 		A1B4015226EB5DCE002F4512 /* tetris.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1B4015026EB5DCE002F4512 /* tetris.gb */; };
 		A1B4015326EB5DCE002F4512 /* cpu_instrs.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1B4015126EB5DCE002F4512 /* cpu_instrs.gb */; };
+		A1FB19DA26EC9657004CFE19 /* 10-bit ops.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1FB19D926EC9657004CFE19 /* 10-bit ops.gb */; };
+		A1FB19DC26ECA12A004CFE19 /* 03-op sp,hl.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1FB19DB26ECA12A004CFE19 /* 03-op sp,hl.gb */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +44,8 @@
 		A1B4014626EB5DB3002F4512 /* CPU.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CPU.swift; sourceTree = "<group>"; };
 		A1B4015026EB5DCE002F4512 /* tetris.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = tetris.gb; sourceTree = "<group>"; };
 		A1B4015126EB5DCE002F4512 /* cpu_instrs.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = cpu_instrs.gb; sourceTree = "<group>"; };
+		A1FB19D926EC9657004CFE19 /* 10-bit ops.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "10-bit ops.gb"; sourceTree = "<group>"; };
+		A1FB19DB26ECA12A004CFE19 /* 03-op sp,hl.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "03-op sp,hl.gb"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,6 +108,8 @@
 		A1B4014F26EB5DCE002F4512 /* ROMs */ = {
 			isa = PBXGroup;
 			children = (
+				A1FB19DB26ECA12A004CFE19 /* 03-op sp,hl.gb */,
+				A1FB19D926EC9657004CFE19 /* 10-bit ops.gb */,
 				A1B4015026EB5DCE002F4512 /* tetris.gb */,
 				A1B4015126EB5DCE002F4512 /* cpu_instrs.gb */,
 			);
@@ -169,10 +175,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1B4011E26EB593A002F4512 /* LaunchScreen.storyboard in Resources */,
+				A1FB19DA26EC9657004CFE19 /* 10-bit ops.gb in Resources */,
 				A1B4011B26EB593A002F4512 /* Assets.xcassets in Resources */,
 				A1B4015326EB5DCE002F4512 /* cpu_instrs.gb in Resources */,
 				A1B4011926EB5937002F4512 /* Main.storyboard in Resources */,
 				A1B4015226EB5DCE002F4512 /* tetris.gb in Resources */,
+				A1FB19DC26ECA12A004CFE19 /* 03-op sp,hl.gb in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
