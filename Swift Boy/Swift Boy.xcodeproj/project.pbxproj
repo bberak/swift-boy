@@ -128,15 +128,15 @@
 			children = (
 				A18B2B6C26EDD32F00A148F5 /* 01-special.gb */,
 				A18B2B6A26EDD32E00A148F5 /* 02-interrupts.gb */,
+				A1FB19DB26ECA12A004CFE19 /* 03-op sp,hl.gb */,
 				A18B2B6F26EDD32F00A148F5 /* 04-op r,imm.gb */,
 				A18B2B6B26EDD32F00A148F5 /* 05-op rp.gb */,
 				A18B2B7026EDD32F00A148F5 /* 06-ld r,r.gb */,
 				A18B2B6926EDD32E00A148F5 /* 07-jr,jp,call,ret,rst.gb */,
 				A18B2B7126EDD32F00A148F5 /* 08-misc instrs.gb */,
 				A18B2B6E26EDD32F00A148F5 /* 09-op r,r.gb */,
-				A18B2B6D26EDD32F00A148F5 /* 11-op a,(hl).gb */,
-				A1FB19DB26ECA12A004CFE19 /* 03-op sp,hl.gb */,
 				A1FB19D926EC9657004CFE19 /* 10-bit ops.gb */,
+				A18B2B6D26EDD32F00A148F5 /* 11-op a,(hl).gb */,
 				A1B4015026EB5DCE002F4512 /* tetris.gb */,
 				A1B4015126EB5DCE002F4512 /* cpu_instrs.gb */,
 			);
