@@ -24,6 +24,7 @@ enum MemoryAccessError: Error {
 }
 
 protocol MemoryAccess: class {
+    
     func contains(address: UInt16) -> Bool
     func readByte(address: UInt16) throws -> UInt8
     func writeByte(address: UInt16, byte: UInt8) throws -> Void
@@ -48,8 +49,72 @@ extension MemoryAccess {
     }
 }
 
-class MemoryAccessArray: MemoryAccess {
+class MemoryBlock: MemoryAccess {
+    private let range: ClosedRange<UInt16>
+    private var buffer: [UInt8]
+    private var readOnly: Bool
+    var enabled: Bool
+    
+    init(range: ClosedRange<UInt16>, buffer: [UInt8], readOnly: Bool, enabled: Bool) {
+        self.range = range
+        self.buffer = buffer
+        self.readOnly = readOnly
+        self.enabled = enabled
+    }
+    
+    convenience init(range: ClosedRange<UInt16>, readOnly: Bool, enabled: Bool) {
+        self.init(range: range, buffer: [UInt8](repeating: 255, count: range.count), readOnly: readOnly, enabled: enabled)
+    }
+    
+    convenience init(range: ClosedRange<UInt16>, block: MemoryBlock) {
+        self.init(range: range, buffer: block.buffer, readOnly: block.readOnly, enabled: block.enabled)
+    }
+    
+    func contains(address: UInt16)-> Bool {
+        return range.contains(address)
+    }
+    
+    func readByte(address: UInt16) throws -> UInt8 {
+        if range.contains(address) == false {
+            throw MemoryAccessError.addressOutOfRange
+        }
+        
+        if enabled == false {
+            return 0xFF
+        }
+        
+        let index = Int(address - range.lowerBound)
+        
+        return buffer[index % buffer.count]
+    }
+    
+    func writeByte(address: UInt16, byte: UInt8) throws {
+        if range.contains(address) == false {
+            throw MemoryAccessError.addressOutOfRange
+        }
+        
+        if readOnly {
+            return
+        }
+        
+        if enabled == false {
+            return
+        }
+        
+        let index = Int(address - range.lowerBound)
+        
+        buffer[index % buffer.count] = byte
+    }
+}
+
+struct Subscriber {
+    let predicate: (UInt16, UInt8) -> Bool
+    let handler: (UInt8)->Void
+}
+
+public class MemoryAccessArray: MemoryAccess {
     private var arr: [MemoryAccess]
+    private var subscribers: [Subscriber] = []
     
     init(_ arr: [MemoryAccess]) {
         self.arr = arr
@@ -84,97 +149,50 @@ class MemoryAccessArray: MemoryAccess {
     
     func writeByte(address: UInt16, byte: UInt8) throws {
         if let block = find(address: address) {
-            return try block.writeByte(address: address, byte: byte)
+            try block.writeByte(address: address, byte: byte)
+            let subs = subscribers.filter({ $0.predicate(address, byte) })
+            subs.forEach { $0.handler(byte) }
+            return
         }
         
         throw MemoryAccessError.addressOutOfRange
     }
-}
-
-class MemoryBlock: MemoryAccess {
-    private let range: ClosedRange<UInt16>
-    private var buffer: [UInt8]
-    private var readOnly: Bool
     
-    init(range: ClosedRange<UInt16>, buffer: [UInt8], readOnly: Bool) {
-        self.range = range
-        self.buffer = buffer
-        self.readOnly = readOnly
+    internal func subscribe(_ predicate: @escaping (UInt16, UInt8) -> Bool, handler: @escaping (UInt8) -> Void) {
+        subscribers.append(Subscriber(predicate: predicate, handler: handler))
     }
     
-    convenience init(range: ClosedRange<UInt16>, readOnly: Bool) {
-        self.init(range: range, buffer: [UInt8](repeating: 255, count: range.count), readOnly: readOnly)
-    }
-    
-    convenience init(range: ClosedRange<UInt16>, block: MemoryBlock) {
-        self.init(range: range, buffer: block.buffer, readOnly: block.readOnly)
-    }
-    
-    func contains(address: UInt16)-> Bool {
-        return range.contains(address)
-    }
-    
-    func readByte(address: UInt16) throws -> UInt8 {
-        if range.contains(address) == false {
-            throw MemoryAccessError.addressOutOfRange
-        }
-        
-        let index = Int(address - range.lowerBound)
-        
-        return buffer[index % buffer.count]
-    }
-    
-    func writeByte(address: UInt16, byte: UInt8) throws {
-        if readOnly {
-            return
-        }
-        
-        if range.contains(address) == false {
-            throw MemoryAccessError.addressOutOfRange
-        }
-        
-        let index = Int(address - range.lowerBound)
-        
-        buffer[index % buffer.count] = byte
+    internal func subscribe(address: UInt16, handler: @escaping (UInt8)->Void) {
+        self.subscribe({ (a, b) in a == address }, handler: handler)
     }
 }
 
-struct Subscriber {
-    let predicate: (UInt16, UInt8) -> Bool
-    let handler: (UInt8)->Void
-}
-
-public class MMU: MemoryAccess {
-    private let cartridge: Cartridge?
-    private let bios: MemoryBlock
-    private let wram: MemoryBlock
-    private let echo: MemoryBlock
-    private let hram: MemoryBlock
-    private var memory: MemoryAccessArray
-    private var subscribers: [Subscriber] = []
+public class MMU: MemoryAccessArray {
     private var queue: [Command] = []
     private var cycles: Int16 = 0
     
     public init(_ cartridge: Cartridge) {
-        self.cartridge = cartridge
-        self.bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true)
-        self.wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false)
-        self.echo = MemoryBlock(range: 0xE000...0xFDFF, block: wram)
-        self.hram = MemoryBlock(range: 0xFF80...0xFFFE, readOnly: false)
-        self.memory = MemoryAccessArray([
+        let bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
+        let wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false, enabled: true)
+        let echo = MemoryBlock(range: 0xE000...0xFDFF, block: wram)
+        let hram = MemoryBlock(range: 0xFF80...0xFFFE, readOnly: false, enabled: true)
+        let rest = MemoryBlock(range: 0x0000...0xFFFF, readOnly: false, enabled: true)
+        
+        super.init([
             bios,
             cartridge,
             wram,
             echo,
             hram,
-            // Catch-all
-            MemoryBlock(range: 0x0000...0xFFFF, readOnly: false)
+            rest
         ])
+        
         self.subscribe(address: 0xFF50) { byte in
             if byte == 1 {
-                self.memory.remove(item: self.bios)
+                self.remove(item: bios)
             }
         }
+        
         self.subscribe(address: 0xFF46) { byte in
             self.startDMATransfer(byte: byte)
         }
@@ -191,30 +209,6 @@ public class MMU: MemoryAccess {
                 return nil
             })
         }
-    }
-    
-    func subscribe(_ predicate: @escaping (UInt16, UInt8) -> Bool, handler: @escaping (UInt8) -> Void) {
-        subscribers.append(Subscriber(predicate: predicate, handler: handler))
-    }
-    
-    func subscribe(address: UInt16, handler: @escaping (UInt8)->Void) {
-        self.subscribe({ (a, b) in a == address }, handler: handler)
-    }
-    
-    func contains(address: UInt16)-> Bool {
-        return memory.contains(address: address)
-    }
-    
-    func readByte(address: UInt16) throws -> UInt8 {
-        return try memory.readByte(address: address)
-    }
-    
-    func writeByte(address: UInt16, byte: UInt8) throws {
-        try memory.writeByte(address: address, byte: byte)
-        
-        let filtered = subscribers.filter({ $0.predicate(address, byte) })
-                
-        filtered.forEach { $0.handler(byte) }
     }
     
      public func run(for time: Int16) throws {

@@ -137,8 +137,8 @@
 				A18B2B6E26EDD32F00A148F5 /* 09-op r,r.gb */,
 				A1FB19D926EC9657004CFE19 /* 10-bit ops.gb */,
 				A18B2B6D26EDD32F00A148F5 /* 11-op a,(hl).gb */,
-				A1B4015026EB5DCE002F4512 /* tetris.gb */,
 				A1B4015126EB5DCE002F4512 /* cpu_instrs.gb */,
+				A1B4015026EB5DCE002F4512 /* tetris.gb */,
 			);
 			path = ROMs;
 			sourceTree = "<group>";
