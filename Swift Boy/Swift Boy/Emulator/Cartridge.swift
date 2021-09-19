@@ -22,22 +22,22 @@ public class Cartridge: MemoryAccessArray {
             let ramB = MemoryBlock(range: 0xA000...0xBFFF, readOnly: false, enabled: false)
             
             super.init([rom0, romB, ramB])
-        
-            self.subscribe({ $0 <= 0x1FFF && ($1 & 0x0A) == 0x0A }) { _ in
-                ramB.enabled = true
+            
+            self.subscribe({ (a, _) in a <= 0x1FFF }) { byte in
+                print("RAM Enabled", byte.toHexString())
+                ramB.enabled = (byte & 0x0A) == 0x0A
             }
             
             self.subscribe({ (a, _) in a >= 0x2000 && a <= 0x3FFF }) { bank in
-                // ROM Bank Number (Write Only)
-                // Set lower 5 bits of rom bank
+                print("ROM Bank Number (Write Only)", bank)
             }
             
-            self.subscribe({ (a, _) in a >= 0x6000 && a <= 0x7FFF }) { bank in
-                // ROM/RAM Mode Select (Write Only)
+            self.subscribe({ (a, _) in a >= 0x6000 && a <= 0x7FFF }) { mode in
+                print("ROM/RAM Mode Select (Write Only)", mode)
             }
             
             self.subscribe({ (a, _) in a >= 0x4000 && a <= 0x5FFF }) { bank in
-                // RAM Bank Number or Upper Bits of ROM Bank Number (Write Only)
+                print("RAM Bank Number or Upper Bits of ROM Bank Number (Write Only)", bank)
             }
         }
     }

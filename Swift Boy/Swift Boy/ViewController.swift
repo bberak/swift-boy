@@ -8,9 +8,65 @@
 
 import UIKit
 
+func testSUB(_ a: UInt8, _ b: UInt8, _ expected: String) {
+    let result = sub(a, b);
+    let resultString = "A←\(result.value.toHexString())h,Z←\(result.zero ? 1 : 0),H←\(result.halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(result.carry ? 1 : 0)"
+    let passed = expected == resultString
+    
+    print("sub \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "failed \(expected) vs \(resultString)")")
+}
+
+func testCP(_ a: UInt8, _ b: UInt8, _ expected: String) {
+    let result = sub(a, b);
+    let resultString = "Z←\(result.zero ? 1 : 0),H←\(result.halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(result.carry ? 1 : 0)"
+    let passed = expected == resultString
+    
+    print("cp \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "failed \(expected) vs \(resultString)")")
+}
+
+func testADD(_ a: UInt8, _ b: UInt8, _ expected: String) {
+    let result = add(a, b);
+    let resultString = "A←\(result.value.toHexString())h,Z←\(result.zero ? 1 : 0),H←\(result.halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(result.carry ? 1 : 0)"
+    let passed = expected == resultString
+    
+    print("add \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "failed \(expected) vs \(resultString)")")
+}
+
+func testADC(_ a: UInt8, _ b: UInt8, _ carry: Bool, _ expected: String) {
+    let increment = add(b, carry ? 1 : 0)
+    let result = add(a, increment.value)
+    let halfCarry = result.halfCarry || increment.halfCarry
+    let carry = result.carry || increment.carry
+    
+    let resultString = "A←\(result.value.toHexString())h,Z←\(result.zero ? 1 : 0),H←\(halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(carry ? 1 : 0)"
+    let passed = expected == resultString
+    
+    print("adc \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "failed \(expected) vs \(resultString)")")
+}
+
 class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
+                
+        testSUB(0x3E, 0x3E, "A←00h,Z←1,H←0,N←1,CY←0")
+        testSUB(0x3E, 0x0F, "A←2Fh,Z←0,H←1,N←1,CY←0")
+        testSUB(0x3E, 0x40, "A←FEh,Z←0,H←0,N←1,CY←1")
+        print("")
+        
+        testCP(0x3C, 0x2F, "Z←0,H←1,N←1,CY←0")
+        testCP(0x3C, 0x3C, "Z←1,H←0,N←1,CY←0")
+        testCP(0x3C, 0x40, "Z←0,H←0,N←1,CY←1")
+        print("")
+
+        testADD(0x3A, 0xC6, "A←00h,Z←1,H←1,N←0,CY←1")
+        testADD(0x3C, 0xFF, "A←3Bh,Z←0,H←1,N←0,CY←1")
+        testADD(0x3C, 0x12, "A←4Eh,Z←0,H←0,N←0,CY←0")
+        print("")
+        
+        testADC(0xE1, 0x0F, true, "A←F1h,Z←0,H←1,N←0,CY←0")
+        testADC(0xE1, 0x3B, true, "A←1Dh,Z←0,H←0,N←0,CY←1")
+        testADC(0xE1, 0x1E, true, "A←00h,Z←1,H←1,N←0,CY←1")
+        print("")
         
         let cpuTestXX = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"))
         let cpuTest01 = Cartridge(path: #fileLiteral(resourceName: "01-special.gb"))
@@ -26,12 +82,11 @@ class ViewController: UIViewController {
         let cpuTest11 = Cartridge(path: #fileLiteral(resourceName: "11-op a,(hl).gb"))
         let tetris = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
-        let mmu = MMU(cpuTest07)
+        let mmu = MMU(cpuTest01)
         let ppu = PPU(mmu)
         let cpu = CPU(mmu, ppu)
         let clock = Clock(mmu, ppu, cpu)
 
-        //clock.printFrameDuration = true
         clock.start()
         
         view.addSubview(ppu.lcd.view)
