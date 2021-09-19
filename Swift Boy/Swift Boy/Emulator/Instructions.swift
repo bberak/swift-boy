@@ -1896,13 +1896,13 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register B and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x98): Instruction.atomic(cycles: 1) { cpu in
-        let decrement = sub(cpu.b, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, decrement.value)
+        let increment = add(cpu.b, cpu.flags.carry ? 1 : 0)
+        let result = sub(cpu.a, increment.value)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
-        cpu.flags.carry = result.carry || decrement.carry
+        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
+        cpu.flags.carry = result.carry || increment.carry
     },
     // SBC A, C
     //
@@ -1912,13 +1912,13 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register C and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x99): Instruction.atomic(cycles: 1) { cpu in
-        let decrement = sub(cpu.c, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, decrement.value)
+        let increment = add(cpu.c, cpu.flags.carry ? 1 : 0)
+        let result = sub(cpu.a, increment.value)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
-        cpu.flags.carry = result.carry || decrement.carry
+        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
+        cpu.flags.carry = result.carry || increment.carry
     },
     // SBC A, D
     //
@@ -1928,13 +1928,13 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register D and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x9A): Instruction.atomic(cycles: 1) { cpu in
-        let decrement = sub(cpu.d, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, decrement.value)
+        let increment = add(cpu.d, cpu.flags.carry ? 1 : 0)
+        let result = sub(cpu.a, increment.value)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
-        cpu.flags.carry = result.carry || decrement.carry
+        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
+        cpu.flags.carry = result.carry || increment.carry
     },
     // SBC A, E
     //
@@ -1944,13 +1944,13 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register E and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x9B): Instruction.atomic(cycles: 1) { cpu in
-        let decrement = sub(cpu.e, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, decrement.value)
+        let increment = add(cpu.e, cpu.flags.carry ? 1 : 0)
+        let result = sub(cpu.a, increment.value)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
-        cpu.flags.carry = result.carry || decrement.carry
+        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
+        cpu.flags.carry = result.carry || increment.carry
     },
     // SBC A, H
     //
@@ -1960,13 +1960,13 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register H and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x9C): Instruction.atomic(cycles: 1) { cpu in
-        let decrement = sub(cpu.h, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, decrement.value)
+        let increment = add(cpu.h, cpu.flags.carry ? 1 : 0)
+        let result = sub(cpu.a, increment.value)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
-        cpu.flags.carry = result.carry || decrement.carry
+        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
+        cpu.flags.carry = result.carry || increment.carry
     },
     // SBC A, L
     //
@@ -1976,13 +1976,13 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register L and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x9D): Instruction.atomic(cycles: 1) { cpu in
-        let decrement = sub(cpu.l, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, decrement.value)
+        let increment = add(cpu.l, cpu.flags.carry ? 1 : 0)
+        let result = sub(cpu.a, increment.value)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
-        cpu.flags.carry = result.carry || decrement.carry
+        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
+        cpu.flags.carry = result.carry || increment.carry
     },
     // SBC A, (HL)
     //
@@ -1993,13 +1993,13 @@ let instructions: [OpCode: Instruction] = [
     // Subtract the contents of memory specified by register pair HL and the carry flag CY from the contents of register A, and store the results in register A.
     OpCode.byte(0x9E): Instruction.atomic(cycles: 2) { cpu in
         let data = try cpu.mmu.readByte(address: cpu.hl)
-        let decrement = sub(data, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, decrement.value)
+        let increment = add(data, cpu.flags.carry ? 1 : 0)
+        let result = sub(cpu.a, increment.value)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
-        cpu.flags.carry = result.carry || decrement.carry
+        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
+        cpu.flags.carry = result.carry || increment.carry
     },
     // SBC A, A
     //
@@ -2009,13 +2009,13 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register A and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x9F): Instruction.atomic(cycles: 1) { cpu in
-        let decrement = sub(cpu.a, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, decrement.value)
+        let increment = add(cpu.a, cpu.flags.carry ? 1 : 0)
+        let result = sub(cpu.a, increment.value)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
-        cpu.flags.carry = result.carry || decrement.carry
+        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
+        cpu.flags.carry = result.carry || increment.carry
     },
     // AND B
     //
@@ -2959,13 +2959,13 @@ let instructions: [OpCode: Instruction] = [
     // Subtract the contents of the 8-bit immediate operand d8 and the carry flag CY from the contents of register A, and store the results in register A.
     OpCode.byte(0xDE): Instruction.atomic(cycles: 2) { cpu in
         let data = try cpu.readNextByte()
-        let decrement = sub(data, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, decrement.value)
+        let increment = add(data, cpu.flags.carry ? 1 : 0)
+        let result = sub(cpu.a, increment.value)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || decrement.halfCarry
-        cpu.flags.carry = result.carry || decrement.carry
+        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
+        cpu.flags.carry = result.carry || increment.carry
     },
     // RST 3
     //

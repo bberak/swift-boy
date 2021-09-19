@@ -16,6 +16,17 @@ func testSUB(_ a: UInt8, _ b: UInt8, _ expected: String) {
     print("sub \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "failed \(expected) vs \(resultString)")")
 }
 
+func testSBC(_ a: UInt8, _ b: UInt8, _ carry: Bool, _ expected: String) {
+    let increment = add(b, carry ? 1 : 0)
+    let result = sub(a, increment.value)
+    let halfCarry = result.halfCarry || increment.halfCarry
+    let carry = result.carry || increment.carry
+    let resultString = "A←\(result.value.toHexString())h,Z←\(result.zero ? 1 : 0),H←\(halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(carry ? 1 : 0)"
+    let passed = expected == resultString
+    
+    print("sbc \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "failed \(expected) vs \(resultString)")")
+}
+
 func testCP(_ a: UInt8, _ b: UInt8, _ expected: String) {
     let result = sub(a, b);
     let resultString = "Z←\(result.zero ? 1 : 0),H←\(result.halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(result.carry ? 1 : 0)"
@@ -37,7 +48,6 @@ func testADC(_ a: UInt8, _ b: UInt8, _ carry: Bool, _ expected: String) {
     let result = add(a, increment.value)
     let halfCarry = result.halfCarry || increment.halfCarry
     let carry = result.carry || increment.carry
-    
     let resultString = "A←\(result.value.toHexString())h,Z←\(result.zero ? 1 : 0),H←\(halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(carry ? 1 : 0)"
     let passed = expected == resultString
     
@@ -51,6 +61,11 @@ class ViewController: UIViewController {
         testSUB(0x3E, 0x3E, "A←00h,Z←1,H←0,N←1,CY←0")
         testSUB(0x3E, 0x0F, "A←2Fh,Z←0,H←1,N←1,CY←0")
         testSUB(0x3E, 0x40, "A←FEh,Z←0,H←0,N←1,CY←1")
+        print("")
+        
+        testSBC(0x3B, 0x2A, true, "A←10h,Z←0,H←0,N←1,CY←0")
+        testSBC(0x3B, 0x3A, true, "A←00h,Z←1,H←0,N←1,CY←0")
+        testSBC(0x3B, 0x4F, true, "A←EBh,Z←0,H←1,N←1,CY←1")
         print("")
         
         testCP(0x3C, 0x2F, "Z←0,H←1,N←1,CY←0")
@@ -82,7 +97,7 @@ class ViewController: UIViewController {
         let cpuTest11 = Cartridge(path: #fileLiteral(resourceName: "11-op a,(hl).gb"))
         let tetris = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
-        let mmu = MMU(cpuTest01)
+        let mmu = MMU(cpuTest03)
         let ppu = PPU(mmu)
         let cpu = CPU(mmu, ppu)
         let clock = Clock(mmu, ppu, cpu)
