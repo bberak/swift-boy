@@ -140,8 +140,9 @@ public func add(_ num1: UInt8, _ num2: UInt8) -> ByteOp {
 
 public func sub(num1: UInt8, num2: UInt8) -> ByteOp {
     let complement: UInt8 = ~num2 &+ 1
-    let result = add(num1, complement)
-    return ByteOp(value: result.value, halfCarry: result.halfCarry, carry: result.carry, subtract: true)
+    let value: UInt8 = num1 &+ complement
+    
+    return ByteOp(value: value, halfCarry: (num2 & 0x0F) > (num1 & 0x0F), carry: num2 > num1, subtract: true)
 }
 
 public func sub(_ num1: UInt8, _ num2: UInt8) -> ByteOp {
@@ -172,8 +173,9 @@ public func add(_ num1: UInt16, _ num2: UInt16) -> WordOp {
 
 public func sub(num1: UInt16, num2: UInt16) -> WordOp {
     let complement: UInt16 = ~num2 &+ 1
-    let result = add(num1, complement)
-    return WordOp(value: result.value, halfCarry: result.halfCarry, carry: result.carry, subtract: true)
+    let value: UInt16 = num1 &+ complement
+    
+    return WordOp(value: value, halfCarry: (num2 & 0x0FFF) > (num1 & 0x0FFF), carry: num2 > num1, subtract: true)
 }
 
 public func sub(_ num1: UInt16, _ num2: UInt16) -> WordOp {
