@@ -681,7 +681,7 @@ let instructions: [OpCode: Instruction] = [
         let address = cpu.hl
         let byte = try cpu.mmu.readByte(address: address)
         let result = add(byte, 1)
-        try cpu.mmu.writeByte(address: address, byte: byte)
+        try cpu.mmu.writeByte(address: address, byte: result.value)
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -697,7 +697,7 @@ let instructions: [OpCode: Instruction] = [
         let address = cpu.hl
         let byte = try cpu.mmu.readByte(address: address)
         let result = sub(byte, 1)
-        try cpu.mmu.writeByte(address: address, byte: byte)
+        try cpu.mmu.writeByte(address: address, byte: result.value)
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry

@@ -97,7 +97,7 @@ class ViewController: UIViewController {
         let cpuTest11 = Cartridge(path: #fileLiteral(resourceName: "11-op a,(hl).gb"))
         let tetris = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
-        let mmu = MMU(cpuTest03)
+        let mmu = MMU(cpuTest11)
         let ppu = PPU(mmu)
         let cpu = CPU(mmu, ppu)
         let clock = Clock(mmu, ppu, cpu)

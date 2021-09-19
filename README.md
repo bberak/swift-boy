@@ -11,7 +11,6 @@ let test01 = Cartridge(path: #fileLiteral(resourceName: "01-special.gb"))
 
 
 Passed
-Failed #10Ì
 
 let test02 = Cartridge(path: #fileLiteral(resourceName: "02-interrupts.gb"))
 
@@ -19,13 +18,15 @@ let test03 = Cartridge(path: #fileLiteral(resourceName: "03-op sp,hl.gb"))
 
 03-op sp,hl
 
->? >? ?? ?? 
+E8 E8 F8 F8 
+Failed
 
 let test04 = Cartridge(path: #fileLiteral(resourceName: "04-op r,imm.gb"))
 
 04-op r,imm
 
-?> == => 
+
+Passed
 
 let test05 = Cartridge(path: #fileLiteral(resourceName: "05-op rp.gb"))
 
@@ -33,7 +34,6 @@ let test05 = Cartridge(path: #fileLiteral(resourceName: "05-op rp.gb"))
 
 
 Passed
-Failed #10Ì
 
 let test06 = Cartridge(path: #fileLiteral(resourceName: "06-ld r,r.gb"))
 
@@ -41,12 +41,35 @@ let test06 = Cartridge(path: #fileLiteral(resourceName: "06-ld r,r.gb"))
 
 
 Passed
-Failed #10Ì
 
 let test07 = Cartridge(path: #fileLiteral(resourceName: "07-jr,jp,call,ret,rst.gb"))
 
 07-jr,jp,call,ret,rst
 
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Interrupt Enable (R/W): 00
+Fatal error: 'try!' expression unexpectedly raised an error: Swift_Boy.CPUError.instructionNotImplemented(0x76): file /Users/Boris/Dev/iOS/swift-boy/Swift Boy/Swift Boy/Emulator/Clock.swift, line 25
+2021-09-19 19:19:48.500472+1000 Swift Boy[35973:2243086] Fatal error: 'try!' expression unexpectedly raised an error: Swift_Boy.CPUError.instructionNotImplemented(0x76): file /Users/Boris/Dev/iOS/swift-boy/Swift Boy/Swift Boy/Emulator/Clock.swift, line 25
 
 let test08 = Cartridge(path: #fileLiteral(resourceName: "08-misc instrs.gb"))
 
@@ -54,13 +77,13 @@ let test08 = Cartridge(path: #fileLiteral(resourceName: "08-misc instrs.gb"))
 
 
 Passed
-Failed #10Ì
 
 let test09 = Cartridge(path: #fileLiteral(resourceName: "09-op r,r.gb"))
 
 09-op r,r
 
-;? ;@ ;: ;; ;< ;= ;? @7 @8 @9 @: @; @< @> @? @@ @: @; @< @= @? 7< 7= 8< 8= 9< 9= := 
+
+Passed
 
 let test10 = Cartridge(path: #fileLiteral(resourceName: "10-bit ops.gb"))
 
@@ -68,11 +91,11 @@ let test10 = Cartridge(path: #fileLiteral(resourceName: "10-bit ops.gb"))
 
 
 Passed
-Failed #10Ì
 
 let test11 = Cartridge(path: #fileLiteral(resourceName: "11-op a,(hl).gb"))
 
 11-op a,(hl)
 
-;> @= @> :< :; 
+
+Passed
 ```
