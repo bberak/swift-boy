@@ -19,14 +19,6 @@ public extension Data {
     }
 }
 
-public extension Array where Element == UInt8 {
-    func toWord() -> UInt16 {
-        let hb = self[1]
-        let lb = self[0]
-        return UInt16(hb) << 8 + UInt16(lb)
-    }
-}
-
 extension Array {
     func chunked(into size: Int) -> [[Element]] {
         return stride(from: 0, to: count, by: size).map {
@@ -35,31 +27,11 @@ extension Array {
     }
 }
 
-public func &+(left: UInt16, right: Int8) -> UInt16 {
-    return left.offset(by: right)
-}
-
-public extension UInt16 {
-    func toBytes() -> [UInt8] {
-        return [UInt8(0x00FF & self), UInt8((0xFF00 & self) >> 8)]
-    }
-    
-    func toHexString() -> String {
-        let bytes = toBytes()
-        return String(format:"%02X", bytes[1]) + String(format:"%02X", bytes[0])
-    }
-    
-    func bit(_ pos: UInt8) -> Bool {
-        let mask = UInt16(0x0001 << pos)
-        return (self & mask) == mask
-    }
-    
-    func offset(by delta: Int8) -> UInt16 {
-        return delta > 0 ? self &+ UInt16(delta.toUInt8()) : self &- UInt16(delta.toUInt8())
-    }
-    
-    func offset(by delta: Int16) -> UInt16 {
-        return delta > 0 ? self &+ delta.toUInt16() : self &- delta.toUInt16()
+public extension Array where Element == UInt8 {
+    func toWord() -> UInt16 {
+        let hb = self[1]
+        let lb = self[0]
+        return UInt16(hb) << 8 + UInt16(lb)
     }
 }
 
@@ -110,9 +82,33 @@ public extension Int8 {
     }
 }
 
+public extension UInt16 {
+    func toBytes() -> [UInt8] {
+        return [UInt8(0x00FF & self), UInt8((0xFF00 & self) >> 8)]
+    }
+    
+    func toHexString() -> String {
+        let bytes = toBytes()
+        return String(format:"%02X", bytes[1]) + String(format:"%02X", bytes[0])
+    }
+    
+    func bit(_ pos: UInt8) -> Bool {
+        let mask = UInt16(0x0001 << pos)
+        return (self & mask) == mask
+    }
+    
+    func offset(by delta: Int8) -> UInt16 {
+        return offset(by: Int16(delta))
+    }
+
+    func offset(by delta: Int16) -> UInt16 {
+        return delta > 0 ? self &+ delta.toUInt16() : self &- delta.toUInt16()
+    }
+}
+
 public extension Int16 {
     func toUInt16() -> UInt16 {
-        return self < 0 ? UInt16(self * -1) : UInt16(self)
+        return self > 0 ? UInt16(self) : UInt16(self * -1)
     }
 }
 
@@ -126,27 +122,22 @@ public struct ByteOp {
     }
 }
 
-public func add(num1: UInt8, num2: UInt8) -> ByteOp {
-    let value: UInt8 = num1 &+ num2
-    let halfCarry = (((num1 & 0x0F) + (num2 & 0x0F)) & 0x10) == 0x10
-    let carry = value < num1 || value < num2
+public func add(_ num1: UInt8, _ num2: UInt8, carry: Bool = false) -> ByteOp {
+    let cy: UInt8 = carry ? 1 : 0
+    let value: UInt8 = num1 &+ num2 &+ cy
+    let halfCarry = (num1 & 0x0F) + (num2 & 0x0F) + cy > 0x0F
+    let carry = UInt16(num1) + UInt16(num2) + UInt16(cy) > 0xFF
     
     return ByteOp(value: value, halfCarry: halfCarry, carry: carry, subtract: false)
 }
 
-public func add(_ num1: UInt8, _ num2: UInt8) -> ByteOp {
-    return add(num1: num1, num2: num2)
-}
-
-public func sub(num1: UInt8, num2: UInt8) -> ByteOp {
-    let complement: UInt8 = ~num2 &+ 1
-    let value: UInt8 = num1 &+ complement
+public func sub(_ num1: UInt8, _ num2: UInt8, carry: Bool = false) -> ByteOp {
+    let cy: UInt8 = carry ? 1 : 0
+    let value: UInt8 = num1 &- num2 &- cy
+    let halfCarry = ((num1 & 0x0F) &- (num2 & 0x0F) &- cy) & 0x10 != 0x00
+    let carry = UInt16(num1) < UInt16(num2) + UInt16(cy)
     
-    return ByteOp(value: value, halfCarry: (num2 & 0x0F) > (num1 & 0x0F), carry: num2 > num1, subtract: true)
-}
-
-public func sub(_ num1: UInt8, _ num2: UInt8) -> ByteOp {
-    return sub(num1: num1, num2: num2)
+    return ByteOp(value: value, halfCarry: halfCarry, carry: carry, subtract: true)
 }
 
 public struct WordOp {
@@ -159,27 +150,17 @@ public struct WordOp {
     }
 }
 
-public func add(num1: UInt16, num2: UInt16) -> WordOp {
+public func checkCarry(_ num1: UInt16, _ num2: UInt16, carryBit: UInt8) -> Bool {
+    let mask = UInt16(0xFFFF) >> (15 - carryBit)
+    return (num1 & mask) + (num2 & mask) > mask
+}
+
+public func add(_ num1: UInt16, _ num2: UInt16, carryBit: UInt8) -> WordOp {
     let value: UInt16 = num1 &+ num2
-    let halfCarry = (((num1 & 0x0FFF) + (num2 & 0x0FFF)) & 0x1000) == 0x1000
-    let carry = value < num1 || value < num2
-    
+    let halfCarry = checkCarry(num1, num2, carryBit: carryBit)
+    let carry = num1 > 0xFFFF - num2
+
     return WordOp(value: value, halfCarry: halfCarry, carry: carry, subtract: false)
-}
-
-public func add(_ num1: UInt16, _ num2: UInt16) -> WordOp {
-    return add(num1: num1, num2: num2)
-}
-
-public func sub(num1: UInt16, num2: UInt16) -> WordOp {
-    let complement: UInt16 = ~num2 &+ 1
-    let value: UInt16 = num1 &+ complement
-    
-    return WordOp(value: value, halfCarry: (num2 & 0x0FFF) > (num1 & 0x0FFF), carry: num2 > num1, subtract: true)
-}
-
-public func sub(_ num1: UInt16, _ num2: UInt16) -> WordOp {
-    return sub(num1: num1, num2: num2)
 }
 
 public class DynamicIterator<T> : IteratorProtocol {

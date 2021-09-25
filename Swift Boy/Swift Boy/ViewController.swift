@@ -13,18 +13,15 @@ func testSUB(_ a: UInt8, _ b: UInt8, _ expected: String) {
     let resultString = "A←\(result.value.toHexString())h,Z←\(result.zero ? 1 : 0),H←\(result.halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(result.carry ? 1 : 0)"
     let passed = expected == resultString
     
-    print("sub \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "failed \(expected) vs \(resultString)")")
+    print("sub \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "expected \(expected), got \(resultString)")")
 }
 
 func testSBC(_ a: UInt8, _ b: UInt8, _ carry: Bool, _ expected: String) {
-    let increment = add(b, carry ? 1 : 0)
-    let result = sub(a, increment.value)
-    let halfCarry = result.halfCarry || increment.halfCarry
-    let carry = result.carry || increment.carry
-    let resultString = "A←\(result.value.toHexString())h,Z←\(result.zero ? 1 : 0),H←\(halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(carry ? 1 : 0)"
+    let result = sub(a, b, carry: carry)
+    let resultString = "A←\(result.value.toHexString())h,Z←\(result.zero ? 1 : 0),H←\(result.halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(result.carry ? 1 : 0)"
     let passed = expected == resultString
     
-    print("sbc \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "failed \(expected) vs \(resultString)")")
+    print("sbc \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "expected \(expected), got \(resultString)")")
 }
 
 func testCP(_ a: UInt8, _ b: UInt8, _ expected: String) {
@@ -32,26 +29,35 @@ func testCP(_ a: UInt8, _ b: UInt8, _ expected: String) {
     let resultString = "Z←\(result.zero ? 1 : 0),H←\(result.halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(result.carry ? 1 : 0)"
     let passed = expected == resultString
     
-    print("cp \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "failed \(expected) vs \(resultString)")")
+    print("cp \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "expected \(expected), got \(resultString)")")
 }
 
 func testADD(_ a: UInt8, _ b: UInt8, _ expected: String) {
-    let result = add(a, b);
+    let result = add(a, b, carry: false);
     let resultString = "A←\(result.value.toHexString())h,Z←\(result.zero ? 1 : 0),H←\(result.halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(result.carry ? 1 : 0)"
     let passed = expected == resultString
     
-    print("add \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "failed \(expected) vs \(resultString)")")
+    print("add \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "expected \(expected), got \(resultString)")")
 }
 
 func testADC(_ a: UInt8, _ b: UInt8, _ carry: Bool, _ expected: String) {
-    let increment = add(b, carry ? 1 : 0)
-    let result = add(a, increment.value)
-    let halfCarry = result.halfCarry || increment.halfCarry
-    let carry = result.carry || increment.carry
-    let resultString = "A←\(result.value.toHexString())h,Z←\(result.zero ? 1 : 0),H←\(halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(carry ? 1 : 0)"
+    let result = add(a, b, carry: carry)
+    let resultString = "A←\(result.value.toHexString())h,Z←\(result.zero ? 1 : 0),H←\(result.halfCarry ? 1 : 0),N←\(result.subtract ? 1 : 0),CY←\(result.carry ? 1 : 0)"
     let passed = expected == resultString
     
-    print("adc \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "failed \(expected) vs \(resultString)")")
+    print("adc \(a.toHexString()),\(b.toHexString()): \(passed ? "passed" : "expected \(expected), got \(resultString)")")
+}
+
+func testADD_SP(_ sp: UInt16, _ offset: Int8, _ expected: String) {
+    let value = sp.offset(by: offset)
+    let zero = false
+    let subtract = false
+    let halfCarry = checkCarry(sp, UInt16(offset.toUInt8()), carryBit: 3)
+    let carry = checkCarry(sp, UInt16(offset.toUInt8()), carryBit: 7)
+    let resultString = "SP←\(value.toHexString())h,Z←\(zero ? 1 : 0),H←\(halfCarry ? 1 : 0),N←\(subtract ? 1 : 0),CY←\(carry ? 1 : 0)"
+    let passed = expected == resultString
+
+    print("add sp \(sp.toHexString()),\(offset.toUInt8().toHexString()): \(passed ? "passed" : "expected \(expected), got \(resultString)")")
 }
 
 class ViewController: UIViewController {
@@ -81,6 +87,11 @@ class ViewController: UIViewController {
         testADC(0xE1, 0x0F, true, "A←F1h,Z←0,H←1,N←0,CY←0")
         testADC(0xE1, 0x3B, true, "A←1Dh,Z←0,H←0,N←0,CY←1")
         testADC(0xE1, 0x1E, true, "A←00h,Z←1,H←1,N←0,CY←1")
+        print("")
+        
+        testADD_SP(0xFFF8, 2, "SP←FFFAh,Z←0,H←0,N←0,CY←0")
+        testADD_SP(0xFFF8, -2, "SP←FFF6h,Z←0,H←0,N←0,CY←0")
+        testADD_SP(0xFFF8, 0, "SP←FFF8h,Z←0,H←0,N←0,CY←0")
         print("")
         
         let cpuTestXX = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"))

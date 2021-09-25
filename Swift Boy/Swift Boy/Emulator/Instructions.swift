@@ -110,7 +110,7 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of register pair BC to the contents of register pair HL, and store the results in register pair HL.
     OpCode.byte(0x09): Instruction.atomic(cycles: 2) { cpu in
-        let result = add(cpu.bc, cpu.hl)
+        let result = add(cpu.bc, cpu.hl, carryBit: 11)
         cpu.hl = result.value
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -297,7 +297,7 @@ let instructions: [OpCode: Instruction] = [
     // Jump s8 steps from the current address in the program counter (PC). (Jump relative.)
     OpCode.byte(0x18): Instruction.atomic(cycles: 3) { cpu in
         let offset = try cpu.readNextByte().toInt8()
-        cpu.pc = cpu.pc &+ offset
+        cpu.pc = cpu.pc.offset(by: offset)
     },
     // ADD HL, DE
     //
@@ -307,7 +307,7 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of register pair DE to the contents of register pair HL, and store the results in register pair HL.
     OpCode.byte(0x19): Instruction.atomic(cycles: 2) { cpu in
-        let result = add(cpu.de, cpu.hl)
+        let result = add(cpu.de, cpu.hl, carryBit: 11)
         cpu.hl = result.value
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -400,7 +400,7 @@ let instructions: [OpCode: Instruction] = [
 
             if cpu.flags.zero == false {
                 return Command(cycles: 1) {
-                    cpu.pc = cpu.pc &+ offset
+                    cpu.pc = cpu.pc.offset(by: offset)
                     return nil
                 }
             }
@@ -524,7 +524,7 @@ let instructions: [OpCode: Instruction] = [
             
             if cpu.flags.zero {
                 return Command(cycles: 1) {
-                    cpu.pc = cpu.pc &+ offset
+                    cpu.pc = cpu.pc.offset(by: offset)
                     return nil
                 }
             }
@@ -540,7 +540,7 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of register pair HL to the contents of register pair HL, and store the results in register pair HL.
     OpCode.byte(0x29): Instruction.atomic(cycles: 2) { cpu in
-        let result = add(cpu.hl, cpu.hl)
+        let result = add(cpu.hl, cpu.hl, carryBit: 11)
         cpu.hl = result.value
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -630,7 +630,7 @@ let instructions: [OpCode: Instruction] = [
             
             if cpu.flags.carry == false {
                 return Command(cycles: 1) {
-                    cpu.pc = cpu.pc &+ offset
+                    cpu.pc = cpu.pc.offset(by: offset)
                     return nil
                 }
             }
@@ -738,7 +738,7 @@ let instructions: [OpCode: Instruction] = [
             
             if cpu.flags.carry {
                 return Command(cycles: 1) {
-                    cpu.pc = cpu.pc &+ offset
+                    cpu.pc = cpu.pc.offset(by: offset)
                     return nil
                 }
             }
@@ -754,7 +754,7 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of register pair SP to the contents of register pair HL, and store the results in register pair HL.
     OpCode.byte(0x39): Instruction.atomic(cycles: 2) { cpu in
-        let result = add(cpu.sp, cpu.hl)
+        let result = add(cpu.sp, cpu.hl, carryBit: 11)
         cpu.hl = result.value
         cpu.flags.subtract = result.subtract
         cpu.flags.halfCarry = result.halfCarry
@@ -1646,13 +1646,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of register B and the CY flag to the contents of register A, and store the results in register A.
     OpCode.byte(0x88): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.b, cpu.flags.carry ? 1 : 0)
-        let result = add(cpu.a, increment.value)
+        let result = add(cpu.a, cpu.b, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // ADC A, C
     //
@@ -1662,13 +1661,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of register C and the CY flag to the contents of register A, and store the results in register A.
     OpCode.byte(0x89): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.c, cpu.flags.carry ? 1 : 0)
-        let result = add(cpu.a, increment.value)
+        let result = add(cpu.a, cpu.c, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // ADC A, D
     //
@@ -1678,13 +1676,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of register D and the CY flag to the contents of register A, and store the results in register A.
     OpCode.byte(0x8A): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.d, cpu.flags.carry ? 1 : 0)
-        let result = add(cpu.a, increment.value)
+        let result = add(cpu.a, cpu.d, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // ADC A, E
     //
@@ -1694,13 +1691,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of register E and the CY flag to the contents of register A, and store the results in register A.
     OpCode.byte(0x8B): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.e, cpu.flags.carry ? 1 : 0)
-        let result = add(cpu.a, increment.value)
+        let result = add(cpu.a, cpu.e, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // ADC A, H
     //
@@ -1710,13 +1706,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of register H and the CY flag to the contents of register A, and store the results in register A.
     OpCode.byte(0x8C): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.h, cpu.flags.carry ? 1 : 0)
-        let result = add(cpu.a, increment.value)
+        let result = add(cpu.a, cpu.h, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // ADC A, L
     //
@@ -1726,13 +1721,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of register L and the CY flag to the contents of register A, and store the results in register A.
     OpCode.byte(0x8D): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.l, cpu.flags.carry ? 1 : 0)
-        let result = add(cpu.a, increment.value)
+        let result = add(cpu.a, cpu.l, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // ADC A, (HL)
     //
@@ -1743,13 +1737,12 @@ let instructions: [OpCode: Instruction] = [
     // Add the contents of memory specified by register pair HL and the CY flag to the contents of register A, and store the results in register A.
     OpCode.byte(0x8E): Instruction.atomic(cycles: 2) { cpu in
         let data = try cpu.mmu.readByte(address: cpu.hl)
-        let increment = add(data, cpu.flags.carry ? 1 : 0)
-        let result = add(cpu.a, increment.value)
+        let result = add(cpu.a, data, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // ADC A, A
     //
@@ -1759,13 +1752,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of register A and the CY flag to the contents of register A, and store the results in register A.
     OpCode.byte(0x8F): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.a, cpu.flags.carry ? 1 : 0)
-        let result = add(cpu.a, increment.value)
+        let result = add(cpu.a, cpu.a, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // SUB B
     //
@@ -1896,13 +1888,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register B and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x98): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.b, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, increment.value)
+        let result = sub(cpu.a, cpu.b, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // SBC A, C
     //
@@ -1912,13 +1903,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register C and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x99): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.c, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, increment.value)
+        let result = sub(cpu.a, cpu.c, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // SBC A, D
     //
@@ -1928,13 +1918,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register D and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x9A): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.d, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, increment.value)
+        let result = sub(cpu.a, cpu.d, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // SBC A, E
     //
@@ -1944,13 +1933,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register E and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x9B): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.e, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, increment.value)
+        let result = sub(cpu.a, cpu.e, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // SBC A, H
     //
@@ -1960,13 +1948,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register H and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x9C): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.h, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, increment.value)
+        let result = sub(cpu.a, cpu.h, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // SBC A, L
     //
@@ -1976,13 +1963,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register L and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x9D): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.l, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, increment.value)
+        let result = sub(cpu.a, cpu.l, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // SBC A, (HL)
     //
@@ -1993,13 +1979,12 @@ let instructions: [OpCode: Instruction] = [
     // Subtract the contents of memory specified by register pair HL and the carry flag CY from the contents of register A, and store the results in register A.
     OpCode.byte(0x9E): Instruction.atomic(cycles: 2) { cpu in
         let data = try cpu.mmu.readByte(address: cpu.hl)
-        let increment = add(data, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, increment.value)
+        let result = sub(cpu.a, data, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // SBC A, A
     //
@@ -2009,13 +1994,12 @@ let instructions: [OpCode: Instruction] = [
     //
     // Subtract the contents of register A and the CY flag from the contents of register A, and store the results in register A.
     OpCode.byte(0x9F): Instruction.atomic(cycles: 1) { cpu in
-        let increment = add(cpu.a, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, increment.value)
+        let result = sub(cpu.a, cpu.a, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // AND B
     //
@@ -2732,13 +2716,12 @@ let instructions: [OpCode: Instruction] = [
     // Add the contents of the 8-bit immediate operand d8 and the CY flag to the contents of register A, and store the results in register A.
     OpCode.byte(0xCE): Instruction.atomic(cycles: 2) { cpu in
         let data = try cpu.readNextByte()
-        let increment = add(data, cpu.flags.carry ? 1 : 0)
-        let result = add(cpu.a, increment.value)
+        let result = add(cpu.a, data, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // RST 1
     //
@@ -2959,13 +2942,12 @@ let instructions: [OpCode: Instruction] = [
     // Subtract the contents of the 8-bit immediate operand d8 and the carry flag CY from the contents of register A, and store the results in register A.
     OpCode.byte(0xDE): Instruction.atomic(cycles: 2) { cpu in
         let data = try cpu.readNextByte()
-        let increment = add(data, cpu.flags.carry ? 1 : 0)
-        let result = sub(cpu.a, increment.value)
+        let result = sub(cpu.a, data, carry: cpu.flags.carry)
         cpu.a = result.value
         cpu.flags.zero = result.zero
         cpu.flags.subtract = result.subtract
-        cpu.flags.halfCarry = result.halfCarry || increment.halfCarry
-        cpu.flags.carry = result.carry || increment.carry
+        cpu.flags.halfCarry = result.halfCarry
+        cpu.flags.carry = result.carry
     },
     // RST 3
     //
@@ -3071,12 +3053,12 @@ let instructions: [OpCode: Instruction] = [
     // Add the contents of the 8-bit signed (2's complement) immediate operand s8 and the stack pointer SP and store the results in SP.
     OpCode.byte(0xE8): Instruction.atomic(cycles: 4) { cpu in
         let offset = try cpu.readNextByte().toInt8()
-        let result = offset > 0 ? add(cpu.sp, UInt16(offset.toUInt8())) : sub(cpu.sp, UInt16(offset.toUInt8()))
-        cpu.sp = result.value
+        let sp = cpu.sp
+        cpu.sp = sp.offset(by: offset)
         cpu.flags.zero = false
         cpu.flags.subtract = false
-        cpu.flags.halfCarry = result.halfCarry
-        cpu.flags.carry = result.carry
+        cpu.flags.halfCarry = checkCarry(sp, UInt16(offset.toUInt8()), carryBit: 3)
+        cpu.flags.carry = checkCarry(sp, UInt16(offset.toUInt8()), carryBit: 7)
     },
     // JP HL
     //
@@ -3229,12 +3211,12 @@ let instructions: [OpCode: Instruction] = [
     // Add the 8-bit signed operand s8 (values -128 to +127) to the stack pointer SP, and store the result in register pair HL.
     OpCode.byte(0xF8): Instruction.atomic(cycles: 3) { cpu in
         let offset = try cpu.readNextByte().toInt8()
-        let result = offset > 0 ? add(cpu.sp, UInt16(offset.toUInt8())) : sub(cpu.sp, UInt16(offset.toUInt8()))
-        cpu.hl = result.value
+        let sp = cpu.sp
+        cpu.hl = sp.offset(by: offset)
         cpu.flags.zero = false
         cpu.flags.subtract = false
-        cpu.flags.halfCarry = result.halfCarry
-        cpu.flags.carry = result.carry
+        cpu.flags.halfCarry = checkCarry(sp, UInt16(offset.toUInt8()), carryBit: 3)
+        cpu.flags.carry = checkCarry(sp, UInt16(offset.toUInt8()), carryBit: 7)
     },
     // LD SP, HL
     //
