@@ -52,12 +52,12 @@ func testADD_SP(_ sp: UInt16, _ offset: Int8, _ expected: String) {
     let value = sp.offset(by: offset)
     let zero = false
     let subtract = false
-    let halfCarry = checkCarry(sp, UInt16(offset.toUInt8()), carryBit: 3)
-    let carry = checkCarry(sp, UInt16(offset.toUInt8()), carryBit: 7)
+    let halfCarry = checkCarry(sp, UInt16(UInt8(bitPattern: offset)), carryBit: 3)
+    let carry = checkCarry(sp, UInt16(UInt8(bitPattern: offset)), carryBit: 7)
     let resultString = "SP←\(value.toHexString())h,Z←\(zero ? 1 : 0),H←\(halfCarry ? 1 : 0),N←\(subtract ? 1 : 0),CY←\(carry ? 1 : 0)"
     let passed = expected == resultString
 
-    print("add sp \(sp.toHexString()),\(offset.toUInt8().toHexString()): \(passed ? "passed" : "expected \(expected), got \(resultString)")")
+    print("add sp \(sp.toHexString()),\(offset)(decimal): \(passed ? "passed" : "expected \(expected), got \(resultString)")")
 }
 
 class ViewController: UIViewController {
@@ -108,7 +108,7 @@ class ViewController: UIViewController {
         let cpuTest11 = Cartridge(path: #fileLiteral(resourceName: "11-op a,(hl).gb"))
         let tetris = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
-        let mmu = MMU(cpuTest03)
+        let mmu = MMU(cpuTest07)
         let ppu = PPU(mmu)
         let cpu = CPU(mmu, ppu)
         let clock = Clock(mmu, ppu, cpu)

@@ -296,8 +296,8 @@ let instructions: [OpCode: Instruction] = [
     //
     // Jump s8 steps from the current address in the program counter (PC). (Jump relative.)
     OpCode.byte(0x18): Instruction.atomic(cycles: 3) { cpu in
-        let offset = try cpu.readNextByte().toInt8()
-        cpu.pc = cpu.pc.offset(by: offset)
+        let data = try cpu.readNextByte()
+        cpu.pc = cpu.pc.offset(by: data.toInt8())
     },
     // ADD HL, DE
     //
@@ -396,11 +396,11 @@ let instructions: [OpCode: Instruction] = [
     // If the Z flag is 0, jump s8 steps from the current address stored in the program counter (PC). If not, the instruction following the current JP instruction is executed (as usual).
     OpCode.byte(0x20): Instruction { cpu in
         return Command(cycles: 2) {
-            let offset = try cpu.readNextByte().toInt8()
+            let data = try cpu.readNextByte()
 
             if cpu.flags.zero == false {
                 return Command(cycles: 1) {
-                    cpu.pc = cpu.pc.offset(by: offset)
+                    cpu.pc = cpu.pc.offset(by: data.toInt8())
                     return nil
                 }
             }
@@ -520,11 +520,11 @@ let instructions: [OpCode: Instruction] = [
     // If the Z flag is 1, jump s8 steps from the current address stored in the program counter (PC). If not, the instruction following the current JP instruction is executed (as usual).
     OpCode.byte(0x28): Instruction { cpu in
         return Command(cycles: 2) {
-            let offset = try cpu.readNextByte().toInt8()
+            let data = try cpu.readNextByte()
             
             if cpu.flags.zero {
                 return Command(cycles: 1) {
-                    cpu.pc = cpu.pc.offset(by: offset)
+                    cpu.pc = cpu.pc.offset(by: data.toInt8())
                     return nil
                 }
             }
@@ -626,11 +626,11 @@ let instructions: [OpCode: Instruction] = [
     // If the CY flag is 0, jump s8 steps from the current address stored in the program counter (PC). If not, the instruction following the current JP instruction is executed (as usual).
     OpCode.byte(0x30): Instruction { cpu in
         return Command(cycles: 2) {
-            let offset = try cpu.readNextByte().toInt8()
+            let data = try cpu.readNextByte()
             
             if cpu.flags.carry == false {
                 return Command(cycles: 1) {
-                    cpu.pc = cpu.pc.offset(by: offset)
+                    cpu.pc = cpu.pc.offset(by: data.toInt8())
                     return nil
                 }
             }
@@ -734,11 +734,11 @@ let instructions: [OpCode: Instruction] = [
     // If the CY flag is 1, jump s8 steps from the current address stored in the program counter (PC). If not, the instruction following the current JP instruction is executed (as usual).
     OpCode.byte(0x38): Instruction { cpu in
         return Command(cycles:2) {
-            let offset = try cpu.readNextByte().toInt8()
+            let data = try cpu.readNextByte()
             
             if cpu.flags.carry {
                 return Command(cycles: 1) {
-                    cpu.pc = cpu.pc.offset(by: offset)
+                    cpu.pc = cpu.pc.offset(by: data.toInt8())
                     return nil
                 }
             }
@@ -3052,13 +3052,13 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the contents of the 8-bit signed (2's complement) immediate operand s8 and the stack pointer SP and store the results in SP.
     OpCode.byte(0xE8): Instruction.atomic(cycles: 4) { cpu in
-        let offset = try cpu.readNextByte().toInt8()
+        let data = try cpu.readNextByte()
         let sp = cpu.sp
-        cpu.sp = sp.offset(by: offset)
+        cpu.sp = sp.offset(by: data.toInt8())
         cpu.flags.zero = false
         cpu.flags.subtract = false
-        cpu.flags.halfCarry = checkCarry(sp, UInt16(offset.toUInt8()), carryBit: 3)
-        cpu.flags.carry = checkCarry(sp, UInt16(offset.toUInt8()), carryBit: 7)
+        cpu.flags.halfCarry = checkCarry(sp, UInt16(data), carryBit: 3)
+        cpu.flags.carry = checkCarry(sp, UInt16(data), carryBit: 7)
     },
     // JP HL
     //
@@ -3210,13 +3210,13 @@ let instructions: [OpCode: Instruction] = [
     //
     // Add the 8-bit signed operand s8 (values -128 to +127) to the stack pointer SP, and store the result in register pair HL.
     OpCode.byte(0xF8): Instruction.atomic(cycles: 3) { cpu in
-        let offset = try cpu.readNextByte().toInt8()
+        let data = try cpu.readNextByte()
         let sp = cpu.sp
-        cpu.hl = sp.offset(by: offset)
+        cpu.hl = sp.offset(by: data.toInt8())
         cpu.flags.zero = false
         cpu.flags.subtract = false
-        cpu.flags.halfCarry = checkCarry(sp, UInt16(offset.toUInt8()), carryBit: 3)
-        cpu.flags.carry = checkCarry(sp, UInt16(offset.toUInt8()), carryBit: 7)
+        cpu.flags.halfCarry = checkCarry(sp, UInt16(data), carryBit: 3)
+        cpu.flags.carry = checkCarry(sp, UInt16(data), carryBit: 7)
     },
     // LD SP, HL
     //

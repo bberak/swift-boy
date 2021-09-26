@@ -76,12 +76,6 @@ public extension UInt8 {
     }
 }
 
-public extension Int8 {
-    func toUInt8() -> UInt8 {
-        return self < 0 ? UInt8(self * -1) : UInt8(self)
-    }
-}
-
 public extension UInt16 {
     func toBytes() -> [UInt8] {
         return [UInt8(0x00FF & self), UInt8((0xFF00 & self) >> 8)]
