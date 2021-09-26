@@ -249,7 +249,7 @@ public class PPU {
                 let bgTileData: [UInt16] = try bgTileIndices.map { idx in
                     if bgTileDataPointer == 0x9000 {
                         let delta = Int16(idx.toInt8()) * 16 + Int16(bgY % 8) * 2
-                        let address = bgTileDataPointer.offset(by: delta)
+                        let address = bgTileDataPointer &+ delta.toUInt16()
                         return try self.mmu.readWord(address: address)
                     } else {
                         let offset = UInt16(idx) * 16 + UInt16(bgY % 8) * 2

@@ -297,7 +297,7 @@ let instructions: [OpCode: Instruction] = [
     // Jump s8 steps from the current address in the program counter (PC). (Jump relative.)
     OpCode.byte(0x18): Instruction.atomic(cycles: 3) { cpu in
         let data = try cpu.readNextByte()
-        cpu.pc = cpu.pc.offset(by: data.toInt8())
+        cpu.pc = cpu.pc &+ data.toInt8().toUInt16()
     },
     // ADD HL, DE
     //
@@ -400,7 +400,7 @@ let instructions: [OpCode: Instruction] = [
 
             if cpu.flags.zero == false {
                 return Command(cycles: 1) {
-                    cpu.pc = cpu.pc.offset(by: data.toInt8())
+                    cpu.pc = cpu.pc &+ data.toInt8().toUInt16()
                     return nil
                 }
             }
@@ -524,7 +524,7 @@ let instructions: [OpCode: Instruction] = [
             
             if cpu.flags.zero {
                 return Command(cycles: 1) {
-                    cpu.pc = cpu.pc.offset(by: data.toInt8())
+                    cpu.pc = cpu.pc &+ data.toInt8().toUInt16()
                     return nil
                 }
             }
@@ -630,7 +630,7 @@ let instructions: [OpCode: Instruction] = [
             
             if cpu.flags.carry == false {
                 return Command(cycles: 1) {
-                    cpu.pc = cpu.pc.offset(by: data.toInt8())
+                    cpu.pc = cpu.pc &+ data.toInt8().toUInt16()
                     return nil
                 }
             }
@@ -738,7 +738,7 @@ let instructions: [OpCode: Instruction] = [
             
             if cpu.flags.carry {
                 return Command(cycles: 1) {
-                    cpu.pc = cpu.pc.offset(by: data.toInt8())
+                    cpu.pc = cpu.pc &+ data.toInt8().toUInt16()
                     return nil
                 }
             }
@@ -3054,7 +3054,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0xE8): Instruction.atomic(cycles: 4) { cpu in
         let data = try cpu.readNextByte()
         let sp = cpu.sp
-        cpu.sp = sp.offset(by: data.toInt8())
+        cpu.sp = sp &+ data.toInt8().toUInt16()
         cpu.flags.zero = false
         cpu.flags.subtract = false
         cpu.flags.halfCarry = checkCarry(sp, UInt16(data), carryBit: 3)
@@ -3212,7 +3212,7 @@ let instructions: [OpCode: Instruction] = [
     OpCode.byte(0xF8): Instruction.atomic(cycles: 3) { cpu in
         let data = try cpu.readNextByte()
         let sp = cpu.sp
-        cpu.hl = sp.offset(by: data.toInt8())
+        cpu.hl = sp &+ data.toInt8().toUInt16()
         cpu.flags.zero = false
         cpu.flags.subtract = false
         cpu.flags.halfCarry = checkCarry(sp, UInt16(data), carryBit: 3)

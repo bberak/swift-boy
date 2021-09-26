@@ -49,7 +49,7 @@ func testADC(_ a: UInt8, _ b: UInt8, _ carry: Bool, _ expected: String) {
 }
 
 func testADD_SP(_ sp: UInt16, _ offset: Int8, _ expected: String) {
-    let value = sp.offset(by: offset)
+    let value = sp &+ offset.toUInt16()
     let zero = false
     let subtract = false
     let halfCarry = checkCarry(sp, UInt16(UInt8(bitPattern: offset)), carryBit: 3)
@@ -63,12 +63,6 @@ func testADD_SP(_ sp: UInt16, _ offset: Int8, _ expected: String) {
 class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let x = UInt8(50)
-        let y = UInt8(251)
-        let z = x &+ y
-        
-        print(x, y, z, UInt16(x).offset(by: y.toInt8()))
                 
         testSUB(0x3E, 0x3E, "A←00h,Z←1,H←0,N←1,CY←0")
         testSUB(0x3E, 0x0F, "A←2Fh,Z←0,H←1,N←1,CY←0")

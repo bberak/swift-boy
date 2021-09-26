@@ -90,22 +90,17 @@ public extension UInt16 {
         let mask = UInt16(0x0001 << pos)
         return (self & mask) == mask
     }
-    
-    // TODO: Delete this func
-    func offset(by delta: Int8) -> UInt16 {
-        return offset(by: Int16(delta))
-    }
+}
 
-    // TODO: Delete this func
-    func offset(by delta: Int16) -> UInt16 {
-        // return self &+ UInt16(bitPattern: delta)
-        return delta > 0 ? self &+ delta.toUInt16() : self &- delta.toUInt16()
+public extension Int8 {
+    func toUInt16() -> UInt16 {
+        return UInt16(bitPattern: Int16(self))
     }
 }
 
 public extension Int16 {
     func toUInt16() -> UInt16 {
-        return self > 0 ? UInt16(self) : UInt16(self * -1)
+        return UInt16(bitPattern: self)
     }
 }
 
