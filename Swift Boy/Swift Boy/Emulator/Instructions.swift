@@ -2614,7 +2614,7 @@ let instructions: [OpCode: Instruction] = [
     // The RST instruction can be used to jump to 1 of 8 addresses. Because all ofthe addresses are held in page 0 memory, 0x00 is loaded in the higher-orderbyte of the PC, and 0x00 is loaded in the lower-order byte.
     OpCode.byte(0xC7): Instruction.atomic(cycles: 4) { cpu in
         try cpu.pushWordOnStack(word: cpu.pc)
-        cpu.pc = try cpu.mmu.readWord(address: 0x0000)
+        cpu.pc = 0x0000
     },
     // RET Z
     //
@@ -2734,7 +2734,7 @@ let instructions: [OpCode: Instruction] = [
     // The RST instruction can be used to jump to 1 of 8 addresses. Because all ofthe addresses are held in page 0 memory, 0x00 is loaded in the higher-orderbyte of the PC, and 0x08 is loaded in the lower-order byte.
     OpCode.byte(0xCF): Instruction.atomic(cycles: 4) { cpu in
         try cpu.pushWordOnStack(word: cpu.pc)
-        cpu.pc = try cpu.mmu.readWord(address: 0x0008)
+        cpu.pc = 0x0008
     },
     // RET NC
     //
@@ -2854,7 +2854,7 @@ let instructions: [OpCode: Instruction] = [
     // The RST instruction can be used to jump to 1 of 8 addresses. Because all ofthe addresses are held in page 0 memory, 0x00 is loaded in the higher-orderbyte of the PC, and 0x10 is loaded in the lower-order byte.
     OpCode.byte(0xD7): Instruction.atomic(cycles: 4) { cpu in
         try cpu.pushWordOnStack(word: cpu.pc)
-        cpu.pc = try cpu.mmu.readWord(address: 0x0010)
+        cpu.pc = 0x0010
     },
     // RET C
     //
@@ -2960,7 +2960,7 @@ let instructions: [OpCode: Instruction] = [
     // The RST instruction can be used to jump to 1 of 8 addresses. Because all ofthe addresses are held in page 0 memory, 0x00 is loaded in the higher-orderbyte of the PC, and 0x18 is loaded in the lower-order byte.
     OpCode.byte(0xDF): Instruction.atomic(cycles: 4) { cpu in
         try cpu.pushWordOnStack(word: cpu.pc)
-        cpu.pc = try cpu.mmu.readWord(address: 0x0018)
+        cpu.pc = 0x0018
     },
     // LD (a8), A
     //
@@ -3042,7 +3042,7 @@ let instructions: [OpCode: Instruction] = [
     // The RST instruction can be used to jump to 1 of 8 addresses. Because all ofthe addresses are held in page 0 memory, 0x00 is loaded in the higher-orderbyte of the PC, and 0x20 is loaded in the lower-order byte.
     OpCode.byte(0xE7): Instruction.atomic(cycles: 4) { cpu in
         try cpu.pushWordOnStack(word: cpu.pc)
-        cpu.pc = try cpu.mmu.readWord(address: 0x0020)
+        cpu.pc = 0x0020
     },
     // ADD SP, s8
     //
@@ -3107,7 +3107,7 @@ let instructions: [OpCode: Instruction] = [
     // The RST instruction can be used to jump to 1 of 8 addresses. Because all ofthe addresses are held in page 0 memory, 0x00 is loaded in the higher-orderbyte of the PC, and 0x28 is loaded in the lower-order byte.
     OpCode.byte(0xEF): Instruction.atomic(cycles: 4) { cpu in
         try cpu.pushWordOnStack(word: cpu.pc)
-        cpu.pc = try cpu.mmu.readWord(address: 0x0028)
+        cpu.pc = 0x0028
     },
     // LD A, (a8)
     //
@@ -3200,7 +3200,7 @@ let instructions: [OpCode: Instruction] = [
     // The RST instruction can be used to jump to 1 of 8 addresses. Because all ofthe addresses are held in page 0 memory, 0x00 is loaded in the higher-orderbyte of the PC, and 0x30 is loaded in the lower-order byte.
     OpCode.byte(0xF7): Instruction.atomic(cycles: 4) { cpu in
         try cpu.pushWordOnStack(word: cpu.pc)
-        cpu.pc = try cpu.mmu.readWord(address: 0x0030)
+        cpu.pc = 0x0030
     },
     // LD HL, SP+s8
     //
@@ -3279,7 +3279,7 @@ let instructions: [OpCode: Instruction] = [
     // The RST instruction can be used to jump to 1 of 8 addresses. Because all ofthe addresses are held in page 0 memory, 0x00 is loaded in the higher-orderbyte of the PC, and 0x38 is loaded in the lower-order byte.
     OpCode.byte(0xFF): Instruction.atomic(cycles: 4) { cpu in
         try cpu.pushWordOnStack(word: cpu.pc)
-        cpu.pc = try cpu.mmu.readWord(address: 0x0038)
+        cpu.pc = 0x0038
     },
     // RLC B
     //

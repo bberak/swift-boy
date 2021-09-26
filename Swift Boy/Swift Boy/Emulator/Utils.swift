@@ -91,11 +91,14 @@ public extension UInt16 {
         return (self & mask) == mask
     }
     
+    // TODO: Delete this func
     func offset(by delta: Int8) -> UInt16 {
         return offset(by: Int16(delta))
     }
 
+    // TODO: Delete this func
     func offset(by delta: Int16) -> UInt16 {
+        // return self &+ UInt16(bitPattern: delta)
         return delta > 0 ? self &+ delta.toUInt16() : self &- delta.toUInt16()
     }
 }
