@@ -27,7 +27,7 @@
 		A1B4014926EB5DB3002F4512 /* Instructions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4014126EB5DB3002F4512 /* Instructions.swift */; };
 		A1B4014B26EB5DB3002F4512 /* PPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4014326EB5DB3002F4512 /* PPU.swift */; };
 		A1B4014C26EB5DB3002F4512 /* MMU.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4014426EB5DB3002F4512 /* MMU.swift */; };
-		A1B4014D26EB5DB3002F4512 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4014526EB5DB3002F4512 /* Utils.swift */; };
+		A1B4014D26EB5DB3002F4512 /* Common.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4014526EB5DB3002F4512 /* Common.swift */; };
 		A1B4014E26EB5DB3002F4512 /* CPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4014626EB5DB3002F4512 /* CPU.swift */; };
 		A1B4015226EB5DCE002F4512 /* tetris.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1B4015026EB5DCE002F4512 /* tetris.gb */; };
 		A1B4015326EB5DCE002F4512 /* cpu_instrs.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1B4015126EB5DCE002F4512 /* cpu_instrs.gb */; };
@@ -58,7 +58,7 @@
 		A1B4014126EB5DB3002F4512 /* Instructions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Instructions.swift; sourceTree = "<group>"; };
 		A1B4014326EB5DB3002F4512 /* PPU.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PPU.swift; sourceTree = "<group>"; };
 		A1B4014426EB5DB3002F4512 /* MMU.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MMU.swift; sourceTree = "<group>"; };
-		A1B4014526EB5DB3002F4512 /* Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		A1B4014526EB5DB3002F4512 /* Common.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Common.swift; sourceTree = "<group>"; };
 		A1B4014626EB5DB3002F4512 /* CPU.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CPU.swift; sourceTree = "<group>"; };
 		A1B4015026EB5DCE002F4512 /* tetris.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = tetris.gb; sourceTree = "<group>"; };
 		A1B4015126EB5DCE002F4512 /* cpu_instrs.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = cpu_instrs.gb; sourceTree = "<group>"; };
@@ -117,7 +117,7 @@
 				A1B4014126EB5DB3002F4512 /* Instructions.swift */,
 				A1B4014326EB5DB3002F4512 /* PPU.swift */,
 				A1B4014426EB5DB3002F4512 /* MMU.swift */,
-				A1B4014526EB5DB3002F4512 /* Utils.swift */,
+				A1B4014526EB5DB3002F4512 /* Common.swift */,
 				A1B4014626EB5DB3002F4512 /* CPU.swift */,
 			);
 			path = Emulator;
@@ -232,7 +232,7 @@
 				A1B4011226EB5937002F4512 /* AppDelegate.swift in Sources */,
 				A1B4014E26EB5DB3002F4512 /* CPU.swift in Sources */,
 				A1B4014726EB5DB3002F4512 /* Clock.swift in Sources */,
-				A1B4014D26EB5DB3002F4512 /* Utils.swift in Sources */,
+				A1B4014D26EB5DB3002F4512 /* Common.swift in Sources */,
 				A1B4011426EB5937002F4512 /* SceneDelegate.swift in Sources */,
 				A1B4014926EB5DB3002F4512 /* Instructions.swift in Sources */,
 				A1B4014C26EB5DB3002F4512 /* MMU.swift in Sources */,

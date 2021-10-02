@@ -203,6 +203,28 @@ public class PPU {
             self.backgroundEnabled = byte.bit(0)
         }
         
+        self.mmu.subscribe(address: 0xFF41) { stat in
+            // TODO:
+            // LCD status register has been written to..
+            // Figure out if we need to set any interrupt flags..
+        }
+        
+        self.mmu.subscribe(address: 0xFF44) { ly in
+            let lyc = try! self.mmu.readByte(address: 0xFF45)
+            let stat = try! self.mmu.readByte(address: 0xFF41)
+            // TODO:
+            // Set stat vBlank bit if ly == 144
+            // Also, can probably set the vBlank interrupt flag here instead of
+            // in the draw code..
+            try! self.mmu.writeByte(address: 0xFF41, byte: stat.set(bit: 2, as: ly == lyc))
+        }
+        
+        self.mmu.subscribe(address: 0xFF45) { lyc in
+            let ly = try! self.mmu.readByte(address: 0xFF44)
+            let stat = try! self.mmu.readByte(address: 0xFF41)
+            try! self.mmu.writeByte(address: 0xFF41, byte: stat.set(bit: 2, as: ly == lyc))
+        }
+        
         self.mmu.subscribe(address: 0xFF47) { byte in
             self.backgroundPalette[0] = defaultPalette[byte.crumb(0)]
             self.backgroundPalette[1] = defaultPalette[byte.crumb(1)]
@@ -258,17 +280,18 @@ public class PPU {
                     }
                 }
                 
-//                let sprites = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
-//                    return Sprite(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
-//                }.filter { (s: Sprite) -> Bool in
-//                    return bgY < s.y && Int(bgY) >= (Int(s.y) - 16)
-//                }
-//                let spritesWithTileData = try sprites.map ({ (s: Sprite) -> (sprite: Sprite, data: [UInt8])  in
-//                    let offset = UInt16(s.index) * 16
-//                    let address: UInt16 = 0x8000 &+ offset
-//                    let data = try self.mmu.readBytes(address: address, count: UInt16(self.spriteSize[1]) * 2)
-//                    return (sprite: s, data: data)
-//                })
+                // let sprites = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
+                //     return Sprite(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
+                // }.filter { (s: Sprite) -> Bool in
+                //     return bgY < s.y && Int(bgY) >= (Int(s.y) - 16)
+                // }
+                
+                // let spritesWithTileData = try sprites.map ({ (s: Sprite) -> (sprite: Sprite, data: [UInt8])  in
+                //     let offset = UInt16(s.index) * 16
+                //     let address: UInt16 = 0x8000 &+ offset
+                //     let data = try self.mmu.readBytes(address: address, count: UInt16(self.spriteSize[1]) * 2)
+                //     return (sprite: s, data: data)
+                // })
                 
                 // Drawing Pixels
                 return Command(cycles: 144) {
@@ -287,28 +310,28 @@ public class PPU {
                         }
                     }
                     
-//                    for obj in spritesWithTileData {
-//                        let spriteX = obj.sprite.x
-//                        let spriteY = obj.sprite.y
-//                        let sizeX = self.spriteSize[0]
-//                        let sizeY = self.spriteSize[1]
-//                        let palette = obj.sprite.attributes.bit(4) ? self.spritePalette1 : self.spritePalette0
-//
-//                        if bgY >= (spriteY - sizeY) && bgY < spriteY {
-//                            let end = Int(self.spriteSize[1]) - 2
-//                            let line = Int.random(in: 0...end) //(Int(sizeY) - (Int(spriteY) - Int(bgY))) * 2
-//                            let lsb = obj.data[line]
-//                            let hsb = obj.data[line + 1]
-//
-//                            for idx in (0...7).reversed() {
-//                                let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
-//                                let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
-//                                let x = (idx + Int(spriteX)) % pixels.count
-//
-//                                pixels[x] = palette[v1 + v2]!
-//                            }
-//                        }
-//                    }
+                    // for obj in spritesWithTileData {
+                    //     let spriteX = obj.sprite.x
+                    //     let spriteY = obj.sprite.y
+                    //     let sizeX = self.spriteSize[0]
+                    //     let sizeY = self.spriteSize[1]
+                    //     let palette = obj.sprite.attributes.bit(4) ? self.spritePalette1 : self.spritePalette0
+
+                    //     if bgY >= (spriteY - sizeY) && bgY < spriteY {
+                    //         let end = Int(self.spriteSize[1]) - 2
+                    //         let line = Int.random(in: 0...end) //(Int(sizeY) - (Int(spriteY) - Int(bgY))) * 2
+                    //         let lsb = obj.data[line]
+                    //         let hsb = obj.data[line + 1]
+
+                    //         for idx in (0...7).reversed() {
+                    //             let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
+                    //             let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
+                    //             let x = (idx + Int(spriteX)) % pixels.count
+
+                    //             pixels[x] = palette[v1 + v2]!
+                    //         }
+                    //     }
+                    // }
                     
                     for col in 0..<self.lcd.bitmap.width {
                         let bgX = (Int(scx) + col) % pixels.count
@@ -318,7 +341,7 @@ public class PPU {
                     // Horizontal blank
                     return Command(cycles: 44) {
                         
-                        // Increment ly
+                        // Increment ly at the end of the blanking period
                         return Command(cycles: 0) {
                             self.ly = ly + 1
                             return nil
@@ -327,10 +350,12 @@ public class PPU {
                 }
             }
         } else {
-            // Vertical blank
+            // Vertical blank per line
             return Command(cycles: 228) {
+                 let flags = try self.mmu.readByte(address: Interrupts.flagAddress)
+                 try self.mmu.writeByte(address: Interrupts.flagAddress, byte: flags.set(Interrupts.vBlank.bit))
                 
-                // Increment or reset ly
+                // Increment or reset ly at the end of the blanking period
                 return Command(cycles: 0) {
                     self.ly = ly < 153 ? ly + 1 : 0
                     return nil

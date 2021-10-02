@@ -65,6 +65,14 @@ public extension UInt8 {
         return self | mask
     }
     
+    func set(bit: UInt8, as value: Bool) -> UInt8 {
+        if value == false {
+            return reset(bit)
+        }
+        
+        return set(bit)
+    }
+    
     func swap() -> UInt8 {
         let hb = self << 4
         let lb = self >> 4
@@ -155,42 +163,6 @@ public func add(_ num1: UInt16, _ num2: UInt16, carryBit: UInt8) -> WordOp {
     return WordOp(value: value, halfCarry: halfCarry, carry: carry, subtract: false)
 }
 
-public class DynamicIterator<T> : IteratorProtocol {
-    private var items: [T] = []
-    private var index = 0
-    
-    init(generator: (DynamicIterator<T>) -> Void) {
-        generator(self)
-    }
-    
-    public func yield(_ item: T) {
-        self.items.append(item)
-    }
-    
-    public func next() -> T? {
-        if index > (items.count-1) {
-            return nil
-        }
-        
-        let item = items[index]
-        index+=1
-        
-        return item
-    }
-}
-
-public class DynamicSequence<T>: Sequence {
-    let generator: (DynamicIterator<T>) -> Void
-    
-    public init(generator: @escaping (DynamicIterator<T>) -> Void) {
-        self.generator = generator
-    }
-    
-    public func makeIterator() -> DynamicIterator<T> {
-        return DynamicIterator(generator: self.generator)
-    }
-}
-
 public struct Command {
     public let cycles: UInt16
     public let run: () throws -> Command?
@@ -199,4 +171,15 @@ public struct Command {
         self.cycles = cycles;
         self.run = run;
     }
+}
+
+public struct Interrupts {
+    static let flagAddress: UInt16 = 0xFF0F
+    static let enabledAddress: UInt16 = 0xFFFF
+    static let vBlank = (bit: UInt8(0), address: UInt16(0x0040))
+    static let lcdStat = (bit: UInt8(1), address: UInt16(0x0048))
+    static let timer = (bit: UInt8(2), address: UInt16(0x0050))
+    static let serial = (bit: UInt8(3), address: UInt16(0x0058))
+    static let joypad = (bit: UInt8(4), address: UInt16(0x0060))
+    static let priority = [Interrupts.vBlank, Interrupts.lcdStat, Interrupts.timer, Interrupts.serial, Interrupts.joypad]
 }

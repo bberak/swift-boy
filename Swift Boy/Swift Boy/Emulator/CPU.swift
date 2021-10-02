@@ -150,14 +150,6 @@ public class CPU: CustomStringConvertible {
     public init(_ mmu: MMU, _ ppu: PPU) {
         self.mmu = mmu
         self.ppu = ppu
-        
-        self.mmu.subscribe(address: 0xFFFF) { byte in
-            print("Interrupt Enable (R/W):", byte.toHexString())
-        }
-        
-        self.mmu.subscribe(address: 0xFF0F) { byte in
-            print("Interrupt Flag (R/W):", byte.toHexString())
-        }
     }
     
     func readNextByte() throws -> UInt8 {
@@ -220,6 +212,34 @@ public class CPU: CustomStringConvertible {
         return instruction!
     }
     
+    func handleInterrupts() throws {
+        if ime == false {
+            return
+        }
+        
+        let enabled = try mmu.readByte(address: Interrupts.enabledAddress)
+        
+        if enabled == 0x00 {
+            return
+        }
+        
+        let flags = try mmu.readByte(address: Interrupts.flagAddress);
+        
+        if flags == 0x00 {
+            return
+        }
+        
+        for interrupt in Interrupts.priority {
+            if enabled.bit(interrupt.bit) && flags.bit(interrupt.bit) {
+                try pushWordOnStack(word: pc)
+                try mmu.writeByte(address: 0xFF0F, byte: flags.reset(interrupt.bit))
+                ime = false
+                pc = interrupt.address
+                return
+            }
+        }
+    }
+    
     public func run(for time: Int16) throws {
         cycles = cycles + time
      
@@ -232,6 +252,8 @@ public class CPU: CustomStringConvertible {
             if next != nil {
                 queue.insert(next!, at: 0)
             }
+            
+            try handleInterrupts()
         }
     }
 }
