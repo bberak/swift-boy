@@ -4,14 +4,16 @@ public class Clock {
     private let mmu: MMU
     private let ppu: PPU
     private let cpu: CPU
+    private let timer: Timer
     private let fps: Double
     private let frameTime: Double
     public var printFrameDuration = false
     
-    public init(_ mmu: MMU, _ ppu: PPU, _ cpu: CPU) {
+    public init(_ mmu: MMU, _ ppu: PPU, _ cpu: CPU, _ timer: Timer) {
         self.mmu = mmu
         self.ppu = ppu
         self.cpu = cpu
+        self.timer = timer;
         self.fps = 60
         self.frameTime = 1 / fps
     }
@@ -45,12 +47,13 @@ public class Clock {
     // 456 clock cycles = 1 scanline
     public func frame() throws {
         var total: Int = 0
-        let cycles: Int16 = 48
+        let cycles: UInt8 = 48
         
         while total < 70224 {
             try cpu.run(for: cycles / 4)
             try mmu.run(for: cycles / 4)
             try ppu.run(for: cycles / 2)
+            try timer.run(for: cycles / 16)
             
             total = total + Int(cycles)
         }

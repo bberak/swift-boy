@@ -29,7 +29,8 @@ class ViewController: UIViewController {
         let mmu = MMU(cpuTest02)
         let ppu = PPU(mmu)
         let cpu = CPU(mmu, ppu)
-        let clock = Clock(mmu, ppu, cpu)
+        let timer = Timer(mmu)
+        let clock = Clock(mmu, ppu, cpu, timer)
 
         clock.start()
         

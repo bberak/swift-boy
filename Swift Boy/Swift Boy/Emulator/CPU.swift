@@ -240,8 +240,8 @@ public class CPU: CustomStringConvertible {
         }
     }
     
-    public func run(for time: Int16) throws {
-        cycles = cycles + time
+    public func run(for time: UInt8) throws {
+        cycles = cycles + Int16(time)
      
         while cycles > 0 {
             let cmd = queue.count > 0 ? queue.removeFirst() : try fetchNextInstruction().build(self)

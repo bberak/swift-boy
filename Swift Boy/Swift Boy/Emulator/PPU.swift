@@ -403,9 +403,9 @@ public class PPU {
         }
     }
     
-    public func run(for time: Int16) throws {
+    public func run(for time: UInt8) throws {
         if lcd.enabled {
-            cycles = cycles + time
+            cycles = cycles + Int16(time)
         
             while cycles > 0 {
                 let cmd = queue.count > 0 ? queue.removeFirst() : fetchNextCommand()
