@@ -2,22 +2,23 @@ import Foundation
 
 public class Timer {
     private let mmu: MMU
+    private let divTreshold: UInt = 16
+    private var counterThreshold: UInt = 0
     private var enabled = false
-    private var modulo: UInt8 = 0
-    private var speed: UInt = 0
-    
-    private var cycles: UInt = 0 {
+        
+    private var divCycles: UInt = 0 {
         didSet {
-            if cycles % 16 == 0 {
+            if divCycles >= divTreshold {
                 divider = divider &+ 1
-            }
-            
-            if cycles % speed == 0 {
-                counter = counter &+ 1
+                divCycles = divCycles - divTreshold
             }
         }
     }
     
+    // TODO:
+    // Whenever a value is written to 0xFF04 (outside of the timer)
+    // the divider should be reset to zero. We almost need to have a way
+    // to bypass subscribers e.g. mmu.writeByte(address: 0xFF04, byte: newValue, subscribers: .ignore)
     private var divider: UInt8 {
         get {
             return try! mmu.readByte(address: 0xFF04)
@@ -27,12 +28,22 @@ public class Timer {
         }
     }
     
+    private var counterCycles: UInt = 0 {
+        didSet {
+            if counterCycles >= counterThreshold {
+                counter = counter &+ 1
+                counterCycles = counterCycles - counterThreshold
+            }
+        }
+    }
+    
     private var counter: UInt8 {
         get {
             return try! mmu.readByte(address: 0xFF05)
         }
         set {
             if newValue == 0 {
+                let modulo = try! mmu.readByte(address: 0xFF06)
                 var flags = try! mmu.readByte(address: Interrupts.flagAddress)
                 flags = flags.set(Interrupts.timer.bit)
                 try! mmu.writeByte(address: 0xFF05, byte: modulo)
@@ -42,34 +53,31 @@ public class Timer {
             }
         }
     }
-        
+    
     public init(_ mmu: MMU) {
         self.mmu = mmu
-        
-        self.mmu.subscribe(address: 0xFF06) { modulo in
-            self.modulo = modulo
-        }
         
         self.mmu.subscribe(address: 0xFF07) { control in
             self.enabled = control.bit(2)
             
-            let n = control & 0b00000011
+            let speed = control & 0b00000011
             
-            if n == 0 {
-                self.speed = 64
-            } else if n == 1 {
-                self.speed = 1
-            } else if n == 2 {
-                self.speed = 4
+            if speed == 0 {
+                self.counterThreshold = 64
+            } else if speed == 1 {
+                self.counterThreshold = 1
+            } else if speed == 2 {
+                self.counterThreshold = 4
             } else {
-                self.speed = 16
+                self.counterThreshold = 16
             }
         }
     }
     
     public func run(for time: UInt8) throws {
         if enabled {
-            cycles = cycles &+ UInt(time)
+            counterCycles = counterCycles &+ UInt(time)
+            divCycles = divCycles &+ UInt(time)
         }
     }
 }

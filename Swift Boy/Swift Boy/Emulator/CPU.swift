@@ -232,9 +232,11 @@ public class CPU: CustomStringConvertible {
         for interrupt in Interrupts.priority {
             if enabled.bit(interrupt.bit) && flags.bit(interrupt.bit) {
                 try pushWordOnStack(word: pc)
-                try mmu.writeByte(address: 0xFF0F, byte: flags.reset(interrupt.bit))
+                try mmu.writeByte(address: Interrupts.flagAddress, byte: flags.reset(interrupt.bit))
                 ime = false
                 pc = interrupt.address
+                cycles = cycles - 5
+                
                 return
             }
         }
@@ -244,6 +246,8 @@ public class CPU: CustomStringConvertible {
         cycles = cycles + Int16(time)
      
         while cycles > 0 {
+            try handleInterrupts()
+            
             let cmd = queue.count > 0 ? queue.removeFirst() : try fetchNextInstruction().build(self)
             let next = try cmd.run()
              
@@ -252,8 +256,6 @@ public class CPU: CustomStringConvertible {
             if next != nil {
                 queue.insert(next!, at: 0)
             }
-            
-            try handleInterrupts()
         }
     }
 }
