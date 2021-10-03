@@ -202,27 +202,15 @@ public class PPU {
             self.spritesEnabled = byte.bit(1)
             self.backgroundEnabled = byte.bit(0)
         }
-        
-        self.mmu.subscribe(address: 0xFF41) { stat in
-            // TODO:
-            // LCD status register has been written to..
-            // Figure out if we need to set any interrupt flags..
-        }
-        
+                
         self.mmu.subscribe(address: 0xFF44) { ly in
             let lyc = try! self.mmu.readByte(address: 0xFF45)
-            let stat = try! self.mmu.readByte(address: 0xFF41)
-            // TODO:
-            // Set stat vBlank bit if ly == 144
-            // Also, can probably set the vBlank interrupt flag here instead of
-            // in the draw code..
-            try! self.mmu.writeByte(address: 0xFF41, byte: stat.set(bit: 2, as: ly == lyc))
+            try! self.setLYEqualsLYC(ly == lyc)
         }
         
         self.mmu.subscribe(address: 0xFF45) { lyc in
             let ly = try! self.mmu.readByte(address: 0xFF44)
-            let stat = try! self.mmu.readByte(address: 0xFF41)
-            try! self.mmu.writeByte(address: 0xFF41, byte: stat.set(bit: 2, as: ly == lyc))
+            try! self.setLYEqualsLYC(ly == lyc)
         }
         
         self.mmu.subscribe(address: 0xFF47) { byte in
@@ -254,6 +242,51 @@ public class PPU {
         }
     }
     
+    func setLYEqualsLYC(_ equal: Bool) throws {
+        var stat = try mmu.readByte(address: 0xFF41)
+        var flags = try self.mmu.readByte(address: Interrupts.flagAddress)
+        
+        defer {
+            try! mmu.writeByte(address: 0xFF41, byte: stat)
+            try! mmu.writeByte(address: Interrupts.flagAddress, byte: flags)
+        }
+        
+        stat = stat.set(bit: 2, as: equal)
+        
+        if stat.bit(6) && stat.bit(2) {
+            flags = flags.set(Interrupts.lcdStat.bit)
+        }
+    }
+    
+    func setMode(_ mode: UInt8) throws {
+        var stat = try mmu.readByte(address: 0xFF41)
+        var flags = try self.mmu.readByte(address: Interrupts.flagAddress)
+        
+        defer {
+            try! mmu.writeByte(address: 0xFF41, byte: stat)
+            try! mmu.writeByte(address: Interrupts.flagAddress, byte: flags)
+        }
+        
+        stat = stat.set(bit: 0, as: mode.bit(0))
+        stat = stat.set(bit: 1, as: mode.bit(1))
+        
+        if mode == 1 {
+            flags = flags.set(Interrupts.vBlank.bit)
+        }
+        
+        if stat.bit(3) && mode == 0 {
+            flags = flags.set(Interrupts.lcdStat.bit)
+        }
+        
+        if stat.bit(4) && mode == 1 {
+            flags = flags.set(Interrupts.lcdStat.bit)
+        }
+        
+        if stat.bit(5) && mode == 2 {
+            flags = flags.set(Interrupts.lcdStat.bit)
+        }
+    }
+    
     func fetchNextCommand() -> Command {
         let ly = self.ly
         let scx = self.scx
@@ -262,6 +295,8 @@ public class PPU {
         if ly < self.lcd.bitmap.height {
             // OAM Scan
             return Command(cycles: 40) {
+                try self.setMode(2)
+                
                 let bgY = scy &+ ly
                 let bgTileMapRow = Int16(bgY / 8)
                 let bgTileMapStartIndex = UInt16(bgTileMapRow * 32)
@@ -295,6 +330,8 @@ public class PPU {
                 
                 // Drawing Pixels
                 return Command(cycles: 144) {
+                    try self.setMode(3)
+                    
                     var pixels = [Pixel]()
 
                     for data in bgTileData {
@@ -340,6 +377,7 @@ public class PPU {
                     
                     // Horizontal blank
                     return Command(cycles: 44) {
+                        try self.setMode(0)
                         
                         // Increment ly at the end of the blanking period
                         return Command(cycles: 0) {
@@ -352,8 +390,9 @@ public class PPU {
         } else {
             // Vertical blank per line
             return Command(cycles: 228) {
-                 let flags = try self.mmu.readByte(address: Interrupts.flagAddress)
-                 try self.mmu.writeByte(address: Interrupts.flagAddress, byte: flags.set(Interrupts.vBlank.bit))
+                if ly == 144 {
+                    try self.setMode(1)
+                }
                 
                 // Increment or reset ly at the end of the blanking period
                 return Command(cycles: 0) {

@@ -31,6 +31,7 @@
 		A1B4014E26EB5DB3002F4512 /* CPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4014626EB5DB3002F4512 /* CPU.swift */; };
 		A1B4015226EB5DCE002F4512 /* tetris.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1B4015026EB5DCE002F4512 /* tetris.gb */; };
 		A1B4015326EB5DCE002F4512 /* cpu_instrs.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1B4015126EB5DCE002F4512 /* cpu_instrs.gb */; };
+		A1DCD2D52709696B001CF043 /* Timer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1DCD2D42709696B001CF043 /* Timer.swift */; };
 		A1FB19DA26EC9657004CFE19 /* 10-bit ops.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1FB19D926EC9657004CFE19 /* 10-bit ops.gb */; };
 		A1FB19DC26ECA12A004CFE19 /* 03-op sp,hl.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1FB19DB26ECA12A004CFE19 /* 03-op sp,hl.gb */; };
 /* End PBXBuildFile section */
@@ -62,6 +63,7 @@
 		A1B4014626EB5DB3002F4512 /* CPU.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CPU.swift; sourceTree = "<group>"; };
 		A1B4015026EB5DCE002F4512 /* tetris.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = tetris.gb; sourceTree = "<group>"; };
 		A1B4015126EB5DCE002F4512 /* cpu_instrs.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = cpu_instrs.gb; sourceTree = "<group>"; };
+		A1DCD2D42709696B001CF043 /* Timer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Timer.swift; sourceTree = "<group>"; };
 		A1FB19D926EC9657004CFE19 /* 10-bit ops.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "10-bit ops.gb"; sourceTree = "<group>"; };
 		A1FB19DB26ECA12A004CFE19 /* 03-op sp,hl.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "03-op sp,hl.gb"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -119,6 +121,7 @@
 				A1B4014426EB5DB3002F4512 /* MMU.swift */,
 				A1B4014526EB5DB3002F4512 /* Common.swift */,
 				A1B4014626EB5DB3002F4512 /* CPU.swift */,
+				A1DCD2D42709696B001CF043 /* Timer.swift */,
 			);
 			path = Emulator;
 			sourceTree = "<group>";
@@ -236,6 +239,7 @@
 				A1B4011426EB5937002F4512 /* SceneDelegate.swift in Sources */,
 				A1B4014926EB5DB3002F4512 /* Instructions.swift in Sources */,
 				A1B4014C26EB5DB3002F4512 /* MMU.swift in Sources */,
+				A1DCD2D52709696B001CF043 /* Timer.swift in Sources */,
 				A1B4014826EB5DB3002F4512 /* Cartridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
