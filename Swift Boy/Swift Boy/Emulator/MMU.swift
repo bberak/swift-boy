@@ -24,7 +24,9 @@ enum MemoryAccessError: Error {
 }
 
 protocol MemoryAccess: class {
-    
+    // TODO:
+    // Remove the contains func?
+    // Remove the "throws" declarations?
     func contains(address: UInt16) -> Bool
     func readByte(address: UInt16) throws -> UInt8
     func writeByte(address: UInt16, byte: UInt8) throws -> Void
@@ -148,10 +150,16 @@ public class MemoryAccessArray: MemoryAccess {
     }
     
     func writeByte(address: UInt16, byte: UInt8) throws {
+        try writeByte(address: address, byte: byte, publish: true)
+    }
+    
+    func writeByte(address: UInt16, byte: UInt8, publish: Bool) throws {
         if let block = find(address: address) {
             try block.writeByte(address: address, byte: byte)
-            let subs = subscribers.filter({ $0.predicate(address, byte) })
-            subs.forEach { $0.handler(byte) }
+            if publish {
+                let subs = subscribers.filter({ $0.predicate(address, byte) })
+                subs.forEach { $0.handler(byte) }
+            }
             return
         }
         
@@ -170,6 +178,11 @@ public class MemoryAccessArray: MemoryAccess {
 public class MMU: MemoryAccessArray {
     private var queue: [Command] = []
     private var cycles: Int16 = 0
+    
+    // TODO:
+    // Create register getters/setters (e.g. for 0xFF0F and magic numbers).
+    // Or create an extension, protocol with getters/setters.
+    // Or create an AddressBook struct with register names and values.
     
     public init(_ cartridge: Cartridge) {
         let bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
@@ -198,8 +211,8 @@ public class MMU: MemoryAccessArray {
         }
     }
     
-    // TODO: Make sure only HRAM is accessible to the CPU
-    // during the DMA transfer process
+    // TODO:
+    // Make sure only HRAM is accessible to the CPU during the DMA transfer process
     func startDMATransfer(byte: UInt8) {
         let start = UInt16(byte) << 8
         for offset in 0..<0xA0 {

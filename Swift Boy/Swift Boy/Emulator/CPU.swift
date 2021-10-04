@@ -1,8 +1,8 @@
 struct Instruction {
-    internal var build: (CPU) throws -> Command
+    internal var toCommand: (CPU) throws -> Command
     
-    init(build: @escaping (CPU) throws -> Command) {
-        self.build = build
+    init(toCommand: @escaping (CPU) throws -> Command) {
+        self.toCommand = toCommand
     }
     
     static func atomic(cycles: UInt16, command: @escaping (CPU) throws -> Void) -> Instruction {
@@ -242,19 +242,49 @@ public class CPU: CustomStringConvertible {
         }
     }
     
+    // TODO:
+    // You can probably remove the run func below
+    // public func run(for time: UInt8) throws {
+    //     cycles = cycles + Int16(time)
+    //
+    //     while cycles > 0 {
+    //         try handleInterrupts()
+    //
+    //         let cmd = queue.count > 0 ? queue.removeFirst() : try fetchNextInstruction().toCommand(self)
+    //         let next = try cmd.run()
+    //
+    //         cycles = cycles - Int16(cmd.cycles)
+    //
+    //         if next != nil {
+    //             queue.insert(next!, at: 0)
+    //         }
+    //     }
+    // }
+    
     public func run(for time: UInt8) throws {
         cycles = cycles + Int16(time)
      
         while cycles > 0 {
-            try handleInterrupts()
-            
-            let cmd = queue.count > 0 ? queue.removeFirst() : try fetchNextInstruction().build(self)
-            let next = try cmd.run()
-             
-            cycles = cycles - Int16(cmd.cycles)
-             
-            if next != nil {
-                queue.insert(next!, at: 0)
+            if queue.count > 0 {
+                let cmd = queue.removeFirst()
+                
+                // TODO:
+                // Only execute cmd if you have enough cycles?
+                // if cmd.cycles > cycles {
+                //     queue.insert(cmd, at: 0)
+                //     return
+                // }
+                
+                let next = try cmd.run()
+                
+                cycles = cycles - Int16(cmd.cycles)
+                
+                if next != nil {
+                    queue.insert(next!, at: 0)
+                }
+            } else {
+                try handleInterrupts()
+                queue.insert(try fetchNextInstruction().toCommand(self), at: 0)
             }
         }
     }
