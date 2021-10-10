@@ -171,7 +171,7 @@ public class MemoryAccessArray: MemoryAccess {
     }
     
     internal func subscribe(address: UInt16, handler: @escaping (UInt8)->Void) {
-        self.subscribe({ (a, b) in a == address }, handler: handler)
+        subscribe({ (a, b) in a == address }, handler: handler)
     }
 }
 
@@ -260,7 +260,7 @@ public class MMU: MemoryAccessArray {
     func startDMATransfer(byte: UInt8) {
         let start = UInt16(byte) << 8
         for offset in 0..<0xA0 {
-            self.queue.append(Command(cycles: 1) {
+            queue.append(Command(cycles: 1) {
                 let data = try self.readByte(address: start + UInt16(offset))
                 try self.writeByte(address: 0xFE00 + UInt16(offset), byte: data)
                 return nil

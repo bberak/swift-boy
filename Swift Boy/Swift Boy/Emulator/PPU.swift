@@ -261,11 +261,11 @@ public class PPU {
     }
     
     func fetchNextCommand() -> Command {
-        let ly = self.mmu.lcdY.get()
-        let scx = self.mmu.scrollX.get()
-        let scy = self.mmu.scrollY.get()
+        let ly = mmu.lcdY.get()
+        let scx = mmu.scrollX.get()
+        let scy = mmu.scrollY.get()
         
-        if ly < self.lcd.bitmap.height {
+        if ly < lcd.bitmap.height {
             // OAM Scan
             return Command(cycles: 40) {
                 try self.setMode(2)
