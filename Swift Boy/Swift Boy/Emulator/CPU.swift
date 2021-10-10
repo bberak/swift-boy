@@ -77,6 +77,15 @@ enum CPUError: Error {
     case debug
 }
 
+public struct Interrupts {
+    static let vBlank = (bit: UInt8(0), address: UInt16(0x0040))
+    static let lcdStat = (bit: UInt8(1), address: UInt16(0x0048))
+    static let timer = (bit: UInt8(2), address: UInt16(0x0050))
+    static let serial = (bit: UInt8(3), address: UInt16(0x0058))
+    static let joypad = (bit: UInt8(4), address: UInt16(0x0060))
+    static let priority = [Interrupts.vBlank, Interrupts.lcdStat, Interrupts.timer, Interrupts.serial, Interrupts.joypad]
+}
+
 public class CPU: CustomStringConvertible {
     internal let mmu: MMU
     internal let flags: Flags = Flags()
@@ -217,13 +226,13 @@ public class CPU: CustomStringConvertible {
             return
         }
         
-        let enabled = mmu.interruptsEnabled.get()
+        let enabled = mmu.interruptsEnabled.read()
         
         if enabled == 0x00 {
             return
         }
         
-        let flags = mmu.interruptFlags.get()
+        let flags = mmu.interruptFlags.read()
         
         if flags == 0x00 {
             return
@@ -232,7 +241,7 @@ public class CPU: CustomStringConvertible {
         for interrupt in Interrupts.priority {
             if enabled.bit(interrupt.bit) && flags.bit(interrupt.bit) {
                 try pushWordOnStack(word: pc)
-                mmu.interruptFlags.set(flags.reset(interrupt.bit))
+                mmu.interruptFlags.write(flags.reset(interrupt.bit))
                 ime = false
                 pc = interrupt.address
                 cycles = cycles - 5

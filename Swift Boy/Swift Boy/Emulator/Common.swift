@@ -177,12 +177,3 @@ public struct Command {
         self.run = run;
     }
 }
-
-public struct Interrupts {
-    static let vBlank = (bit: UInt8(0), address: UInt16(0x0040))
-    static let lcdStat = (bit: UInt8(1), address: UInt16(0x0048))
-    static let timer = (bit: UInt8(2), address: UInt16(0x0050))
-    static let serial = (bit: UInt8(3), address: UInt16(0x0058))
-    static let joypad = (bit: UInt8(4), address: UInt16(0x0060))
-    static let priority = [Interrupts.vBlank, Interrupts.lcdStat, Interrupts.timer, Interrupts.serial, Interrupts.joypad]
-}

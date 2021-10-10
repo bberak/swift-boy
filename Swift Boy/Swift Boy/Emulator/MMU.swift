@@ -184,22 +184,20 @@ public struct Address {
         self.mmu = mmu
     }
     
-    func get() -> UInt8 {
+    func read() -> UInt8 {
         return try! mmu.readByte(address: address)
     }
 
-    func set(_ byte: UInt8, publish: Bool = true) {
+    func write(_ byte: UInt8, publish: Bool = true) {
         try! mmu.writeByte(address: address, byte: byte, publish: publish)
     }
     
-    func setBit(_ bit: UInt8) {
-        set(get().set(bit))
+    func writeBit(_ bit: UInt8, as value: Bool) {
+        var byte = read()
+        byte[bit] = value
+        write(byte)
     }
-    
-    func resetBit(_ bit: UInt8) {
-        set(get().reset(bit))
-    }
-    
+        
     func subscribe(handler: @escaping (UInt8) -> Void) {
         mmu.subscribe(address: address, handler: handler);
     }

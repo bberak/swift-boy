@@ -177,12 +177,12 @@ public class PPU {
         }
                 
         self.mmu.lcdY.subscribe { ly in
-            let lyc = self.mmu.lcdYCompare.get()
+            let lyc = self.mmu.lcdYCompare.read()
             try! self.setLYEqualsLYC(ly == lyc)
         }
         
         self.mmu.lcdYCompare.subscribe { lyc in
-            let ly = self.mmu.lcdY.get()
+            let ly = self.mmu.lcdY.read()
             try! self.setLYEqualsLYC(ly == lyc)
         }
         
@@ -208,7 +208,7 @@ public class PPU {
         }
         
         self.mmu.serialDataTransfer.subscribe({ (b) in b == 0x81 }) { _ in
-            let byte = self.mmu.serialDataControl.get()
+            let byte = self.mmu.serialDataControl.read()
             let scalar = UnicodeScalar(byte)
             let char = Character(scalar)
             print(char, terminator: "")
@@ -216,54 +216,54 @@ public class PPU {
     }
     
     func setLYEqualsLYC(_ equal: Bool) throws {
-        var stat = mmu.lcdStatus.get()
-        var flags = mmu.interruptFlags.get()
+        var stat = mmu.lcdStatus.read()
+        var flags = mmu.interruptFlags.read()
         
         defer {
-            mmu.lcdStatus.set(stat)
-            mmu.interruptFlags.set(flags)
+            mmu.lcdStatus.write(stat)
+            mmu.interruptFlags.write(flags)
         }
         
         stat[2] = equal
         
         if stat.bit(6) && stat.bit(2) {
-            flags = flags.set(Interrupts.lcdStat.bit)
+            flags[Interrupts.lcdStat.bit] = true
         }
     }
     
     func setMode(_ mode: UInt8) throws {
-        var stat = mmu.lcdStatus.get()
-        var flags = mmu.interruptFlags.get()
+        var stat = mmu.lcdStatus.read()
+        var flags = mmu.interruptFlags.read()
         
         defer {
-            mmu.lcdStatus.set(stat)
-            mmu.interruptFlags.set(flags)
+            mmu.lcdStatus.write(stat)
+            mmu.interruptFlags.write(flags)
         }
         
         stat[0] = mode[0]
         stat[1] = mode[1]
         
         if mode == 1 {
-            flags = flags.set(Interrupts.vBlank.bit)
+            flags[Interrupts.vBlank.bit] = true
         }
         
         if stat.bit(3) && mode == 0 {
-            flags = flags.set(Interrupts.lcdStat.bit)
+            flags[Interrupts.lcdStat.bit] = true
         }
         
         if stat.bit(4) && mode == 1 {
-            flags = flags.set(Interrupts.lcdStat.bit)
+            flags[Interrupts.lcdStat.bit] = true
         }
         
         if stat.bit(5) && mode == 2 {
-            flags = flags.set(Interrupts.lcdStat.bit)
+            flags[Interrupts.lcdStat.bit] = true
         }
     }
     
     func fetchNextCommand() -> Command {
-        let ly = mmu.lcdY.get()
-        let scx = mmu.scrollX.get()
-        let scy = mmu.scrollY.get()
+        let ly = mmu.lcdY.read()
+        let scx = mmu.scrollX.read()
+        let scy = mmu.scrollY.read()
         
         if ly < lcd.bitmap.height {
             // OAM Scan
@@ -354,7 +354,7 @@ public class PPU {
                         
                         // Increment ly at the end of the blanking period
                         return Command(cycles: 0) {
-                            self.mmu.lcdY.set(ly + 1)
+                            self.mmu.lcdY.write(ly + 1)
                             return nil
                         }
                     }
@@ -369,7 +369,7 @@ public class PPU {
                 
                 // Increment or reset ly at the end of the blanking period
                 return Command(cycles: 0) {
-                    self.mmu.lcdY.set(ly < 153 ? ly + 1 : 0)
+                    self.mmu.lcdY.write(ly < 153 ? ly + 1 : 0)
                     return nil
                 }
             }

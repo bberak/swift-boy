@@ -12,14 +12,14 @@ public class Timer {
             // Try refactor code below
             if counterCycles >= counterThreshold {
                 let delta = counterThreshold == 1 ? UInt8(counterCycles) : UInt8(1)
-                let prev = mmu.timerCounter.get()
+                let prev = mmu.timerCounter.read()
                 let next = prev &+ delta
                 if next < prev {
                     // Overflowed
-                    mmu.timerCounter.set(mmu.timerModulo.get())
-                    mmu.interruptFlags.setBit(Interrupts.timer.bit)
+                    mmu.timerCounter.write(mmu.timerModulo.read())
+                    mmu.interruptFlags.writeBit(Interrupts.timer.bit, as: true)
                 } else {
-                    mmu.timerCounter.set(next)
+                    mmu.timerCounter.write(next)
                 }
                 counterCycles = counterCycles - UInt(delta)
             }
@@ -30,7 +30,7 @@ public class Timer {
         didSet {
             if divCycles >= divTreshold {
                 let divider = mmu.dividerRegister
-                divider.set(divider.get() &+ 1, publish: false)
+                divider.write(divider.read() &+ 1, publish: false)
                 divCycles = divCycles - divTreshold
             }
         }
@@ -40,7 +40,7 @@ public class Timer {
         self.mmu = mmu
         
         self.mmu.dividerRegister.subscribe { _ in
-            self.mmu.dividerRegister.set(0, publish: false)
+            self.mmu.dividerRegister.write(0, publish: false)
         }
         
         self.mmu.timerControl.subscribe { control in
