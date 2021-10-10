@@ -8,8 +8,6 @@ public class Timer {
         
     private var counterCycles: UInt = 0 {
         didSet {
-            // TODO:
-            // Try refactor code below
             if counterCycles >= counterThreshold {
                 let delta = counterThreshold == 1 ? UInt8(counterCycles) : UInt8(1)
                 let prev = mmu.timerCounter.read()
