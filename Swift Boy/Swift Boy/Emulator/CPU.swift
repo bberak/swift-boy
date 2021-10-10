@@ -15,15 +15,11 @@ struct Instruction {
     }
 }
 
-class Flags: CustomStringConvertible {
+class Flags {
     internal var zero = false
     internal var subtract = false
     internal var halfCarry = false
     internal var carry = false
-    
-    public var description: String {
-        return "z: \(zero ? 1 : 0), n: \(subtract ? 1 : 0), h: \(halfCarry ? 1 : 0), c: \(carry ? 1 : 0)"
-    }
     
     func clear() {
         zero = false
@@ -57,18 +53,9 @@ class Flags: CustomStringConvertible {
     }
 }
 
-enum OpCode: Hashable, CustomStringConvertible {
+enum OpCode: Hashable {
     case byte(UInt8)
     case word(UInt8)
-    
-    public var description: String {
-        switch self {
-        case .byte(let value):
-            return "0x\(value.toHexString())"
-        case .word(let value):
-            return "0x\(value.toHexString()) (word)"
-        }
-    }
 }
 
 enum CPUError: Error {
@@ -85,7 +72,7 @@ public struct Interrupts {
     static let priority = [Interrupts.vBlank, Interrupts.lcdStat, Interrupts.timer, Interrupts.serial, Interrupts.joypad]
 }
 
-public class CPU: CustomStringConvertible {
+public class CPU {
     internal let mmu: MMU
     internal let flags: Flags = Flags()
     internal var a: UInt8 = 0
@@ -150,10 +137,6 @@ public class CPU: CustomStringConvertible {
             h = bytes[1]
             l = bytes[0]
         }
-    }
-    
-    public var description: String {
-        return "a: \(a), flags: (\(flags)), b: \(b), c: \(c), d: \(d), e: \(e), h: \(h), l: \(l), sp: \(sp), pc: \(pc), ime: \(ime), cycles: \(cycles)"
     }
     
     public init(_ mmu: MMU, _ ppu: PPU) {
