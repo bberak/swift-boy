@@ -177,19 +177,19 @@ public class MemoryAccessArray: MemoryAccess {
 
 public struct Address {
     let address: UInt16
-    let mmu: MMU
+    let arr: MemoryAccessArray
     
-    init(_ address: UInt16, _ mmu: MMU) {
+    init(_ address: UInt16, _ arr: MemoryAccessArray) {
         self.address = address
-        self.mmu = mmu
+        self.arr = arr
     }
     
     func read() -> UInt8 {
-        return try! mmu.readByte(address: address)
+        return try! arr.readByte(address: address)
     }
 
     func write(_ byte: UInt8, publish: Bool = true) {
-        try! mmu.writeByte(address: address, byte: byte, publish: publish)
+        try! arr.writeByte(address: address, byte: byte, publish: publish)
     }
     
     func writeBit(_ bit: UInt8, as value: Bool) {
@@ -199,32 +199,37 @@ public struct Address {
     }
         
     func subscribe(handler: @escaping (UInt8) -> Void) {
-        mmu.subscribe(address: address, handler: handler);
+        arr.subscribe(address: address, handler: handler);
     }
     
     func subscribe(_ predicate: @escaping (UInt8) -> Bool, handler: @escaping (UInt8) -> Void) {
-        mmu.subscribe({ (a, b) in a == self.address && predicate(b) }, handler: handler)
-    }
-}
-
-struct AddressBook {
-    private static var cache: [UInt16: Address] = [:]
-    
-    static func entry(_ address: UInt16, _ mmu: MMU) -> Address {
-        var entry = cache[address];
-        
-        if  entry == nil {
-            entry = Address(address, mmu)
-            cache[address] = entry
-        }
-        
-        return entry!
+        arr.subscribe({ (a, b) in a == self.address && predicate(b) }, handler: handler)
     }
 }
 
 public class MMU: MemoryAccessArray {
     private var queue: [Command] = []
     private var cycles: Int16 = 0
+    
+    lazy var serialDataTransfer = Address(0xFF01, self)
+    lazy var serialDataControl = Address(0xFF02, self)
+    lazy var dividerRegister = Address(0xFF04, self)
+    lazy var timerCounter = Address(0xFF05, self)
+    lazy var timerModulo = Address(0xFF06, self)
+    lazy var timerControl = Address(0xFF07, self)
+    lazy var interruptFlags = Address(0xFF0F, self)
+    lazy var lcdControl = Address(0xFF40, self)
+    lazy var lcdStatus = Address(0xFF41, self)
+    lazy var scrollY = Address(0xFF42, self)
+    lazy var scrollX = Address(0xFF43, self)
+    lazy var lcdY = Address(0xFF44, self)
+    lazy var lcdYCompare = Address(0xFF45, self)
+    lazy var dmaTransfer = Address(0xFF46, self)
+    lazy var bgPalette = Address(0xFF47, self)
+    lazy var obj0Palette = Address(0xFF48, self)
+    lazy var obj1Palette = Address(0xFF49, self)
+    lazy var biosRegister = Address(0xFF50, self)
+    lazy var interruptsEnabled = Address(0xFFFF, self)
         
     public init(_ cartridge: Cartridge) {
         let bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
@@ -285,83 +290,5 @@ public class MMU: MemoryAccessArray {
                 cycles = 0
             }
         }
-    }
-}
-
-extension MMU {
-    public var serialDataTransfer: Address {
-        return AddressBook.entry(0xFF01, self)
-    }
-    
-    public var serialDataControl: Address {
-        return AddressBook.entry(0xFF02, self)
-    }
-    
-    public var dividerRegister: Address {
-        return AddressBook.entry(0xFF04, self)
-    }
-    
-    public var timerCounter: Address {
-        return AddressBook.entry(0xFF05, self)
-    }
-    
-    public var timerModulo: Address {
-        return AddressBook.entry(0xFF06, self)
-    }
-    
-    public var timerControl: Address {
-        return AddressBook.entry(0xFF07, self)
-    }
-    
-    public var interruptFlags: Address {
-        return AddressBook.entry(0xFF0F, self)
-    }
-    
-    public var lcdControl: Address {
-        return AddressBook.entry(0xFF40, self)
-    }
-    
-    public var lcdStatus: Address {
-        return AddressBook.entry(0xFF41, self)
-    }
-    
-    public var scrollY: Address {
-        return AddressBook.entry(0xFF42, self)
-    }
-    
-    public var scrollX: Address {
-        return AddressBook.entry(0xFF43, self)
-    }
-    
-    public var lcdY: Address {
-        return AddressBook.entry(0xFF44, self)
-    }
-    
-    public var lcdYCompare: Address {
-        return AddressBook.entry(0xFF45, self)
-    }
-    
-    public var dmaTransfer: Address {
-        return AddressBook.entry(0xFF46, self)
-    }
-    
-    public var bgPalette: Address {
-        return AddressBook.entry(0xFF47, self)
-    }
-    
-    public var obj0Palette: Address {
-        return AddressBook.entry(0xFF48, self)
-    }
-    
-    public var obj1Palette: Address {
-        return AddressBook.entry(0xFF49, self)
-    }
-    
-    public var biosRegister: Address {
-        return AddressBook.entry(0xFF50, self)
-    }
-    
-    public var interruptsEnabled: Address {
-        return AddressBook.entry(0xFFFF, self)
     }
 }
