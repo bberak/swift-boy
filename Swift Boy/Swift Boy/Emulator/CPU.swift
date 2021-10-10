@@ -74,7 +74,6 @@ enum OpCode: Hashable, CustomStringConvertible {
 enum CPUError: Error {
     case instructionNotFound(OpCode)
     case instructionNotImplemented(OpCode)
-    case debug
 }
 
 public struct Interrupts {

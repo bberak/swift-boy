@@ -6,7 +6,7 @@ let instructions: [OpCode: Instruction] = [
     // Flags: - - - -
     //
     // Only advances the program counter by 1. Performs no other operations that would have an effect.
-    OpCode.byte(0x00): Instruction.atomic(cycles: 1) { cpu in },
+    OpCode.byte(0x00): Instruction.atomic(cycles: 1) { _ in },
     // LD BC, d16
     //
     // Cycles: 3
@@ -201,7 +201,7 @@ let instructions: [OpCode: Instruction] = [
     // The following conditions should be met before a STOP instruction is executed and stop mode is entered:
     // All interrupt-enable (IE) flags are reset.
     // Input to P10-P13 is LOW for all.
-    OpCode.byte(0x10): Instruction.atomic(cycles: 1) { cpu in
+    OpCode.byte(0x10): Instruction.atomic(cycles: 1) { _ in
         throw CPUError.instructionNotImplemented(OpCode.byte(0x10))
     },
     // LD DE, d16
@@ -1415,8 +1415,8 @@ let instructions: [OpCode: Instruction] = [
     // Once HALT mode is cancelled, the program starts from the address indicated by the program counter.
     // If the interrupt master enable flag is set, the contents of the program coounter are pushed to the stack and control jumps to the starting address of the interrupt.
     // If the RESET terminal goes LOW in HALT moode, the mode becomes that of a normal reset.
-    OpCode.byte(0x76): Instruction.atomic(cycles: 1) { cpu in
-        //throw CPUError.instructionNotImplemented(OpCode.byte(0x76))
+    OpCode.byte(0x76): Instruction.atomic(cycles: 1) { _ in
+        throw CPUError.instructionNotImplemented(OpCode.byte(0x76))
     },
     // LD (HL), A
     //

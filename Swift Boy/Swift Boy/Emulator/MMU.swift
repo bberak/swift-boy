@@ -24,9 +24,6 @@ enum MemoryAccessError: Error {
 }
 
 protocol MemoryAccess: class {
-    // TODO:
-    // Remove the contains func?
-    // Remove the "throws" declarations?
     func contains(address: UInt16) -> Bool
     func readByte(address: UInt16) throws -> UInt8
     func writeByte(address: UInt16, byte: UInt8) throws -> Void

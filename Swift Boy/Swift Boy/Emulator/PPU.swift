@@ -178,12 +178,12 @@ public class PPU {
                 
         self.mmu.lcdY.subscribe { ly in
             let lyc = self.mmu.lcdYCompare.read()
-            try! self.setLYEqualsLYC(ly == lyc)
+            self.setLYEqualsLYC(ly == lyc)
         }
         
         self.mmu.lcdYCompare.subscribe { lyc in
             let ly = self.mmu.lcdY.read()
-            try! self.setLYEqualsLYC(ly == lyc)
+            self.setLYEqualsLYC(ly == lyc)
         }
         
         self.mmu.bgPalette.subscribe { byte in
@@ -215,7 +215,7 @@ public class PPU {
         }
     }
     
-    func setLYEqualsLYC(_ equal: Bool) throws {
+    func setLYEqualsLYC(_ equal: Bool) {
         var stat = mmu.lcdStatus.read()
         var flags = mmu.interruptFlags.read()
         
@@ -231,7 +231,7 @@ public class PPU {
         }
     }
     
-    func setMode(_ mode: UInt8) throws {
+    func setMode(_ mode: UInt8) {
         var stat = mmu.lcdStatus.read()
         var flags = mmu.interruptFlags.read()
         
@@ -268,7 +268,7 @@ public class PPU {
         if ly < lcd.bitmap.height {
             // OAM Scan
             return Command(cycles: 40) {
-                try self.setMode(2)
+                self.setMode(2)
                 
                 let bgY = scy &+ ly
                 let bgTileMapRow = Int16(bgY / 8)
@@ -303,7 +303,7 @@ public class PPU {
                 
                 // Drawing Pixels
                 return Command(cycles: 144) {
-                    try self.setMode(3)
+                    self.setMode(3)
                     
                     var pixels = [Pixel]()
 
@@ -350,7 +350,7 @@ public class PPU {
                     
                     // Horizontal blank
                     return Command(cycles: 44) {
-                        try self.setMode(0)
+                        self.setMode(0)
                         
                         // Increment ly at the end of the blanking period
                         return Command(cycles: 0) {
@@ -364,7 +364,7 @@ public class PPU {
             // Vertical blank per line
             return Command(cycles: 228) {
                 if ly == 144 {
-                    try self.setMode(1)
+                    self.setMode(1)
                 }
                 
                 // Increment or reset ly at the end of the blanking period
