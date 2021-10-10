@@ -224,7 +224,7 @@ public class PPU {
             mmu.interruptFlags.set(flags)
         }
         
-        stat = stat.set(bit: 2, as: equal)
+        stat[2] = equal
         
         if stat.bit(6) && stat.bit(2) {
             flags = flags.set(Interrupts.lcdStat.bit)
@@ -240,8 +240,8 @@ public class PPU {
             mmu.interruptFlags.set(flags)
         }
         
-        stat = stat.set(bit: 0, as: mode.bit(0))
-        stat = stat.set(bit: 1, as: mode.bit(1))
+        stat[0] = mode[0]
+        stat[1] = mode[1]
         
         if mode == 1 {
             flags = flags.set(Interrupts.vBlank.bit)

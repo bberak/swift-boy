@@ -65,14 +65,6 @@ public extension UInt8 {
         return self | mask
     }
     
-    func set(bit: UInt8, as value: Bool) -> UInt8 {
-        if value == false {
-            return reset(bit)
-        }
-        
-        return set(bit)
-    }
-    
     func swap() -> UInt8 {
         let hb = self << 4
         let lb = self >> 4
@@ -81,6 +73,19 @@ public extension UInt8 {
     
     func toInt8() -> Int8 {
         return Int8(bitPattern: self)
+    }
+    
+    subscript(index: UInt8) -> Bool {
+        get {
+            return bit(index)
+        }
+        set {
+            if newValue {
+                self = set(index)
+            } else {
+                self = reset(index)
+            }
+        }
     }
 }
 
