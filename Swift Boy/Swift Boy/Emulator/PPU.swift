@@ -207,8 +207,8 @@ public class PPU {
             self.obj1Palette[3] = defaultPalette[byte.crumb(3)]
         }
         
-        self.mmu.serialDataTransfer.subscribe({ (b) in b == 0x81 }) { _ in
-            let byte = self.mmu.serialDataControl.read()
+        self.mmu.serialDataControl.subscribe({ (b) in b == 0x81 }) { _ in
+            let byte = self.mmu.serialDataTransfer.read()
             let scalar = UnicodeScalar(byte)
             let char = Character(scalar)
             print(char, terminator: "")
