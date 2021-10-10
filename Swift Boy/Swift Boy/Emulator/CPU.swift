@@ -250,26 +250,7 @@ public class CPU: CustomStringConvertible {
             }
         }
     }
-    
-    // TODO:
-    // You can probably remove the run func below
-    // public func run(for time: UInt8) throws {
-    //     cycles = cycles + Int16(time)
-    //
-    //     while cycles > 0 {
-    //         try handleInterrupts()
-    //
-    //         let cmd = queue.count > 0 ? queue.removeFirst() : try fetchNextInstruction().toCommand(self)
-    //         let next = try cmd.run()
-    //
-    //         cycles = cycles - Int16(cmd.cycles)
-    //
-    //         if next != nil {
-    //             queue.insert(next!, at: 0)
-    //         }
-    //     }
-    // }
-    
+        
     public func run(for time: UInt8) throws {
         cycles = cycles + Int16(time)
      
