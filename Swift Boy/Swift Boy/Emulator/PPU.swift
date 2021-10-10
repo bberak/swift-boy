@@ -157,42 +157,15 @@ public class PPU {
     private var spriteSize: [UInt8] = [8, 8]
     private var spritesEnabled = false
     private var backgroundEnabled = false
-    private var backgroundPalette = defaultPalette
-    private var spritePalette0 = defaultPalette
-    private var spritePalette1 = defaultPalette
-    
-    private var scx: UInt8 {
-        get {
-            return try! mmu.readByte(address: 0xFF43)
-        }
-        set {
-            try! mmu.writeByte(address: 0xFF43, byte: newValue)
-        }
-    }
-    
-    private var scy: UInt8 {
-        get {
-            return try! mmu.readByte(address: 0xFF42)
-        }
-        set {
-            try! mmu.writeByte(address: 0xFF42, byte: newValue)
-        }
-    }
-    
-    private var ly: UInt8 {
-        get {
-            return try! mmu.readByte(address: 0xFF44)
-        }
-        set {
-            try! mmu.writeByte(address: 0xFF44, byte: newValue)
-        }
-    }
-        
+    private var bgPalette = defaultPalette
+    private var obj0Palette = defaultPalette
+    private var obj1Palette = defaultPalette
+            
     public init(_ mmu: MMU) {
         self.lcd = LCD()
         self.mmu = mmu
         
-        self.mmu.subscribe(address: 0xFF40) { byte in
+        self.mmu.lcdControl.subscribe { byte in
             self.lcd.enabled = byte.bit(7)
             self.windowTileMap = byte.bit(6) ? 1 : 0
             self.windowEnabled = byte.bit(5)
@@ -203,39 +176,39 @@ public class PPU {
             self.backgroundEnabled = byte.bit(0)
         }
                 
-        self.mmu.subscribe(address: 0xFF44) { ly in
-            let lyc = try! self.mmu.readByte(address: 0xFF45)
+        self.mmu.lcdY.subscribe { ly in
+            let lyc = self.mmu.lcdYCompare.get()
             try! self.setLYEqualsLYC(ly == lyc)
         }
         
-        self.mmu.subscribe(address: 0xFF45) { lyc in
-            let ly = try! self.mmu.readByte(address: 0xFF44)
+        self.mmu.lcdYCompare.subscribe { lyc in
+            let ly = self.mmu.lcdY.get()
             try! self.setLYEqualsLYC(ly == lyc)
         }
         
-        self.mmu.subscribe(address: 0xFF47) { byte in
-            self.backgroundPalette[0] = defaultPalette[byte.crumb(0)]
-            self.backgroundPalette[1] = defaultPalette[byte.crumb(1)]
-            self.backgroundPalette[2] = defaultPalette[byte.crumb(2)]
-            self.backgroundPalette[3] = defaultPalette[byte.crumb(3)]
+        self.mmu.bgPalette.subscribe { byte in
+            self.bgPalette[0] = defaultPalette[byte.crumb(0)]
+            self.bgPalette[1] = defaultPalette[byte.crumb(1)]
+            self.bgPalette[2] = defaultPalette[byte.crumb(2)]
+            self.bgPalette[3] = defaultPalette[byte.crumb(3)]
         }
         
-        self.mmu.subscribe(address: 0xFF48) { byte in
-            self.spritePalette0[0] = Pixel.transparent
-            self.spritePalette0[1] = defaultPalette[byte.crumb(1)]
-            self.spritePalette0[2] = defaultPalette[byte.crumb(2)]
-            self.spritePalette0[3] = defaultPalette[byte.crumb(3)]
+        self.mmu.obj0Palette.subscribe { byte in
+            self.obj0Palette[0] = Pixel.transparent
+            self.obj0Palette[1] = defaultPalette[byte.crumb(1)]
+            self.obj0Palette[2] = defaultPalette[byte.crumb(2)]
+            self.obj0Palette[3] = defaultPalette[byte.crumb(3)]
         }
         
-        self.mmu.subscribe(address: 0xFF49) { byte in
-            self.spritePalette1[0] = Pixel.transparent
-            self.spritePalette1[1] = defaultPalette[byte.crumb(1)]
-            self.spritePalette1[2] = defaultPalette[byte.crumb(2)]
-            self.spritePalette1[3] = defaultPalette[byte.crumb(3)]
+        self.mmu.obj1Palette.subscribe { byte in
+            self.obj1Palette[0] = Pixel.transparent
+            self.obj1Palette[1] = defaultPalette[byte.crumb(1)]
+            self.obj1Palette[2] = defaultPalette[byte.crumb(2)]
+            self.obj1Palette[3] = defaultPalette[byte.crumb(3)]
         }
         
-        self.mmu.subscribe({ (a, b) in a == 0xFF02 && b == 0x81 }) { _ in
-            let byte = try! self.mmu.readByte(address: 0xFF01)
+        self.mmu.serialDataTransfer.subscribe({ (b) in b == 0x81 }) { _ in
+            let byte = self.mmu.serialDataControl.get()
             let scalar = UnicodeScalar(byte)
             let char = Character(scalar)
             print(char, terminator: "")
@@ -243,12 +216,12 @@ public class PPU {
     }
     
     func setLYEqualsLYC(_ equal: Bool) throws {
-        var stat = try mmu.readByte(address: 0xFF41)
-        var flags = try self.mmu.readByte(address: Interrupts.flagAddress)
+        var stat = mmu.lcdStatus.get()
+        var flags = mmu.interruptFlags.get()
         
         defer {
-            try! mmu.writeByte(address: 0xFF41, byte: stat)
-            try! mmu.writeByte(address: Interrupts.flagAddress, byte: flags)
+            mmu.lcdStatus.set(stat)
+            mmu.interruptFlags.set(flags)
         }
         
         stat = stat.set(bit: 2, as: equal)
@@ -259,12 +232,12 @@ public class PPU {
     }
     
     func setMode(_ mode: UInt8) throws {
-        var stat = try mmu.readByte(address: 0xFF41)
-        var flags = try self.mmu.readByte(address: Interrupts.flagAddress)
+        var stat = mmu.lcdStatus.get()
+        var flags = mmu.interruptFlags.get()
         
         defer {
-            try! mmu.writeByte(address: 0xFF41, byte: stat)
-            try! mmu.writeByte(address: Interrupts.flagAddress, byte: flags)
+            mmu.lcdStatus.set(stat)
+            mmu.interruptFlags.set(flags)
         }
         
         stat = stat.set(bit: 0, as: mode.bit(0))
@@ -288,9 +261,9 @@ public class PPU {
     }
     
     func fetchNextCommand() -> Command {
-        let ly = self.ly
-        let scx = self.scx
-        let scy = self.scy
+        let ly = self.mmu.lcdY.get()
+        let scx = self.mmu.scrollX.get()
+        let scy = self.mmu.scrollY.get()
         
         if ly < self.lcd.bitmap.height {
             // OAM Scan
@@ -343,7 +316,7 @@ public class PPU {
                             let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
                             let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
 
-                            pixels.append(self.backgroundPalette[v1 + v2]!)
+                            pixels.append(self.bgPalette[v1 + v2]!)
                         }
                     }
                     
@@ -381,7 +354,7 @@ public class PPU {
                         
                         // Increment ly at the end of the blanking period
                         return Command(cycles: 0) {
-                            self.ly = ly + 1
+                            self.mmu.lcdY.set(ly + 1)
                             return nil
                         }
                     }
@@ -396,7 +369,7 @@ public class PPU {
                 
                 // Increment or reset ly at the end of the blanking period
                 return Command(cycles: 0) {
-                    self.ly = ly < 153 ? ly + 1 : 0
+                    self.mmu.lcdY.set(ly < 153 ? ly + 1 : 0)
                     return nil
                 }
             }

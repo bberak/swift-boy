@@ -12,58 +12,38 @@ public class Timer {
             // Try refactor code below
             if counterCycles >= counterThreshold {
                 let delta = counterThreshold == 1 ? UInt8(counterCycles) : UInt8(1)
-                let prev = counter
+                let prev = mmu.timerCounter.get()
                 let next = prev &+ delta
                 if next < prev {
                     // Overflowed
-                    let modulo = try! mmu.readByte(address: 0xFF06)
-                    var flags = try! mmu.readByte(address: Interrupts.flagAddress)
-                    flags = flags.set(Interrupts.timer.bit)
-                    counter = modulo
-                    try! mmu.writeByte(address: Interrupts.flagAddress, byte: flags)
+                    mmu.timerCounter.set(mmu.timerModulo.get())
+                    mmu.interruptFlags.setBit(Interrupts.timer.bit)
                 } else {
-                    counter = next
+                    mmu.timerCounter.set(next)
                 }
                 counterCycles = counterCycles - UInt(delta)
             }
         }
     }
     
-    private var counter: UInt8 {
-        get {
-            return try! mmu.readByte(address: 0xFF05)
-        }
-        set {
-            try! mmu.writeByte(address: 0xFF05, byte: newValue)
-        }
-    }
-    
     private var divCycles: UInt = 0 {
         didSet {
             if divCycles >= divTreshold {
-                divider = divider &+ 1
+                let divider = mmu.dividerRegister
+                divider.set(divider.get() &+ 1, publish: false)
                 divCycles = divCycles - divTreshold
             }
-        }
-    }
-    
-    private var divider: UInt8 {
-        get {
-            return try! mmu.readByte(address: 0xFF04)
-        }
-        set {
-            try! mmu.writeByte(address: 0xFF04, byte: newValue, publish: false)
         }
     }
     
     public init(_ mmu: MMU) {
         self.mmu = mmu
         
-        self.mmu.subscribe(address: 0xFF04) { _ in
-            self.divider = 0
+        self.mmu.dividerRegister.subscribe { _ in
+            self.mmu.dividerRegister.set(0, publish: false)
         }
         
-        self.mmu.subscribe(address: 0xFF07) { control in
+        self.mmu.timerControl.subscribe { control in
             self.enabled = control.bit(2)
             
             let speed = control & 0b00000011

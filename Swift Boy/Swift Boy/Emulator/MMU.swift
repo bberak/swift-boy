@@ -175,15 +175,59 @@ public class MemoryAccessArray: MemoryAccess {
     }
 }
 
+public struct Address {
+    let address: UInt16
+    let mmu: MMU
+    
+    init(_ address: UInt16, _ mmu: MMU) {
+        self.address = address
+        self.mmu = mmu
+    }
+    
+    func get() -> UInt8 {
+        return try! mmu.readByte(address: address)
+    }
+
+    func set(_ byte: UInt8, publish: Bool = true) {
+        try! mmu.writeByte(address: address, byte: byte, publish: publish)
+    }
+    
+    func setBit(_ bit: UInt8) {
+        set(get().set(bit))
+    }
+    
+    func resetBit(_ bit: UInt8) {
+        set(get().reset(bit))
+    }
+    
+    func subscribe(handler: @escaping (UInt8) -> Void) {
+        mmu.subscribe(address: address, handler: handler);
+    }
+    
+    func subscribe(_ predicate: @escaping (UInt8) -> Bool, handler: @escaping (UInt8) -> Void) {
+        mmu.subscribe({ (a, b) in a == self.address && predicate(b) }, handler: handler)
+    }
+}
+
+struct AddressBook {
+    private static var cache: [UInt16: Address] = [:]
+    
+    static func entry(_ address: UInt16, _ mmu: MMU) -> Address {
+        var entry = cache[address];
+        
+        if  entry == nil {
+            entry = Address(address, mmu)
+            cache[address] = entry
+        }
+        
+        return entry!
+    }
+}
+
 public class MMU: MemoryAccessArray {
     private var queue: [Command] = []
     private var cycles: Int16 = 0
-    
-    // TODO:
-    // Create register getters/setters (e.g. for 0xFF0F and magic numbers).
-    // Or create an extension, protocol with getters/setters.
-    // Or create an AddressBook struct with register names and values.
-    
+        
     public init(_ cartridge: Cartridge) {
         let bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
         let wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false, enabled: true)
@@ -200,13 +244,13 @@ public class MMU: MemoryAccessArray {
             rest
         ])
         
-        self.subscribe(address: 0xFF50) { byte in
+        self.biosRegister.subscribe { byte in
             if byte == 1 {
                 self.remove(item: bios)
             }
         }
         
-        self.subscribe(address: 0xFF46) { byte in
+        self.dmaTransfer.subscribe { byte in
             self.startDMATransfer(byte: byte)
         }
     }
@@ -243,5 +287,83 @@ public class MMU: MemoryAccessArray {
                 cycles = 0
             }
         }
+    }
+}
+
+extension MMU {
+    public var serialDataTransfer: Address {
+        return AddressBook.entry(0xFF01, self)
+    }
+    
+    public var serialDataControl: Address {
+        return AddressBook.entry(0xFF02, self)
+    }
+    
+    public var dividerRegister: Address {
+        return AddressBook.entry(0xFF04, self)
+    }
+    
+    public var timerCounter: Address {
+        return AddressBook.entry(0xFF05, self)
+    }
+    
+    public var timerModulo: Address {
+        return AddressBook.entry(0xFF06, self)
+    }
+    
+    public var timerControl: Address {
+        return AddressBook.entry(0xFF07, self)
+    }
+    
+    public var interruptFlags: Address {
+        return AddressBook.entry(0xFF0F, self)
+    }
+    
+    public var lcdControl: Address {
+        return AddressBook.entry(0xFF40, self)
+    }
+    
+    public var lcdStatus: Address {
+        return AddressBook.entry(0xFF41, self)
+    }
+    
+    public var scrollY: Address {
+        return AddressBook.entry(0xFF42, self)
+    }
+    
+    public var scrollX: Address {
+        return AddressBook.entry(0xFF43, self)
+    }
+    
+    public var lcdY: Address {
+        return AddressBook.entry(0xFF44, self)
+    }
+    
+    public var lcdYCompare: Address {
+        return AddressBook.entry(0xFF45, self)
+    }
+    
+    public var dmaTransfer: Address {
+        return AddressBook.entry(0xFF46, self)
+    }
+    
+    public var bgPalette: Address {
+        return AddressBook.entry(0xFF47, self)
+    }
+    
+    public var obj0Palette: Address {
+        return AddressBook.entry(0xFF48, self)
+    }
+    
+    public var obj1Palette: Address {
+        return AddressBook.entry(0xFF49, self)
+    }
+    
+    public var biosRegister: Address {
+        return AddressBook.entry(0xFF50, self)
+    }
+    
+    public var interruptsEnabled: Address {
+        return AddressBook.entry(0xFFFF, self)
     }
 }

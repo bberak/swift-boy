@@ -174,8 +174,6 @@ public struct Command {
 }
 
 public struct Interrupts {
-    static let flagAddress: UInt16 = 0xFF0F
-    static let enabledAddress: UInt16 = 0xFFFF
     static let vBlank = (bit: UInt8(0), address: UInt16(0x0040))
     static let lcdStat = (bit: UInt8(1), address: UInt16(0x0048))
     static let timer = (bit: UInt8(2), address: UInt16(0x0050))

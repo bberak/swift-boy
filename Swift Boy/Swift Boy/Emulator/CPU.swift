@@ -217,13 +217,13 @@ public class CPU: CustomStringConvertible {
             return
         }
         
-        let enabled = try mmu.readByte(address: Interrupts.enabledAddress)
+        let enabled = mmu.interruptsEnabled.get()
         
         if enabled == 0x00 {
             return
         }
         
-        let flags = try mmu.readByte(address: Interrupts.flagAddress);
+        let flags = mmu.interruptFlags.get()
         
         if flags == 0x00 {
             return
@@ -232,7 +232,7 @@ public class CPU: CustomStringConvertible {
         for interrupt in Interrupts.priority {
             if enabled.bit(interrupt.bit) && flags.bit(interrupt.bit) {
                 try pushWordOnStack(word: pc)
-                try mmu.writeByte(address: Interrupts.flagAddress, byte: flags.reset(interrupt.bit))
+                mmu.interruptFlags.set(flags.reset(interrupt.bit))
                 ime = false
                 pc = interrupt.address
                 cycles = cycles - 5
