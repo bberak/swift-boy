@@ -102,6 +102,7 @@ public class CPU: CustomStringConvertible {
     private var queue: [Command] = []
     private var cycles: Int16 = 0
     public var printOpcodes = false
+    public var enabled = true
     
     internal var af: UInt16 {
         get {
@@ -158,6 +159,12 @@ public class CPU: CustomStringConvertible {
     public init(_ mmu: MMU, _ ppu: PPU) {
         self.mmu = mmu
         self.ppu = ppu
+        
+        self.mmu.interruptFlags.subscribe { flags in
+            if flags > 0 && self.enabled == false {
+                self.enabled = flags & self.mmu.interruptsEnabled.read() > 0
+            }
+        }
     }
     
     func readNextByte() throws -> UInt8 {
@@ -251,9 +258,9 @@ public class CPU: CustomStringConvertible {
     }
         
     public func run(for time: UInt8) throws {
-        cycles = cycles + Int16(time)
+        cycles = cycles + (enabled ? Int16(time) : 0)
      
-        while cycles > 0 {
+        while cycles > 0 && enabled {
             if queue.count > 0 {
                 let cmd = queue.removeFirst()
                 

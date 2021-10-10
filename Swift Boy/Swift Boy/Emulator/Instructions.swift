@@ -1415,8 +1415,8 @@ let instructions: [OpCode: Instruction] = [
     // Once HALT mode is cancelled, the program starts from the address indicated by the program counter.
     // If the interrupt master enable flag is set, the contents of the program coounter are pushed to the stack and control jumps to the starting address of the interrupt.
     // If the RESET terminal goes LOW in HALT moode, the mode becomes that of a normal reset.
-    OpCode.byte(0x76): Instruction.atomic(cycles: 1) { _ in
-        throw CPUError.instructionNotImplemented(OpCode.byte(0x76))
+    OpCode.byte(0x76): Instruction.atomic(cycles: 1) { cpu in
+        cpu.enabled = false
     },
     // LD (HL), A
     //
