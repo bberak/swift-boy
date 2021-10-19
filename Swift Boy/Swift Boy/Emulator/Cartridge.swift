@@ -18,18 +18,18 @@ public class Cartridge: MemoryAccessArray {
 
         case .one:
             let rom0 = MemoryBlock(range: 0x0000...0x3FFF, buffer: rom.extract(0x0000...0x3FFF), readOnly: true, enabled: true)
-            let romB = MemoryBlock(range: 0x4000...0x7FFF, buffer: rom.extract(0x4000...0x7FFF), readOnly: true, enabled: true)
-            let ramB = MemoryBlock(range: 0xA000...0xBFFF, readOnly: false, enabled: false)
+            let romBank = MemoryBlockBanked(range: 0x4000...0x7FFF, buffer: rom.extractFrom(0x4000), readOnly: true, enabled: true)
+            let ramBank = MemoryBlock(range: 0xA000...0xBFFF, readOnly: false, enabled: false)
             
-            super.init([rom0, romB, ramB])
+            super.init([rom0, romBank, ramBank])
             
             self.subscribe({ (a, _) in a <= 0x1FFF }) { byte in
-                print("RAM Enabled", byte.toHexString())
-                ramB.enabled = (byte & 0x0A) == 0x0A
+                ramBank.enabled = (byte & 0x0A) == 0x0A
             }
             
             self.subscribe({ (a, _) in a >= 0x2000 && a <= 0x3FFF }) { bank in
                 print("ROM Bank Number (Write Only)", bank)
+                romBank.bankIndex = romBank.bankIndex & 0b11100000 + bank & 0b00011111
             }
             
             self.subscribe({ (a, _) in a >= 0x6000 && a <= 0x7FFF }) { mode in

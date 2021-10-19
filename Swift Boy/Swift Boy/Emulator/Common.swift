@@ -17,6 +17,10 @@ public extension Data {
     func extract(_ range: ClosedRange<Int>) -> [UInt8] {
         return range.map({ self[$0] })
     }
+    
+    func extractFrom(_ start: Int) -> [UInt8] {
+        return self.extract(start...(self.count-1))
+    }
 }
 
 extension Array {

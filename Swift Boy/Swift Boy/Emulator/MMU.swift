@@ -50,8 +50,8 @@ extension MemoryAccess {
 
 class MemoryBlock: MemoryAccess {
     private let range: ClosedRange<UInt16>
-    private var buffer: [UInt8]
     private var readOnly: Bool
+    var buffer: [UInt8]
     var enabled: Bool
     
     init(range: ClosedRange<UInt16>, buffer: [UInt8], readOnly: Bool, enabled: Bool) {
@@ -103,6 +103,24 @@ class MemoryBlock: MemoryAccess {
         let index = Int(address - range.lowerBound)
         
         buffer[index % buffer.count] = byte
+    }
+}
+
+class MemoryBlockBanked: MemoryBlock {
+    var banks: [[UInt8]]
+    var bankIndex: UInt8 = 0 {
+        didSet {
+            super.buffer = banks[Int(bankIndex)]
+        }
+    }
+    
+    init(range: ClosedRange<UInt16>, banks: [[UInt8]], readOnly: Bool, enabled: Bool) {
+        self.banks = banks
+        super.init(range: range, buffer: banks[0], readOnly: readOnly, enabled: enabled)
+    }
+    
+    convenience override init(range: ClosedRange<UInt16>, buffer: [UInt8], readOnly: Bool, enabled: Bool) {
+        self.init(range: range, banks: buffer.chunked(into: range.count), readOnly: readOnly, enabled: enabled)
     }
 }
 
