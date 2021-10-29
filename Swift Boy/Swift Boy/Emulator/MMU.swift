@@ -133,8 +133,13 @@ public class MemoryAccessArray: MemoryAccess {
     private var arr: [MemoryAccess]
     private var subscribers: [Subscriber] = []
     
-    init(_ arr: [MemoryAccess]) {
+    init(_ arr: [MemoryAccess] = []) {
         self.arr = arr
+    }
+    
+    func copy(other: MemoryAccessArray) {
+        self.arr = other.arr;
+        self.subscribers = other.subscribers
     }
     
     func find(address: UInt16) -> MemoryAccess? {
