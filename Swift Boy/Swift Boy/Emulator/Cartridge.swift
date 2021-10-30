@@ -1,8 +1,28 @@
+// References:
+// https://github.com/juchi/gameboy.js/blob/2eeed5eb5fdc497b47584e2719c18fe8aa13c1ea/src/mbc.js#L10
+// https://retrocomputing.stackexchange.com/questions/11732/how-does-the-gameboys-memory-bank-switching-work
+// https://b13rg.github.io/Gameboy-MBC-Analysis/
+
 import Foundation
 
 enum MBCType: UInt8 {
     case zero = 0x00
     case one = 0x01
+    case one_ram = 0x02
+    case one_ram_battery = 0x03
+}
+
+func getRamSize(rom: Data) -> Int {
+    switch rom[0x0149] {
+    case 1:
+        return 2048
+    case 2:
+        return 8096
+    case 3:
+        return 8096 * 4
+    default:
+        return 2048
+    }
 }
 
 func mbcZero(_ rom: Data) -> MemoryAccessArray {
@@ -13,23 +33,18 @@ func mbcZero(_ rom: Data) -> MemoryAccessArray {
 }
 
 func mbcOne(_ rom: Data) -> MemoryAccessArray {
-    //-- References:
-    //-- https://github.com/juchi/gameboy.js/blob/2eeed5eb5fdc497b47584e2719c18fe8aa13c1ea/src/mbc.js#L10
-    //-- https://retrocomputing.stackexchange.com/questions/11732/how-does-the-gameboys-memory-bank-switching-work
-    
     let rom0 = MemoryBlock(range: 0x0000...0x3FFF, buffer: rom.extract(0x0000...0x3FFF), readOnly: true, enabled: true)
     let romBank = MemoryBlockBanked(range: 0x4000...0x7FFF, buffer: rom.extractFrom(0x4000), readOnly: true, enabled: true)
-    //-- TODO:
-    //-- Check size of ram (2KB, 8KB or 4 x 8KB) from the rom data?
-    let ramBank = MemoryBlock(range: 0xA000...0xBFFF, readOnly: false, enabled: true)
-    let mem = MemoryAccessArray([rom0, romBank, ramBank])
+    let ramSize = getRamSize(rom: rom)
+    let ramBank = MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: [UInt8](repeating: 0xFF, count: ramSize), readOnly: false, enabled: true)
+    let mbc = MemoryAccessArray([rom0, romBank, ramBank])
     var mode: UInt8 = 0
     
-    mem.subscribe({ (a, _) in a <= 0x1FFF }) { byte in
+    mbc.subscribe({ (a, _) in a <= 0x1FFF }) { byte in
         ramBank.enabled = (byte & 0x0A) == 0x0A
     }
     
-    mem.subscribe({ (a, _) in a >= 0x2000 && a <= 0x3FFF }) { byte in
+    mbc.subscribe({ (a, _) in a >= 0x2000 && a <= 0x3FFF }) { byte in
         var bank = UInt8(0)
         var upper = UInt8(0)
         var lower = UInt8(0)
@@ -45,11 +60,11 @@ func mbcOne(_ rom: Data) -> MemoryAccessArray {
         romBank.bankIndex = bank
     }
     
-    mem.subscribe({ (a, _) in a >= 0x6000 && a <= 0x7FFF }) { byte in
+    mbc.subscribe({ (a, _) in a >= 0x6000 && a <= 0x7FFF }) { byte in
         mode = byte
     }
     
-    mem.subscribe({ (a, _) in a >= 0x4000 && a <= 0x5FFF }) { byte in
+    mbc.subscribe({ (a, _) in a >= 0x4000 && a <= 0x5FFF }) { byte in
         if mode == 0 {
             var bank = UInt8(0)
             var upper = UInt8(0)
@@ -57,18 +72,19 @@ func mbcOne(_ rom: Data) -> MemoryAccessArray {
             
             upper = upper & 0b00000011
             upper = upper << 5
-            lower = romBank.bankIndex + 1
+            lower = romBank.bankIndex + 1 // ROM bank numbers start from 1, index starts from 0
             lower = lower & 0b00011111
             bank = upper | lower
             bank = bank - 1 // Convert to index
-                
+            
             romBank.bankIndex = bank
         } else {
-            // Set RAM bank
+            let bank = byte & 0b00000011
+            ramBank.bankIndex = bank
         }
     }
     
-    return mem
+    return mbc
 }
 
 public class Cartridge: MemoryAccessArray {
@@ -80,7 +96,7 @@ public class Cartridge: MemoryAccessArray {
         switch type {
         case .zero:
             super.copy(other: mbcZero(rom))
-        case .one:
+        case .one, .one_ram, .one_ram_battery:
             super.copy(other: mbcOne(rom))
         }
     }
