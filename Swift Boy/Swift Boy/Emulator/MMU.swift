@@ -263,6 +263,9 @@ public class MMU: MemoryAccessArray {
             cartridge,
             wram,
             echo,
+            // TODO:
+            // Implement joypad
+            MemoryBlock(range: 0xFF00...0xFF00, buffer: [0xFF], readOnly: true, enabled: true),
             hram,
             rest
         ])

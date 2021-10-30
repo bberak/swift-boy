@@ -12,7 +12,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let cpuTestAll = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"))
+        // let cpuTestAll = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"))
         // let cpuTest01 = Cartridge(path: #fileLiteral(resourceName: "01-special.gb"))
         // let cpuTest02 = Cartridge(path: #fileLiteral(resourceName: "02-interrupts.gb"))
         // let cpuTest03 = Cartridge(path: #fileLiteral(resourceName: "03-op sp,hl.gb"))
@@ -24,9 +24,9 @@ class ViewController: UIViewController {
         // let cpuTest09 = Cartridge(path: #fileLiteral(resourceName: "09-op r,r.gb"))
         // let cpuTest10 = Cartridge(path: #fileLiteral(resourceName: "10-bit ops.gb"))
         // let cpuTest11 = Cartridge(path: #fileLiteral(resourceName: "11-op a,(hl).gb"))
-        // let tetris = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
+        let tetris = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
-        let mmu = MMU(cpuTestAll)
+        let mmu = MMU(tetris)
         let ppu = PPU(mmu)
         let cpu = CPU(mmu, ppu)
         let timer = Timer(mmu)
