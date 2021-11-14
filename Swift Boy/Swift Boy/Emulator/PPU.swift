@@ -194,14 +194,18 @@ public class PPU {
         }
         
         self.mmu.obj0Palette.subscribe { byte in
-            self.obj0Palette[0] = Pixel.transparent
+            // TODO:
+            // Where do I set the transparent pixel?
+            self.obj0Palette[0] = defaultPalette[byte.crumb(0)]
             self.obj0Palette[1] = defaultPalette[byte.crumb(1)]
             self.obj0Palette[2] = defaultPalette[byte.crumb(2)]
             self.obj0Palette[3] = defaultPalette[byte.crumb(3)]
         }
         
         self.mmu.obj1Palette.subscribe { byte in
-            self.obj1Palette[0] = Pixel.transparent
+            // TODO:
+            // Where do I set the transparent pixel?
+            self.obj1Palette[0] = defaultPalette[byte.crumb(0)]
             self.obj1Palette[1] = defaultPalette[byte.crumb(1)]
             self.obj1Palette[2] = defaultPalette[byte.crumb(2)]
             self.obj1Palette[3] = defaultPalette[byte.crumb(3)]
@@ -288,18 +292,19 @@ public class PPU {
                     }
                 }
                 
-//                let sprites = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
-//                    return Sprite(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
-//                }.filter { (s: Sprite) -> Bool in
-//                    return bgY < s.y && Int(bgY) >= (Int(s.y) - 16)
-//                }
+                let sprites = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
+                    return Sprite(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
+                }.filter { (s: Sprite) -> Bool in
+                    //return s.y > 0 && bgY > s.y && bgY < (s.y &+ 16)
+                    //return bgY < s.y && Int(bgY) >= (Int(s.y) - 16)
+                }
                 
-//                let spritesWithTileData = try sprites.map ({ (s: Sprite) -> (sprite: Sprite, data: [UInt8])  in
-//                    let offset = UInt16(s.index) * 16
-//                    let address: UInt16 = 0x8000 &+ offset
-//                    let data = try self.mmu.readBytes(address: address, count: UInt16(self.spriteSize[1]) * 2)
-//                    return (sprite: s, data: data)
-//                })
+                let spritesWithTileData = try sprites.map ({ (s: Sprite) -> (sprite: Sprite, data: [UInt8])  in
+                    let offset = UInt16(s.index) * 16
+                    let address: UInt16 = 0x8000 &+ offset
+                    let data = try self.mmu.readBytes(address: address, count: UInt16(self.spriteSize[1]) * 2)
+                    return (sprite: s, data: data)
+                })
                 
                 // Drawing Pixels
                 return Command(cycles: 144) {
@@ -320,29 +325,31 @@ public class PPU {
                         }
                     }
                     
-//                    for obj in spritesWithTileData {
-//                        let spriteX = obj.sprite.x
-//                        let spriteY = obj.sprite.y
-//                        let sizeX = self.spriteSize[0]
-//                        let sizeY = self.spriteSize[1]
-//                        let palette = obj.sprite.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
-//
-//                        if bgY >= (spriteY - sizeY) && bgY < spriteY {
-//                            let end = Int(self.spriteSize[1]) - 2
-//                            let line = Int.random(in: 0...end) //(Int(sizeY) - (Int(spriteY) - Int(bgY))) * 2
-//                            let lsb = obj.data[line]
-//                            let hsb = obj.data[line + 1]
-//
-//                            for idx in (0...7).reversed() {
-//                                let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
-//                                let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
-//                                let x = (idx + Int(spriteX)) % pixels.count
-//
-//                                pixels[x] = palette[v1 + v2]!
-//                            }
-//                        }
-//                    }
-                    
+                    // TODO:
+                    // 1. Handle transparency
+                    // 2. Sprites are being drawn an extra square down and to the right
+                    for obj in spritesWithTileData {
+                        let spriteX = obj.sprite.x
+                        let spriteY = obj.sprite.y
+                        let sizeX = self.spriteSize[0]
+                        let sizeY = self.spriteSize[1]
+                        let palette = obj.sprite.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
+
+                        if bgY >= (spriteY - sizeY) && bgY < spriteY {
+                            let end = Int(self.spriteSize[1]) - 2
+                            let line = (Int(sizeY) - (Int(spriteY) - Int(bgY))) * 2
+                            let lsb = obj.data[line]
+                            let hsb = obj.data[line + 1]
+
+                            for idx in (0...7).reversed() {
+                                let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
+                                let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
+                                let x = (idx + Int(spriteX)) % pixels.count
+
+                                pixels[x] = palette[v1 + v2]!
+                            }
+                        }
+                    }
                     
                     for col in 0..<self.lcd.bitmap.width {
                         let bgX = (Int(scx) + col) % pixels.count
