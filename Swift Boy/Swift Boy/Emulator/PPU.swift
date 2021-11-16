@@ -292,17 +292,21 @@ public class PPU {
                     }
                 }
                 
+                let sizeX = self.spriteSize[0]
+                let sizeY = self.spriteSize[1]
                 let sprites = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
                     return Sprite(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
                 }.filter { (s: Sprite) -> Bool in
-                    //return s.y > 0 && bgY > s.y && bgY < (s.y &+ 16)
-                    //return bgY < s.y && Int(bgY) >= (Int(s.y) - 16)
+                    return (Int16(s.y) - Int16(bgY)).isBetween(17 - Int(sizeY), 16)
+                    // return s.y > 0 && s.y > bgY && (s.y &+ 16) < bgY
+                    // return s.y > 0 && bgY > s.y && bgY < (s.y &+ 16)
+                    // return bgY < s.y && Int(bgY) >= (Int(s.y) - 16)
                 }
                 
                 let spritesWithTileData = try sprites.map ({ (s: Sprite) -> (sprite: Sprite, data: [UInt8])  in
                     let offset = UInt16(s.index) * 16
                     let address: UInt16 = 0x8000 &+ offset
-                    let data = try self.mmu.readBytes(address: address, count: UInt16(self.spriteSize[1]) * 2)
+                    let data = try self.mmu.readBytes(address: address, count: UInt16(sizeY) * 2)
                     return (sprite: s, data: data)
                 })
                 
@@ -316,11 +320,11 @@ public class PPU {
                         let arr = data.toBytes()
                         let lsb = arr[0]
                         let hsb = arr[1]
-                        
+
                         for idx in (0...7).reversed() {
                             let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
                             let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
-                            
+
                             pixels.append(self.bgPalette[v1 + v2]!)
                         }
                     }
@@ -331,23 +335,29 @@ public class PPU {
                     for obj in spritesWithTileData {
                         let spriteX = obj.sprite.x
                         let spriteY = obj.sprite.y
-                        let sizeX = self.spriteSize[0]
-                        let sizeY = self.spriteSize[1]
                         let palette = obj.sprite.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
 
-                        if bgY >= (spriteY - sizeY) && bgY < spriteY {
-                            let end = Int(self.spriteSize[1]) - 2
-                            let line = (Int(sizeY) - (Int(spriteY) - Int(bgY))) * 2
-                            let lsb = obj.data[line]
-                            let hsb = obj.data[line + 1]
+//                        if bgY >= (spriteY - sizeY) && bgY < spriteY {
+//                            let end = Int(sizeY) - 2
+//                            let line = (Int(sizeY) - (Int(spriteY) - Int(bgY))) * 2
+//                            let lsb = obj.data[line]
+//                            let hsb = obj.data[line + 1]
+//
+//                            for idx in (0...7).reversed() {
+//                                let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
+//                                let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
+//                                let x = (idx + Int(spriteX)) % pixels.count
+//
+//                                pixels[x] = palette[v1 + v2]!
+//                            }
+//                        }
+                        
+    
 
-                            for idx in (0...7).reversed() {
-                                let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
-                                let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
-                                let x = (idx + Int(spriteX)) % pixels.count
+                        for idx in (0...7).reversed() {
+                            let x = (idx + Int(spriteX)) % pixels.count
 
-                                pixels[x] = palette[v1 + v2]!
-                            }
+                            pixels[x] = Pixel.black
                         }
                     }
                     

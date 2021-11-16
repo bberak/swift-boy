@@ -119,6 +119,10 @@ public extension Int16 {
     func toUInt16() -> UInt16 {
         return UInt16(bitPattern: self)
     }
+    
+    func isBetween(_ lower: Int, _ upper: Int) -> Bool {
+        return self >= lower && self <= upper
+    }
 }
 
 public struct ByteOp {
