@@ -131,7 +131,7 @@ public class LCD: UIViewController {
     }
 }
 
-struct Sprite {
+struct Object {
     let x: UInt8
     let y: UInt8
     let index: UInt8
@@ -154,12 +154,12 @@ public class PPU {
     private var windowEnabled = false
     private var backgroundTileSet: UInt8 = 0
     private var backgroundTileMap: UInt8 = 0
-    private var spriteSize: [UInt8] = [8, 8]
-    private var spritesEnabled = false
     private var backgroundEnabled = false
     private var bgPalette = defaultPalette
     private var obj0Palette = defaultPalette
     private var obj1Palette = defaultPalette
+    private var objSize: [UInt8] = [8, 8]
+    private var objectsEnabled = false
     
     public init(_ mmu: MMU) {
         self.lcd = LCD()
@@ -171,8 +171,8 @@ public class PPU {
             self.windowEnabled = byte.bit(5)
             self.backgroundTileSet = byte.bit(4) ? 1 : 0
             self.backgroundTileMap = byte.bit(3) ? 1 : 0
-            self.spriteSize = byte.bit(2) ? [8, 16] : [8, 8]
-            self.spritesEnabled = byte.bit(1)
+            self.objSize = byte.bit(2) ? [8, 16] : [8, 8]
+            self.objectsEnabled = byte.bit(1)
             self.backgroundEnabled = byte.bit(0)
         }
         
@@ -292,22 +292,20 @@ public class PPU {
                     }
                 }
                 
-                let sizeX = self.spriteSize[0]
-                let sizeY = self.spriteSize[1]
-                let sprites = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
-                    return Sprite(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
-                }.filter { (s: Sprite) -> Bool in
-                    return (Int16(s.y) - Int16(bgY)).isBetween(17 - Int(sizeY), 16)
-                    // return s.y > 0 && s.y > bgY && (s.y &+ 16) < bgY
-                    // return s.y > 0 && bgY > s.y && bgY < (s.y &+ 16)
-                    // return bgY < s.y && Int(bgY) >= (Int(s.y) - 16)
+                let objects = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
+                    return Object(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
+                }.filter { (o: Object) -> Bool in
+                    let dy = Int16(o.y) - Int16(bgY)
+                    let sizeY = Int(self.objSize[1])
+                    return (dy).isBetween(17 - sizeY, 16) && o.x > 0
                 }
                 
-                let spritesWithTileData = try sprites.map ({ (s: Sprite) -> (sprite: Sprite, data: [UInt8])  in
-                    let offset = UInt16(s.index) * 16
+                let objectsWithTileData = try objects.map ({ (o: Object) -> (object: Object, data: [UInt8])  in
+                    let sizeY = Int(self.objSize[1])
+                    let offset = UInt16(o.index) * 16
                     let address: UInt16 = 0x8000 &+ offset
                     let data = try self.mmu.readBytes(address: address, count: UInt16(sizeY) * 2)
-                    return (sprite: s, data: data)
+                    return (object: o, data: data)
                 })
                 
                 // Drawing Pixels
@@ -331,33 +329,34 @@ public class PPU {
                     
                     // TODO:
                     // 1. Handle transparency
-                    // 2. Sprites are being drawn an extra square down and to the right
-                    for obj in spritesWithTileData {
-                        let spriteX = obj.sprite.x
-                        let spriteY = obj.sprite.y
-                        let palette = obj.sprite.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
-
-//                        if bgY >= (spriteY - sizeY) && bgY < spriteY {
-//                            let end = Int(sizeY) - 2
-//                            let line = (Int(sizeY) - (Int(spriteY) - Int(bgY))) * 2
-//                            let lsb = obj.data[line]
-//                            let hsb = obj.data[line + 1]
-//
-//                            for idx in (0...7).reversed() {
-//                                let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
-//                                let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
-//                                let x = (idx + Int(spriteX)) % pixels.count
-//
-//                                pixels[x] = palette[v1 + v2]!
-//                            }
-//                        }
+                    // 2. Looks like sprites are being drawn horizontally mirrored
+                    // 3. Horizontal flipping is not working
+                    // 4. Vertical flipping has not been implemented
+                    for obj in objectsWithTileData {
+                        let palette = obj.object.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
+                        let sizeY = self.objSize[1]
+                        let flipX = obj.object.attributes.bit(5)
+                        let flipY = obj.object.attributes.bit(6)
+                        var line = Int(obj.object.y - sizeY - bgY - 1)
+                        var lsb = obj.data[line * 2]
+                        var hsb = obj.data[line * 2 + 1]
                         
-    
-
-                        for idx in (0...7).reversed() {
-                            let x = (idx + Int(spriteX)) % pixels.count
-
-                            pixels[x] = Pixel.black
+                        if flipX {
+               
+                        }
+                        
+                        if flipY {
+                            
+                        }
+                        
+                        for idx in (0...7) {
+                            let x = idx + Int(obj.object.x) - 8
+                            
+                            if x >= 0 {
+                                let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
+                                let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
+                                pixels[x % pixels.count] = palette[v1 + v2]!
+                            }
                         }
                     }
                     

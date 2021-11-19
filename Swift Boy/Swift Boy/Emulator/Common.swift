@@ -69,6 +69,8 @@ public extension UInt8 {
         return self | mask
     }
     
+    // TODO:
+    // Rename this to swapNibbles
     func swap() -> UInt8 {
         let hb = self << 4
         let lb = self >> 4
@@ -176,6 +178,8 @@ public func add(_ num1: UInt16, _ num2: UInt16, carryBit: UInt8) -> WordOp {
     return WordOp(value: value, halfCarry: halfCarry, carry: carry, subtract: false)
 }
 
+// TODO:
+// Check if Command's are being deinitialized (if that's even possible)...
 public struct Command {
     public let cycles: UInt16
     public let run: () throws -> Command?
