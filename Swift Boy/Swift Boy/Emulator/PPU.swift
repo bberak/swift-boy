@@ -194,18 +194,14 @@ public class PPU {
         }
         
         self.mmu.obj0Palette.subscribe { byte in
-            // TODO:
-            // Where do I set the transparent pixel?
-            self.obj0Palette[0] = defaultPalette[byte.crumb(0)]
+            self.obj0Palette[0] = Pixel.transparent
             self.obj0Palette[1] = defaultPalette[byte.crumb(1)]
             self.obj0Palette[2] = defaultPalette[byte.crumb(2)]
             self.obj0Palette[3] = defaultPalette[byte.crumb(3)]
         }
         
         self.mmu.obj1Palette.subscribe { byte in
-            // TODO:
-            // Where do I set the transparent pixel?
-            self.obj1Palette[0] = defaultPalette[byte.crumb(0)]
+            self.obj1Palette[0] = Pixel.transparent
             self.obj1Palette[1] = defaultPalette[byte.crumb(1)]
             self.obj1Palette[2] = defaultPalette[byte.crumb(2)]
             self.obj1Palette[3] = defaultPalette[byte.crumb(3)]
@@ -274,6 +270,8 @@ public class PPU {
             return Command(cycles: 40) {
                 self.setMode(2)
                 
+                // TODO:
+                // - Can the bg tile data be cached?
                 let bgY = scy &+ ly
                 let bgTileMapRow = Int16(bgY / 8)
                 let bgTileMapStartIndex = UInt16(bgTileMapRow * 32)
@@ -292,6 +290,9 @@ public class PPU {
                     }
                 }
                 
+                // TODO:
+                // - Read OAM data until you have found 10 sprites.. I'm reading them all at the moment
+                // - Can the sprite tile data be cached?
                 let objects = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
                     return Object(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
                 }.filter { (o: Object) -> Bool in
@@ -320,42 +321,37 @@ public class PPU {
                         let hsb = arr[1]
 
                         for idx in (0...7).reversed() {
-                            let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
-                            let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
+                            let bit = UInt8(idx) // Bit 7 represents the most leftmost pixel (idx=0)
+                            let v1: UInt8 = lsb.bit(bit) ? 1 : 0
+                            let v2: UInt8 = hsb.bit(bit) ? 2 : 0
 
                             pixels.append(self.bgPalette[v1 + v2]!)
                         }
                     }
                     
                     // TODO:
-                    // 1. Handle transparency
-                    // 2. Looks like sprites are being drawn horizontally mirrored
-                    // 3. Horizontal flipping is not working
-                    // 4. Vertical flipping has not been implemented
+                    // - Handle sprite priority
                     for obj in objectsWithTileData {
-                        let palette = obj.object.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
                         let sizeY = self.objSize[1]
-                        let flipX = obj.object.attributes.bit(5)
+                        let palette = obj.object.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
                         let flipY = obj.object.attributes.bit(6)
-                        var line = Int(obj.object.y - sizeY - bgY - 1)
-                        var lsb = obj.data[line * 2]
-                        var hsb = obj.data[line * 2 + 1]
-                        
-                        if flipX {
-               
-                        }
-                        
-                        if flipY {
-                            
-                        }
+                        let flipX = obj.object.attributes.bit(5)
+                        let line = Int(bgY) - Int(obj.object.y) + 16 // Why does this work?
+                        let lineIndex = Int(flipY ? Int(sizeY) - line - 1 : line)
+                        let lsb = obj.data[lineIndex * 2]
+                        let hsb = obj.data[lineIndex * 2 + 1]
                         
                         for idx in (0...7) {
                             let x = idx + Int(obj.object.x) - 8
                             
                             if x >= 0 {
-                                let v1: UInt8 = lsb.bit(UInt8(idx)) ? 1 : 0
-                                let v2: UInt8 = hsb.bit(UInt8(idx)) ? 2 : 0
-                                pixels[x % pixels.count] = palette[v1 + v2]!
+                                let bit = UInt8(flipX ? idx : 7 - idx) // Bit 7 represents the most leftmost pixel (idx=0)
+                                let v1: UInt8 = lsb.bit(bit) ? 1 : 0
+                                let v2: UInt8 = hsb.bit(bit) ? 2 : 0
+                                let p = v1 + v2
+                                if p > 0 {
+                                    pixels[x % pixels.count] = palette[p]!
+                                }
                             }
                         }
                     }
