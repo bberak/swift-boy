@@ -293,19 +293,18 @@ public class PPU {
                 // TODO:
                 // - Read OAM data until you have found 10 sprites.. I'm reading them all at the moment
                 // - Can the sprite tile data be cached?
+                let objSizeY = Int(self.objSize[1])
                 let objects = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
                     return Object(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
                 }.filter { (o: Object) -> Bool in
                     let dy = Int16(o.y) - Int16(bgY)
-                    let sizeY = Int(self.objSize[1])
-                    return (dy).isBetween(17 - sizeY, 16) && o.x > 0
+                    return (dy).isBetween(17 - objSizeY, 16) && o.x > 0
                 }
                 
                 let objectsWithTileData = try objects.map ({ (o: Object) -> (object: Object, data: [UInt8])  in
-                    let sizeY = Int(self.objSize[1])
                     let offset = UInt16(o.index) * 16
                     let address: UInt16 = 0x8000 &+ offset
-                    let data = try self.mmu.readBytes(address: address, count: UInt16(sizeY) * 2)
+                    let data = try self.mmu.readBytes(address: address, count: UInt16(objSizeY) * 2)
                     return (object: o, data: data)
                 })
                 
@@ -332,12 +331,11 @@ public class PPU {
                     // TODO:
                     // - Handle sprite priority
                     for obj in objectsWithTileData {
-                        let sizeY = self.objSize[1]
                         let palette = obj.object.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
                         let flipY = obj.object.attributes.bit(6)
                         let flipX = obj.object.attributes.bit(5)
                         let line = Int(bgY) - Int(obj.object.y) + 16 // Why does this work?
-                        let lineIndex = Int(flipY ? Int(sizeY) - line - 1 : line)
+                        let lineIndex = Int(flipY ? objSizeY - line - 1 : line)
                         let lsb = obj.data[lineIndex * 2]
                         let hsb = obj.data[lineIndex * 2 + 1]
                         
