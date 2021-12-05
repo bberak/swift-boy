@@ -58,7 +58,7 @@ public class Timer {
         }
     }
     
-    public func run(for time: UInt8) throws {
+    public func run(for time: Int16) throws {
         if enabled {
             counterCycles = counterCycles &+ UInt(time)
         }

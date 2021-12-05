@@ -294,9 +294,9 @@ public class MMU: MemoryAccessArray {
         }
     }
     
-     public func run(for time: UInt8) throws {
+     public func run(for time: Int16) throws {
         if queue.count > 0 {
-            cycles = cycles + Int16(time)
+            cycles = cycles + time
          
              while cycles > 0 && queue.count > 0 {
                 let cmd = queue.removeFirst()

@@ -395,6 +395,7 @@
 				DEVELOPMENT_TEAM = QN6STV2X25;
 				ENABLE_HARDENED_RUNTIME = NO;
 				INFOPLIST_FILE = "Swift Boy/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -417,6 +418,7 @@
 				DEVELOPMENT_TEAM = QN6STV2X25;
 				ENABLE_HARDENED_RUNTIME = NO;
 				INFOPLIST_FILE = "Swift Boy/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

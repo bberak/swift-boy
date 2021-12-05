@@ -240,8 +240,8 @@ public class CPU {
         }
     }
         
-    public func run(for time: UInt8) throws {
-        cycles = cycles + (enabled ? Int16(time) : 0)
+    public func run(for time: Int16) throws {
+        cycles = cycles + (enabled ? time : 0)
      
         while cycles > 0 && enabled {
             if queue.count > 0 {

@@ -111,6 +111,12 @@ public extension UInt16 {
     }
 }
 
+public extension UInt64 {
+    func inMs() -> UInt64 {
+        return self / 1000000
+    }
+}
+
 public extension Int8 {
     func toUInt16() -> UInt16 {
         return UInt16(bitPattern: Int16(self))
@@ -187,5 +193,65 @@ public struct Command {
     public init(cycles: UInt16, run: @escaping () throws -> Command?) {
         self.cycles = cycles;
         self.run = run;
+    }
+}
+
+class StopWatch {
+    static let global = StopWatch()
+    
+    private var timers: [String: DispatchTime] = [:]
+    private var ledger: [String: UInt64] = [:]
+    
+    func start(_ label: String) {
+        timers[label] = DispatchTime.now();
+    }
+    
+    func stop(_ label: String) {
+        if let start = timers[label] {
+            let end = DispatchTime.now();
+            let duration = end.uptimeNanoseconds - start.uptimeNanoseconds
+            let current = ledger[label] ?? 0
+            ledger[label] = current + duration
+        }
+    }
+    
+    func reset(_ label: String) {
+        timers[label] = nil
+        ledger[label] = nil
+    }
+    
+    func check(_ label: String) -> UInt64 {
+        return ledger[label] ?? 0
+    }
+    
+    func resetAll() {
+        timers.removeAll(keepingCapacity: false)
+        ledger.removeAll(keepingCapacity: false)
+    }
+    
+    func printAll() {
+        let all = ledger.map( { (k,v) in
+            return "\(k) \(v.inMs())ms"
+        }).sorted()
+        
+        print(all.joined(separator: ", "))
+    }
+    
+    func maybePrintAll() {
+        if Int.random(in: 0...100) == 7 {
+            printAll()
+        }
+    }
+}
+
+class Job: Thread {
+    let work: ()->Void
+    
+    init(priority: QualityOfService, _ work: @escaping ()->Void) {
+        self.work = work;
+    }
+
+    override func main() {
+        self.work()
     }
 }
