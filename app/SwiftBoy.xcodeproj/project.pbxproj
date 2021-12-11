@@ -82,7 +82,7 @@
 		A1B4010526EB5937002F4512 = {
 			isa = PBXGroup;
 			children = (
-				A1B4011026EB5937002F4512 /* Swift Boy */,
+				A1B4011026EB5937002F4512 /* SwiftBoy */,
 				A1B4010F26EB5937002F4512 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -95,7 +95,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A1B4011026EB5937002F4512 /* Swift Boy */ = {
+		A1B4011026EB5937002F4512 /* SwiftBoy */ = {
 			isa = PBXGroup;
 			children = (
 				A1B4014F26EB5DCE002F4512 /* ROMs */,
@@ -108,7 +108,7 @@
 				A1B4011C26EB593A002F4512 /* LaunchScreen.storyboard */,
 				A1B4011F26EB593A002F4512 /* Info.plist */,
 			);
-			path = "Swift Boy";
+			path = SwiftBoy;
 			sourceTree = "<group>";
 		};
 		A1B4013E26EB5DB3002F4512 /* Emulator */ = {
