@@ -32,11 +32,7 @@ class ViewController: UIViewController {
         let timer = Timer(mmu)
         let clock = Clock(mmu, ppu, cpu, timer)
         
-        // clock.start()
-        
-         Task(priority: .userInitiated) {
-             try await clock.frame()
-         }
+        clock.start()
         
         view.addSubview(ppu.lcd.view)
     }
