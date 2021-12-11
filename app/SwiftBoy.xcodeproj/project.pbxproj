@@ -46,7 +46,7 @@
 		A18B2B6F26EDD32F00A148F5 /* 04-op r,imm.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "04-op r,imm.gb"; sourceTree = "<group>"; };
 		A18B2B7026EDD32F00A148F5 /* 06-ld r,r.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "06-ld r,r.gb"; sourceTree = "<group>"; };
 		A18B2B7126EDD32F00A148F5 /* 08-misc instrs.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "08-misc instrs.gb"; sourceTree = "<group>"; };
-		A1B4010E26EB5937002F4512 /* Swift Boy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Swift Boy.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B4010E26EB5937002F4512 /* SwiftBoy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftBoy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1B4011126EB5937002F4512 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A1B4011326EB5937002F4512 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		A1B4011526EB5937002F4512 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -90,7 +90,7 @@
 		A1B4010F26EB5937002F4512 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A1B4010E26EB5937002F4512 /* Swift Boy.app */,
+				A1B4010E26EB5937002F4512 /* SwiftBoy.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -149,9 +149,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A1B4010D26EB5937002F4512 /* Swift Boy */ = {
+		A1B4010D26EB5937002F4512 /* SwiftBoy */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A1B4012226EB593A002F4512 /* Build configuration list for PBXNativeTarget "Swift Boy" */;
+			buildConfigurationList = A1B4012226EB593A002F4512 /* Build configuration list for PBXNativeTarget "SwiftBoy" */;
 			buildPhases = (
 				A1B4010A26EB5937002F4512 /* Sources */,
 				A1B4010B26EB5937002F4512 /* Frameworks */,
@@ -161,9 +161,9 @@
 			);
 			dependencies = (
 			);
-			name = "Swift Boy";
+			name = SwiftBoy;
 			productName = "Swift Boy";
-			productReference = A1B4010E26EB5937002F4512 /* Swift Boy.app */;
+			productReference = A1B4010E26EB5937002F4512 /* SwiftBoy.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -181,7 +181,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A1B4010926EB5937002F4512 /* Build configuration list for PBXProject "Swift Boy" */;
+			buildConfigurationList = A1B4010926EB5937002F4512 /* Build configuration list for PBXProject "SwiftBoy" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -194,7 +194,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A1B4010D26EB5937002F4512 /* Swift Boy */,
+				A1B4010D26EB5937002F4512 /* SwiftBoy */,
 			);
 		};
 /* End PBXProject section */
@@ -437,7 +437,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A1B4010926EB5937002F4512 /* Build configuration list for PBXProject "Swift Boy" */ = {
+		A1B4010926EB5937002F4512 /* Build configuration list for PBXProject "SwiftBoy" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1B4012026EB593A002F4512 /* Debug */,
@@ -446,7 +446,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A1B4012226EB593A002F4512 /* Build configuration list for PBXNativeTarget "Swift Boy" */ = {
+		A1B4012226EB593A002F4512 /* Build configuration list for PBXNativeTarget "SwiftBoy" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1B4012326EB593A002F4512 /* Debug */,
