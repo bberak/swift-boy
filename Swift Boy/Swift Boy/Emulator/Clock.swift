@@ -60,7 +60,7 @@ public class Clock {
             total = total + Int(cycles)
         }
         
-        StopWatch.global.stop("total")
+        StopWatch.global.stop("frame")
         StopWatch.global.maybePrintAll()
         StopWatch.global.resetAll()
     }

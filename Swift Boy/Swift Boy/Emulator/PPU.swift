@@ -272,7 +272,6 @@ public class PPU {
                 
                 // TODO:
                 // - Can the bg tile data be cached?
-                StopWatch.global.start("read/bg")
                 let bgY = scy &+ ly
                 let bgTileMapRow = Int16(bgY / 8)
                 let bgTileMapStartIndex = UInt16(bgTileMapRow * 32)
@@ -290,12 +289,10 @@ public class PPU {
                         return try self.mmu.readWord(address: address)
                     }
                 }
-                StopWatch.global.stop("read/bg")
                 
                 // TODO:
                 // - Read OAM data until you have found 10 sprites.. I'm reading them all at the moment
                 // - Can the sprite tile data be cached?
-                StopWatch.global.start("read/oam")
                 let objSizeY = Int(self.objSize[1])
                 let objects = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
                     return Object(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
@@ -311,15 +308,13 @@ public class PPU {
                     let data = try self.mmu.readBytes(address: address, count: UInt16(objSizeY) * 2)
                     return (object: o, data: data)
                 })
-                StopWatch.global.stop("read/oam")
                 
                 // Drawing Pixels
                 return Command(cycles: 144) {
                     self.setMode(3)
                     
                     var pixels = [Pixel]()
-                    
-                    StopWatch.global.start("render/bg")
+
                     for data in bgTileData {
                         let arr = data.toBytes()
                         let lsb = arr[0]
@@ -333,11 +328,9 @@ public class PPU {
                             pixels.append(self.bgPalette[v1 + v2]!)
                         }
                     }
-                    StopWatch.global.stop("render/bg")
                     
                     // TODO:
                     // - Handle sprite priority
-                    StopWatch.global.start("render/oam")
                     for obj in objectsWithTileData {
                         let palette = obj.object.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
                         let flipY = obj.object.attributes.bit(6)
@@ -361,14 +354,11 @@ public class PPU {
                             }
                         }
                     }
-                    StopWatch.global.stop("render/oam")
                     
-                    StopWatch.global.start("render/lcd")
                     for col in 0..<self.lcd.bitmap.width {
                         let bgX = (Int(scx) + col) % pixels.count
                         self.lcd.bitmap[col, Int(ly)] = pixels[bgX]
                     }
-                    StopWatch.global.stop("render/lcd")
                     
                     // Horizontal blank
                     return Command(cycles: 44) {
