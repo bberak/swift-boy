@@ -47,7 +47,7 @@ public class Clock {
     // 456 clock cycles = 1 scanline
     public func frame() throws {
         var total: Int = 0
-        let cycles: Int16 = 48
+        let cycles: Int16 = 456 // 48
         
         StopWatch.global.start("total")
         
