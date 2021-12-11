@@ -23,7 +23,7 @@ enum MemoryAccessError: Error {
     case addressOutOfRange
 }
 
-protocol MemoryAccess: class {
+protocol MemoryAccess: AnyObject {
     func contains(address: UInt16) -> Bool
     func readByte(address: UInt16) throws -> UInt8
     func writeByte(address: UInt16, byte: UInt8) throws -> Void

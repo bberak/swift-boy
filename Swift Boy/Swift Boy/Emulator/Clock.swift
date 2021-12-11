@@ -62,7 +62,7 @@ public class Clock {
                 try ppu.run(for: cycles / 2)
             }
 
-            try await [t1.value, t2.value]
+            _ = try await [t1.value, t2.value]
             
             total = total + Int(cycles)
         }
