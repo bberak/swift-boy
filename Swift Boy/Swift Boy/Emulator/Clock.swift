@@ -49,13 +49,13 @@ public class Clock {
         var total: Int = 0
         let cycles: Int16 = 456 // 48
         
-        StopWatch.global.start("total")
+        StopWatch.global.start("frame")
         
         while total < 70224 {
             try cpu.run(for: cycles / 4)
             try mmu.run(for: cycles / 4)
-            try timer.run(for: cycles / 16)
             try ppu.run(for: cycles / 2)
+            try timer.run(for: cycles / 16)
             
             total = total + Int(cycles)
         }

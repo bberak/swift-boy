@@ -309,6 +309,7 @@ public class MMU: MemoryAccessArray {
                 }
             }
             
+            // Don't want the MMU to be constanly accumulating cycles since it doesn't have regular work to perform..
             if cycles > 0 {
                 cycles = 0
             }

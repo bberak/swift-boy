@@ -260,131 +260,153 @@ public class PPU {
         }
     }
     
+    struct OamScanData {
+        let bgTileData: [UInt16]
+        let objectsWithTileData: [(object: Object, data: [UInt8])]
+        let bgy: UInt8
+        let objSizeY: Int
+    }
+    
+    func oamScan(ly: UInt8, scx: UInt8, scy: UInt8, continuation: @escaping (OamScanData) -> Command) -> Command {
+        return Command(cycles: 40) {
+            self.setMode(2)
+            
+            // TODO:
+            // - Can the bg tile data be cached?
+            let bgy = scy &+ ly
+            let bgTileMapRow = Int16(bgy / 8)
+            let bgTileMapStartIndex = UInt16(bgTileMapRow * 32)
+            let bgTileMapPointer: UInt16 = self.backgroundTileMap == 1 ? 0x9C00 : 0x9800
+            let bgTileIndices: [UInt8] = try self.mmu.readBytes(address: bgTileMapPointer &+ bgTileMapStartIndex, count: 32 )
+            let bgTileDataPointer: UInt16 = self.backgroundTileSet == 1 ? 0x8000 : 0x9000
+            let bgTileData: [UInt16] = try bgTileIndices.map { idx in
+                if bgTileDataPointer == 0x9000 {
+                    let delta = Int16(idx.toInt8()) * 16 + Int16(bgy % 8) * 2
+                    let address = bgTileDataPointer &+ delta.toUInt16()
+                    return try self.mmu.readWord(address: address)
+                } else {
+                    let offset = UInt16(idx) * 16 + UInt16(bgy % 8) * 2
+                    let address = bgTileDataPointer &+ offset
+                    return try self.mmu.readWord(address: address)
+                }
+            }
+            
+            // TODO:
+            // - Can the sprite tile data be cached?
+            let objSizeY = Int(self.objSize[1])
+            let objects = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
+                return Object(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
+            }.filter { (o: Object) -> Bool in
+                // It's weird.. The only thing that moves the needle is changing the count from 160 to 40..
+                // Even if I read 160 bytes and filter out all the items, the oam/read jumps to 7ms
+                let dy = Int16(o.y) - Int16(bgy)
+                return (dy).isBetween(17 - objSizeY, 16) && o.x > 0
+            }.prefix(10)
+            let objectsWithTileData = try objects.map ({ (o: Object) -> (object: Object, data: [UInt8])  in
+                let offset = UInt16(o.index) * 16
+                let address: UInt16 = 0x8000 &+ offset
+                let data = try self.mmu.readBytes(address: address, count: UInt16(objSizeY) * 2)
+                return (object: o, data: data)
+            })
+            
+            return continuation(OamScanData(bgTileData: bgTileData, objectsWithTileData: objectsWithTileData, bgy: bgy, objSizeY: objSizeY))
+        }
+    }
+    
+    func pixelTransfer(ly: UInt8, scx: UInt8, data: OamScanData, continuation: @escaping () -> Command) -> Command {
+        return Command(cycles: 144) {
+            self.setMode(3)
+            
+            var pixels = [Pixel]()
+
+            for data in data.bgTileData {
+                let arr = data.toBytes()
+                let lsb = arr[0]
+                let hsb = arr[1]
+
+                for idx in (0...7).reversed() {
+                    let bit = UInt8(idx) // Bit 7 represents the most leftmost pixel (idx=0)
+                    let v1: UInt8 = lsb.bit(bit) ? 1 : 0
+                    let v2: UInt8 = hsb.bit(bit) ? 2 : 0
+
+                    pixels.append(self.bgPalette[v1 + v2]!)
+                }
+            }
+            
+            // TODO:
+            // - Handle sprite priority
+            for obj in data.objectsWithTileData {
+                let palette = obj.object.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
+                let flipY = obj.object.attributes.bit(6)
+                let flipX = obj.object.attributes.bit(5)
+                let line = Int(data.bgy) - Int(obj.object.y) + 16 // Why does this work?
+                let lineIndex = Int(flipY ? data.objSizeY - line - 1 : line)
+                let lsb = obj.data[lineIndex * 2]
+                let hsb = obj.data[lineIndex * 2 + 1]
+                
+                for idx in (0...7) {
+                    let x = idx + Int(obj.object.x) - 8
+                    
+                    if x >= 0 {
+                        let bit = UInt8(flipX ? idx : 7 - idx) // Bit 7 represents the most leftmost pixel (idx=0)
+                        let v1: UInt8 = lsb.bit(bit) ? 1 : 0
+                        let v2: UInt8 = hsb.bit(bit) ? 2 : 0
+                        let p = v1 + v2
+                        if p > 0 {
+                            pixels[x % pixels.count] = palette[p]!
+                        }
+                    }
+                }
+            }
+            
+            for col in 0..<self.lcd.bitmap.width {
+                let bgX = (Int(scx) + col) % pixels.count
+                self.lcd.bitmap[col, Int(ly)] = pixels[bgX]
+            }
+            
+            return continuation()
+        }
+    }
+    
+    func hBlank(ly: UInt8) -> Command {
+        return Command(cycles: 44) {
+            self.setMode(0)
+            
+            // Increment ly at the end of the blanking period
+            return Command(cycles: 0) {
+                self.mmu.lcdY.write(ly + 1)
+                return nil
+            }
+        }
+    }
+    
+    func vBlank(ly: UInt8) -> Command {
+        return Command(cycles: 228) {
+            if ly == 144 {
+                self.setMode(1)
+            }
+            
+            // Increment or reset ly at the end of the blanking period
+            return Command(cycles: 0) {
+                self.mmu.lcdY.write(ly < 153 ? ly + 1 : 0)
+                return nil
+            }
+        }
+    }
+    
     func fetchNextCommand() -> Command {
         let ly = mmu.lcdY.read()
         let scx = mmu.scrollX.read()
         let scy = mmu.scrollY.read()
         
         if ly < lcd.bitmap.height {
-            // OAM Scan
-            return Command(cycles: 40) {
-                self.setMode(2)
-                
-                // TODO:
-                // - Can the bg tile data be cached?
-                let bgY = scy &+ ly
-                let bgTileMapRow = Int16(bgY / 8)
-                let bgTileMapStartIndex = UInt16(bgTileMapRow * 32)
-                let bgTileMapPointer: UInt16 = self.backgroundTileMap == 1 ? 0x9C00 : 0x9800
-                let bgTileIndices: [UInt8] = try self.mmu.readBytes(address: bgTileMapPointer &+ bgTileMapStartIndex, count: 32 )
-                let bgTileDataPointer: UInt16 = self.backgroundTileSet == 1 ? 0x8000 : 0x9000
-                let bgTileData: [UInt16] = try bgTileIndices.map { idx in
-                    if bgTileDataPointer == 0x9000 {
-                        let delta = Int16(idx.toInt8()) * 16 + Int16(bgY % 8) * 2
-                        let address = bgTileDataPointer &+ delta.toUInt16()
-                        return try self.mmu.readWord(address: address)
-                    } else {
-                        let offset = UInt16(idx) * 16 + UInt16(bgY % 8) * 2
-                        let address = bgTileDataPointer &+ offset
-                        return try self.mmu.readWord(address: address)
-                    }
-                }
-                
-                // TODO:
-                // - Read OAM data until you have found 10 sprites.. I'm reading them all at the moment
-                // - Can the sprite tile data be cached?
-                let objSizeY = Int(self.objSize[1])
-                let objects = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
-                    return Object(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
-                }.filter { (o: Object) -> Bool in
-                    // It's weird.. The only thing that moves the needle is changing the count from 160 to 40..
-                    // Even if I read 160 bytes and filter out all the items, the oam/read jumps to 7ms
-                    let dy = Int16(o.y) - Int16(bgY)
-                    return (dy).isBetween(17 - objSizeY, 16) && o.x > 0
-                }
-                let objectsWithTileData = try objects.map ({ (o: Object) -> (object: Object, data: [UInt8])  in
-                    let offset = UInt16(o.index) * 16
-                    let address: UInt16 = 0x8000 &+ offset
-                    let data = try self.mmu.readBytes(address: address, count: UInt16(objSizeY) * 2)
-                    return (object: o, data: data)
-                })
-                
-                // Drawing Pixels
-                return Command(cycles: 144) {
-                    self.setMode(3)
-                    
-                    var pixels = [Pixel]()
-
-                    for data in bgTileData {
-                        let arr = data.toBytes()
-                        let lsb = arr[0]
-                        let hsb = arr[1]
-
-                        for idx in (0...7).reversed() {
-                            let bit = UInt8(idx) // Bit 7 represents the most leftmost pixel (idx=0)
-                            let v1: UInt8 = lsb.bit(bit) ? 1 : 0
-                            let v2: UInt8 = hsb.bit(bit) ? 2 : 0
-
-                            pixels.append(self.bgPalette[v1 + v2]!)
-                        }
-                    }
-                    
-                    // TODO:
-                    // - Handle sprite priority
-                    for obj in objectsWithTileData {
-                        let palette = obj.object.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
-                        let flipY = obj.object.attributes.bit(6)
-                        let flipX = obj.object.attributes.bit(5)
-                        let line = Int(bgY) - Int(obj.object.y) + 16 // Why does this work?
-                        let lineIndex = Int(flipY ? objSizeY - line - 1 : line)
-                        let lsb = obj.data[lineIndex * 2]
-                        let hsb = obj.data[lineIndex * 2 + 1]
-                        
-                        for idx in (0...7) {
-                            let x = idx + Int(obj.object.x) - 8
-                            
-                            if x >= 0 {
-                                let bit = UInt8(flipX ? idx : 7 - idx) // Bit 7 represents the most leftmost pixel (idx=0)
-                                let v1: UInt8 = lsb.bit(bit) ? 1 : 0
-                                let v2: UInt8 = hsb.bit(bit) ? 2 : 0
-                                let p = v1 + v2
-                                if p > 0 {
-                                    pixels[x % pixels.count] = palette[p]!
-                                }
-                            }
-                        }
-                    }
-                    
-                    for col in 0..<self.lcd.bitmap.width {
-                        let bgX = (Int(scx) + col) % pixels.count
-                        self.lcd.bitmap[col, Int(ly)] = pixels[bgX]
-                    }
-                    
-                    // Horizontal blank
-                    return Command(cycles: 44) {
-                        self.setMode(0)
-                        
-                        // Increment ly at the end of the blanking period
-                        return Command(cycles: 0) {
-                            self.mmu.lcdY.write(ly + 1)
-                            return nil
-                        }
-                    }
+            return self.oamScan(ly: ly, scx: scx, scy: scy) { data in
+                return self.pixelTransfer(ly: ly, scx: scx, data: data) {
+                    return self.hBlank(ly: ly);
                 }
             }
         } else {
-            // Vertical blank per line
-            return Command(cycles: 228) {
-                if ly == 144 {
-                    self.setMode(1)
-                }
-                
-                // Increment or reset ly at the end of the blanking period
-                return Command(cycles: 0) {
-                    self.mmu.lcdY.write(ly < 153 ? ly + 1 : 0)
-                    return nil
-                }
-            }
+            return self.vBlank(ly: ly)
         }
     }
     
