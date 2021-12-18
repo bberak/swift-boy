@@ -24,6 +24,7 @@ enum MemoryAccessError: Error {
 }
 
 protocol MemoryAccess: AnyObject {
+    var version: UInt64 { get }
     func contains(address: UInt16) -> Bool
     func readByte(address: UInt16) throws -> UInt8
     func writeByte(address: UInt16, byte: UInt8) throws -> Void
@@ -51,6 +52,7 @@ extension MemoryAccess {
 class MemoryBlock: MemoryAccess {
     private let range: ClosedRange<UInt16>
     private var readOnly: Bool
+    private(set) var version: UInt64 = 0
     var buffer: [UInt8]
     var enabled: Bool
     
@@ -103,6 +105,7 @@ class MemoryBlock: MemoryAccess {
         let index = Int(address - range.lowerBound)
         
         buffer[index % buffer.count] = byte
+        version = version &+ 1
     }
 }
 
@@ -132,6 +135,7 @@ struct Subscriber {
 public class MemoryAccessArray: MemoryAccess {
     private var arr: [MemoryAccess]
     private var subscribers: [Subscriber] = []
+    private(set) var version: UInt64 = 0
     
     init(_ arr: [MemoryAccess] = []) {
         self.arr = arr
@@ -176,10 +180,14 @@ public class MemoryAccessArray: MemoryAccess {
     func writeByte(address: UInt16, byte: UInt8, publish: Bool) throws {
         if let block = find(address: address) {
             try block.writeByte(address: address, byte: byte)
+            
             if publish {
                 let subs = subscribers.filter({ $0.predicate(address, byte) })
                 subs.forEach { $0.handler(byte) }
             }
+            
+            version = version &+ 1
+            
             return
         }
         
@@ -231,6 +239,10 @@ public class MMU: MemoryAccessArray {
     private var queue: [Command] = []
     private var cycles: Int16 = 0
     
+    var vramTileData: MemoryBlock
+    var vramTileMaps: MemoryBlock
+    var oam: MemoryBlock
+    
     lazy var serialDataTransfer = Address(0xFF01, self)
     lazy var serialDataControl = Address(0xFF02, self)
     lazy var dividerRegister = Address(0xFF04, self)
@@ -252,6 +264,10 @@ public class MMU: MemoryAccessArray {
     lazy var interruptsEnabled = Address(0xFFFF, self)
         
     public init(_ cartridge: Cartridge) {
+        self.vramTileData = MemoryBlock(range: 0x8000...0x97FF, readOnly: false, enabled: true)
+        self.vramTileMaps = MemoryBlock(range: 0x9800...0x9FFF, readOnly: false, enabled: true)
+        self.oam = MemoryBlock(range: 0xFE00...0xFE9F, readOnly: false, enabled: true)
+        
         let bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
         let wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false, enabled: true)
         let echo = MemoryBlock(range: 0xE000...0xFDFF, block: wram)
@@ -261,8 +277,11 @@ public class MMU: MemoryAccessArray {
         super.init([
             bios,
             cartridge,
+            vramTileData,
+            vramTileMaps,
             wram,
             echo,
+            oam,
             // TODO:
             // Implement joypad
             MemoryBlock(range: 0xFF00...0xFF00, buffer: [0xFF], readOnly: true, enabled: true),

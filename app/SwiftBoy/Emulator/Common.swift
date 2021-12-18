@@ -184,8 +184,6 @@ public func add(_ num1: UInt16, _ num2: UInt16, carryBit: UInt8) -> WordOp {
     return WordOp(value: value, halfCarry: halfCarry, carry: carry, subtract: false)
 }
 
-// TODO:
-// Check if Command's are being deinitialized (if that's even possible)...
 public struct Command {
     public let cycles: UInt16
     public let run: () throws -> Command?
@@ -253,5 +251,22 @@ class Job: Thread {
 
     override func main() {
         self.work()
+    }
+}
+
+class Memo<T> {
+    private var value: T?
+    private var deps: [AnyHashable] = []
+    
+    func get (deps: [AnyHashable], _ getter: @escaping () -> T) -> T {
+        if value == nil || self.deps != deps {
+            value = getter()
+            self.deps = deps
+            print("miss")
+        } else {
+            print ("hit")
+        }
+        
+        return value!
     }
 }

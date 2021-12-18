@@ -160,7 +160,7 @@ public class PPU {
     private var obj1Palette = defaultPalette
     private var objSize: [UInt8] = [8, 8]
     private var objectsEnabled = false
-    
+        
     public init(_ mmu: MMU) {
         self.lcd = LCD()
         self.mmu = mmu
@@ -271,30 +271,31 @@ public class PPU {
         return Command(cycles: 40) {
             self.setMode(2)
             
-            // TODO:
-            // - Can the bg tile data be cached?
+            StopWatch.global.start("read bg")
             let bgy = scy &+ ly
             let bgTileMapRow = Int16(bgy / 8)
             let bgTileMapStartIndex = UInt16(bgTileMapRow * 32)
             let bgTileMapPointer: UInt16 = self.backgroundTileMap == 1 ? 0x9C00 : 0x9800
-            let bgTileIndices: [UInt8] = try self.mmu.readBytes(address: bgTileMapPointer &+ bgTileMapStartIndex, count: 32 )
+            let bgTileIndices: [UInt8] = try self.mmu.vramTileMaps.readBytes(address: bgTileMapPointer &+ bgTileMapStartIndex, count: 32 )
             let bgTileDataPointer: UInt16 = self.backgroundTileSet == 1 ? 0x8000 : 0x9000
             let bgTileData: [UInt16] = try bgTileIndices.map { idx in
                 if bgTileDataPointer == 0x9000 {
                     let delta = Int16(idx.toInt8()) * 16 + Int16(bgy % 8) * 2
                     let address = bgTileDataPointer &+ delta.toUInt16()
-                    return try self.mmu.readWord(address: address)
+                    return try self.mmu.vramTileData.readWord(address: address)
                 } else {
                     let offset = UInt16(idx) * 16 + UInt16(bgy % 8) * 2
                     let address = bgTileDataPointer &+ offset
-                    return try self.mmu.readWord(address: address)
+                    return try self.mmu.vramTileData.readWord(address: address)
                 }
             }
+            StopWatch.global.stop("read bg")
             
             // TODO:
             // - Can the sprite tile data be cached?
+            StopWatch.global.start("read oam")
             let objSizeY = Int(self.objSize[1])
-            let objects = try self.mmu.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
+            let objects = try self.mmu.oam.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
                 return Object(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
             }.filter { (o: Object) -> Bool in
                 // It's weird.. The only thing that moves the needle is changing the count from 160 to 40..
@@ -305,9 +306,10 @@ public class PPU {
             let objectsWithTileData = try objects.map ({ (o: Object) -> (object: Object, data: [UInt8])  in
                 let offset = UInt16(o.index) * 16
                 let address: UInt16 = 0x8000 &+ offset
-                let data = try self.mmu.readBytes(address: address, count: UInt16(objSizeY) * 2)
+                let data = try self.mmu.vramTileData.readBytes(address: address, count: UInt16(objSizeY) * 2)
                 return (object: o, data: data)
             })
+            StopWatch.global.stop("read oam")
             
             return continuation(OamScanData(bgTileData: bgTileData, objectsWithTileData: objectsWithTileData, bgy: bgy, objSizeY: objSizeY))
         }
