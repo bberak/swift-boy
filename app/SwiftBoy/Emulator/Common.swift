@@ -262,9 +262,6 @@ class Memo<T> {
         if value == nil || self.deps != deps {
             value = getter()
             self.deps = deps
-            print("miss")
-        } else {
-            print ("hit")
         }
         
         return value!

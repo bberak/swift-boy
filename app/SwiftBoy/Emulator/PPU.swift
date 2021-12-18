@@ -160,6 +160,8 @@ public class PPU {
     private var obj1Palette = defaultPalette
     private var objSize: [UInt8] = [8, 8]
     private var objectsEnabled = false
+    private var objectsMemo = Memo<[Object]>()
+    private var objectsTileDataMemo = Memo<[[UInt8]]>()
         
     public init(_ mmu: MMU) {
         self.lcd = LCD()
@@ -172,6 +174,8 @@ public class PPU {
             self.backgroundTileSet = byte.bit(4) ? 1 : 0
             self.backgroundTileMap = byte.bit(3) ? 1 : 0
             self.objSize = byte.bit(2) ? [8, 16] : [8, 8]
+            // TODO:
+            // self.objectsEnabled is not currently being used
             self.objectsEnabled = byte.bit(1)
             self.backgroundEnabled = byte.bit(0)
         }
@@ -291,24 +295,29 @@ public class PPU {
             }
             StopWatch.global.stop("read bg")
             
-            // TODO:
-            // - Can the sprite tile data be cached?
             StopWatch.global.start("read oam")
+            let allObjects = self.objectsMemo.get(deps: [self.mmu.oam.version]) {
+                return try! self.mmu.oam.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
+                    return Object(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
+                }
+            }
             let objSizeY = Int(self.objSize[1])
-            let objects = try self.mmu.oam.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
-                return Object(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
-            }.filter { (o: Object) -> Bool in
-                // It's weird.. The only thing that moves the needle is changing the count from 160 to 40..
-                // Even if I read 160 bytes and filter out all the items, the oam/read jumps to 7ms
+            let visibleObjects = allObjects.filter { (o: Object) -> Bool in
                 let dy = Int16(o.y) - Int16(bgy)
                 return (dy).isBetween(17 - objSizeY, 16) && o.x > 0
             }.prefix(10)
-            let objectsWithTileData = try objects.map ({ (o: Object) -> (object: Object, data: [UInt8])  in
-                let offset = UInt16(o.index) * 16
-                let address: UInt16 = 0x8000 &+ offset
-                let data = try self.mmu.vramTileData.readBytes(address: address, count: UInt16(objSizeY) * 2)
-                return (object: o, data: data)
-            })
+            var deps: [AnyHashable] = visibleObjects.map { $0.index }
+            deps.append(objSizeY)
+            deps.append(self.mmu.vramTileData.version)
+            let objTileData = self.objectsTileDataMemo.get(deps: deps) {
+                return visibleObjects.map ({ (o: Object) -> [UInt8]  in
+                    let offset = UInt16(o.index) * 16
+                    let address: UInt16 = 0x8000 &+ offset
+                    let data = try! self.mmu.vramTileData.readBytes(address: address, count: UInt16(objSizeY) * 2)
+                    return data
+                })
+            }
+            let objectsWithTileData = Array(zip(visibleObjects, objTileData))
             StopWatch.global.stop("read oam")
             
             return continuation(OamScanData(bgTileData: bgTileData, objectsWithTileData: objectsWithTileData, bgy: bgy, objSizeY: objSizeY))
@@ -336,7 +345,7 @@ public class PPU {
             }
             
             // TODO:
-            // - Handle sprite priority
+            // Handle sprite priority
             for obj in data.objectsWithTileData {
                 let palette = obj.object.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
                 let flipY = obj.object.attributes.bit(6)
