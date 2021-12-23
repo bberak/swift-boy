@@ -229,7 +229,7 @@ class StopWatch {
     
     func printAll() {
         let all = ledger.map( { (k,v) in
-            return "\(k) \(v.inMs())ms"
+            return "\(k): \(v.inMs())ms"
         }).sorted()
         
         print(all.joined(separator: ", "))
