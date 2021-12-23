@@ -30,10 +30,6 @@ protocol MemoryAccess: AnyObject {
     func writeByte(address: UInt16, byte: UInt8) throws -> Void
 }
 
-// TODO:
-// Make the readBytes methodpart of the MemoryAccess protocol so that the MemoryAccessArray and MemoryBlock
-// classes are forced to to implement their own optimized versions. Currently appears to be way too much overhead
-// because the block search needs to be performed for every single byte.
 extension MemoryAccess {
     func readWord(address: UInt16) throws -> UInt16 {
         let bytes = [try readByte(address: address), try readByte(address: address + 1)]
@@ -44,12 +40,6 @@ extension MemoryAccess {
         let bytes = word.toBytes()
         try writeByte(address: address, byte: bytes[0])
         try writeByte(address: address + 1, byte: bytes[1])
-    }
-    
-    func readBytes(address: UInt16, count: UInt16) throws -> [UInt8] {
-        return try (0..<count).map { idx in
-            return try readByte(address: address &+ idx)
-        }
     }
 }
 
@@ -91,6 +81,27 @@ class MemoryBlock: MemoryAccess {
         let index = Int(address - range.lowerBound)
         
         return buffer[index % buffer.count]
+    }
+    
+    func readBytes(address start: UInt16, count: UInt16) throws -> [UInt8] {
+        let end = start &+ count - 1
+        
+        if range.contains(start) == false {
+            throw MemoryAccessError.addressOutOfRange
+        }
+        
+        if range.contains(end) == false {
+            throw MemoryAccessError.addressOutOfRange
+        }
+        
+        if enabled == false {
+            return [UInt8](repeating: 0xFF, count: Int(count))
+        }
+        
+        return (start...end).map { address in
+            let index = Int(address - range.lowerBound)
+            return buffer[index % buffer.count]
+        }
     }
     
     func writeByte(address: UInt16, byte: UInt8) throws {
