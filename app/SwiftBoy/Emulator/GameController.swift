@@ -53,33 +53,6 @@ struct GameControllerView: View {
     }
 }
 
-// var stat = mmu.lcdStatus.read()
-// var flags = mmu.interruptFlags.read()
-//
-// defer {
-//     mmu.lcdStatus.write(stat)
-//     mmu.interruptFlags.write(flags)
-// }
-//
-// stat[0] = mode[0]
-// stat[1] = mode[1]
-//
-// if mode == 1 {
-//     flags[Interrupts.vBlank.bit] = true
-// }
-//
-// if stat.bit(3) && mode == 0 {
-//     flags[Interrupts.lcdStat.bit] = true
-// }
-//
-// if stat.bit(4) && mode == 1 {
-//     flags[Interrupts.lcdStat.bit] = true
-// }
-//
-// if stat.bit(5) && mode == 2 {
-//     flags[Interrupts.lcdStat.bit] = true
-// }
-
 public class GameController {
     private let mmu: MMU
     private let buttons: Buttons
