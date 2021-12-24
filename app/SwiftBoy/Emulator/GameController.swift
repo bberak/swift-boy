@@ -53,6 +53,33 @@ struct GameControllerView: View {
     }
 }
 
+// var stat = mmu.lcdStatus.read()
+// var flags = mmu.interruptFlags.read()
+//
+// defer {
+//     mmu.lcdStatus.write(stat)
+//     mmu.interruptFlags.write(flags)
+// }
+//
+// stat[0] = mode[0]
+// stat[1] = mode[1]
+//
+// if mode == 1 {
+//     flags[Interrupts.vBlank.bit] = true
+// }
+//
+// if stat.bit(3) && mode == 0 {
+//     flags[Interrupts.lcdStat.bit] = true
+// }
+//
+// if stat.bit(4) && mode == 1 {
+//     flags[Interrupts.lcdStat.bit] = true
+// }
+//
+// if stat.bit(5) && mode == 2 {
+//     flags[Interrupts.lcdStat.bit] = true
+// }
+
 public class GameController {
     private let mmu: MMU
     private let buttons: Buttons
@@ -66,25 +93,36 @@ public class GameController {
         
         // TODO:
         // Need integrate joypad interrupts
-        self.mmu.joypad.subscribe { byte in
-    
-            var input = byte
+        self.mmu.joypad.subscribe { input in
+            var result = input
             
-            if !input[4] {
-                input[0] = !self.buttons.right
-                input[1] = !self.buttons.left
-                input[2] = !self.buttons.up
-                input[3] = !self.buttons.down
-            } else if !input[5] {
-                input[0] = !self.buttons.a
-                input[1] = !self.buttons.b
-                input[2] = !self.buttons.select
-                input[3] = !self.buttons.start
+            if !result[4] {
+                result[0] = !self.buttons.right
+                result[1] = !self.buttons.left
+                result[2] = !self.buttons.up
+                result[3] = !self.buttons.down
+                
+                if input > result {
+                    var flags = self.mmu.interruptFlags.read()
+                    flags[Interrupts.joypad.bit] = true
+                    self.mmu.interruptFlags.write(flags)
+                }
+            } else if !result[5] {
+                result[0] = !self.buttons.a
+                result[1] = !self.buttons.b
+                result[2] = !self.buttons.select
+                result[3] = !self.buttons.start
+                
+                if input > result {
+                    var flags = self.mmu.interruptFlags.read()
+                    flags[Interrupts.joypad.bit] = true
+                    self.mmu.interruptFlags.write(flags)
+                }
             } else {
-                input = 0xFF
+                result = 0xFF
             }
             
-            self.mmu.joypad.write(input, publish: false)
+            self.mmu.joypad.write(result, publish: false)
         }
     }
 }
