@@ -13,7 +13,7 @@ public class Clock {
         self.mmu = mmu
         self.ppu = ppu
         self.cpu = cpu
-        self.timer = timer;
+        self.timer = timer
         self.fps = 60
         self.frameTime = 1 / fps
     }
