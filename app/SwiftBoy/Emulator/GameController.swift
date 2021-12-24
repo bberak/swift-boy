@@ -91,8 +91,6 @@ public class GameController {
         self.buttons = Buttons()
         self.ui = UIHostingController(rootView: GameControllerView(buttons: self.buttons))
         
-        // TODO:
-        // Need integrate joypad interrupts
         self.mmu.joypad.subscribe { input in
             var result = input
             
