@@ -20,35 +20,49 @@ class Buttons: ObservableObject {
     @Published var select = false
 }
 
+struct PressActions: ViewModifier {
+    var onPress: () -> Void
+    var onRelease: () -> Void
+    
+    func body(content: Content) -> some View {
+        content
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged({ _ in
+                        onPress()
+                    })
+                    .onEnded({ _ in
+                        onRelease()
+                    })
+            )
+    }
+}
+
+struct GameButton: View {
+    var label: String
+    var onPress: () -> Void
+    var onRelease: () -> Void
+    
+    var body: some View {
+        Button(label) {
+            // Unused press action
+        }.modifier(PressActions(onPress: onPress, onRelease: onRelease))
+    }
+}
+
 struct GameControllerView: View {
     @ObservedObject var buttons: Buttons
     
     var body: some View {
         VStack {
-            Button("Up \(buttons.up ? "1" : "0")") {
-                buttons.up.toggle()
-            }
-            Button("Down \(buttons.down ? "1" : "0")") {
-                buttons.down.toggle()
-            }
-            Button("Left \(buttons.left ? "1" : "0")") {
-                buttons.left.toggle()
-            }
-            Button("Right \(buttons.right ? "1" : "0")") {
-                buttons.right.toggle()
-            }
-            Button("A \(buttons.a ? "1" : "0")") {
-                buttons.a.toggle()
-            }
-            Button("B \(buttons.b ? "1" : "0")") {
-                buttons.b.toggle()
-            }
-            Button("Start \(buttons.start ? "1" : "0")") {
-                buttons.start.toggle()
-            }
-            Button("Select \(buttons.select ? "1" : "0")") {
-                buttons.select.toggle()
-            }
+            GameButton(label: "Up", onPress: { buttons.up = true }, onRelease: { buttons.up = false })
+            GameButton(label: "Down", onPress: { buttons.down = true }, onRelease: { buttons.down = false })
+            GameButton(label: "Left", onPress: { buttons.left = true }, onRelease: { buttons.left = false })
+            GameButton(label: "Right", onPress: { buttons.right = true }, onRelease: { buttons.right = false })
+            GameButton(label: "A", onPress: { buttons.a = true }, onRelease: { buttons.a = false })
+            GameButton(label: "B", onPress: { buttons.b = true }, onRelease: { buttons.b = false })
+            GameButton(label: "Start", onPress: { buttons.start = true }, onRelease: { buttons.start = false })
+            GameButton(label: "Select", onPress: { buttons.select = true }, onRelease: { buttons.select = false })
         }
     }
 }
