@@ -54,7 +54,6 @@ class ViewController: UIViewController {
         stack.addArrangedSubview(lower.view)
         
         lower.view.translatesAutoresizingMaskIntoConstraints = false
-        lower.view.backgroundColor = .blue
         lower.addChild(controller.ui)
         lower.view.addSubview(controller.ui.view)
         

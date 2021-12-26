@@ -275,7 +275,6 @@ public class PPU {
         return Command(cycles: 40) {
             self.setMode(2)
             
-            StopWatch.global.start("read bg")
             let bgy = scy &+ ly
             let bgTileMapRow = Int16(bgy / 8)
             let bgTileMapStartIndex = UInt16(bgTileMapRow * 32)
@@ -293,9 +292,7 @@ public class PPU {
                     return try self.mmu.vramTileData.readWord(address: address)
                 }
             }
-            StopWatch.global.stop("read bg")
             
-            StopWatch.global.start("read oam")
             let allObjects = self.objectsMemo.get(deps: [self.mmu.oam.version]) {
                 return try! self.mmu.oam.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
                     return Object(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
@@ -318,7 +315,6 @@ public class PPU {
                 })
             }
             let objectsWithTileData = Array(zip(visibleObjects, objTileData))
-            StopWatch.global.stop("read oam")
             
             return continuation(OamScanData(bgTileData: bgTileData, objectsWithTileData: objectsWithTileData, bgy: bgy, objSizeY: objSizeY))
         }
