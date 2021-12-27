@@ -26,15 +26,13 @@ struct PressActions: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged({ _ in
-                        onPress()
-                    })
-                    .onEnded({ _ in
-                        onRelease()
-                    })
-            )
+            .onLongPressGesture(minimumDuration: 0.0001, maximumDistance: .infinity, perform: { }) { pressing in
+                if pressing {
+                    onPress()
+                } else {
+                    onRelease()
+                }
+            }
     }
 }
 
@@ -45,7 +43,7 @@ struct GameButton<S>: View where S : Shape {
     var label: String?
     var onPress: () -> Void
     var onRelease: () -> Void
-    
+    var haptics = UIImpactFeedbackGenerator(style: .soft)
     
     @State var pressed = false
     
@@ -54,7 +52,15 @@ struct GameButton<S>: View where S : Shape {
             shape
                 .fill(pressed ? .cyan : .white)
                 .frame(width: width, height: height)
-                .modifier(PressActions(onPress: { onPress(); pressed = true }, onRelease: { onRelease(); pressed = false }))
+                .modifier(PressActions(onPress: {
+                    onPress();
+                    pressed = true;
+                    haptics.impactOccurred(intensity: 1.0);
+                }, onRelease: {
+                    onRelease();
+                    pressed = false;
+                    haptics.impactOccurred(intensity: 0.5);
+                }))
                 .scaleEffect(pressed ? 1.2 : 1)
                 .animation(.spring().speed(4), value: pressed)
             

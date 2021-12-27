@@ -52,10 +52,22 @@ public class Clock {
         StopWatch.global.start("frame")
         
         while total < 70224 {
+            
+            StopWatch.global.start("cpu")
             try cpu.run(for: cycles / 4)
+            StopWatch.global.stop("cpu")
+            
+            StopWatch.global.start("mmu")
             try mmu.run(for: cycles / 4)
+            StopWatch.global.stop("mmu")
+            
+            StopWatch.global.start("ppu")
             try ppu.run(for: cycles / 2)
+            StopWatch.global.stop("ppu")
+            
+            StopWatch.global.start("timer")
             try timer.run(for: cycles / 16)
+            StopWatch.global.stop("timer")
             
             total = total + Int(cycles)
         }
