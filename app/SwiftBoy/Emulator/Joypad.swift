@@ -1,11 +1,3 @@
-//
-//  GameController.swift
-//  SwiftBoy
-//
-//  Created by Boris Berak on 23/12/2021.
-//  Copyright © 2021 Boris Berak. All rights reserved.
-//
-
 import Foundation
 import SwiftUI
 
@@ -73,7 +65,7 @@ struct GameButton<S>: View where S : Shape {
     }
 }
 
-struct GameControllerView: View {
+struct JoypadView: View {
     @ObservedObject var buttons: Buttons
     
     var body: some View {
@@ -112,16 +104,16 @@ struct GameControllerView: View {
     }
 }
 
-public class GameController {
+public class Joypad {
     private let mmu: MMU
     private let buttons: Buttons
     
-    let ui: UIHostingController<GameControllerView>
+    let view: JoypadView
     
     init(_ mmu: MMU) {
         self.mmu = mmu
         self.buttons = Buttons()
-        self.ui = UIHostingController(rootView: GameControllerView(buttons: self.buttons))
+        self.view = JoypadView(buttons: self.buttons)
         
         self.mmu.joypad.subscribe { input in
             var result = input

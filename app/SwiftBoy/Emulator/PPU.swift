@@ -1,5 +1,6 @@
 import Foundation
 import UIKit
+import SwiftUI
 
 public struct Pixel {
     public var r, g, b, a: UInt8
@@ -77,7 +78,7 @@ extension UIImage {
     }
 }
 
-public class LCD: UIViewController {
+public class LCDController: UIViewController {
     private let imageView = UIImageView()
     private var displayLink: CADisplayLink?
     internal var bitmap = Bitmap(width: 160, height: 144, pixel: Pixel(r: 0, g: 0, b: 0))
@@ -104,10 +105,10 @@ public class LCD: UIViewController {
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
         imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        imageView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
-        imageView.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
+        imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+        imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
         imageView.contentMode = .scaleAspectFit
-        imageView.backgroundColor = .black
+        imageView.backgroundColor = .none
         imageView.layer.magnificationFilter = .nearest
     }
     
@@ -131,6 +132,16 @@ public class LCD: UIViewController {
     }
 }
 
+public struct LCDView: UIViewControllerRepresentable {
+    var controller: LCDController
+
+    public func makeUIViewController(context: Context) -> UIViewController {
+        controller
+    }
+
+    public func updateUIViewController(_ viewController: UIViewController, context: Context) { }
+}
+
 struct Object {
     let x: UInt8
     let y: UInt8
@@ -146,7 +157,7 @@ let defaultPalette: [UInt8: Pixel] = [
 ]
 
 public class PPU {
-    public let lcd: LCD
+    public let view: LCDView
     private let mmu: MMU
     private var queue: [Command] = []
     private var cycles: Int16 = 0
@@ -164,11 +175,11 @@ public class PPU {
     private var objectsTileDataMemo = Memo<[[UInt8]]>()
         
     public init(_ mmu: MMU) {
-        self.lcd = LCD()
+        self.view = LCDView(controller: LCDController())
         self.mmu = mmu
         
         self.mmu.lcdControl.subscribe { byte in
-            self.lcd.enabled = byte.bit(7)
+            self.view.controller.enabled = byte.bit(7)
             self.windowTileMap = byte.bit(6) ? 1 : 0
             self.windowEnabled = byte.bit(5)
             self.backgroundTileSet = byte.bit(4) ? 1 : 0
@@ -366,9 +377,9 @@ public class PPU {
                 }
             }
             
-            for col in 0..<self.lcd.bitmap.width {
+            for col in 0..<self.view.controller.bitmap.width {
                 let bgX = (Int(scx) + col) % pixels.count
-                self.lcd.bitmap[col, Int(ly)] = pixels[bgX]
+                self.view.controller.bitmap[col, Int(ly)] = pixels[bgX]
             }
             
             return continuation()
@@ -406,7 +417,7 @@ public class PPU {
         let scx = mmu.scrollX.read()
         let scy = mmu.scrollY.read()
         
-        if ly < lcd.bitmap.height {
+        if ly < view.controller.bitmap.height {
             return self.oamScan(ly: ly, scx: scx, scy: scy) { data in
                 return self.pixelTransfer(ly: ly, scx: scx, data: data) {
                     return self.hBlank(ly: ly);
@@ -418,7 +429,7 @@ public class PPU {
     }
     
     public func run(for time: Int16) throws {
-        if lcd.enabled {
+        if view.controller.enabled {
             cycles = cycles + time
             
             while cycles > 0 {

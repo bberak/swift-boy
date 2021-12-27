@@ -1,12 +1,5 @@
-//
-//  ViewController.swift
-//  Swift Boy
-//
-//  Created by Boris Berak on 10/9/21.
-//  Copyright © 2021 Boris Berak. All rights reserved.
-//
-
 import UIKit
+import SwiftUI
 
 class ViewController: UIViewController {
     override func viewDidLoad() {
@@ -30,37 +23,33 @@ class ViewController: UIViewController {
         let ppu = PPU(mmu)
         let cpu = CPU(mmu, ppu)
         let timer = Timer(mmu)
-        let controller = GameController(mmu)
+        let joypad = Joypad(mmu)
         let clock = Clock(mmu, ppu, cpu, timer)
         
         clock.start()
         
-        let stack = UIStackView();
-        let lower = UIViewController()
+        let ui = UIHostingController(rootView: UI(lcd: ppu.view,  joypad: joypad.view))
         
-        view.addSubview(stack)
-        view.backgroundColor = .black
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(ui.view)
+        addChild(ui)
         
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.backgroundColor = .systemPurple
-        stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
-        stack.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
-        stack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
-        stack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
-        stack.alignment = .fill
-        stack.axis = .vertical
-        stack.distribution = .fillEqually
-        stack.addArrangedSubview(ppu.lcd.view)
-        stack.addArrangedSubview(lower.view)
-        
-        lower.view.translatesAutoresizingMaskIntoConstraints = false
-        lower.addChild(controller.ui)
-        lower.view.addSubview(controller.ui.view)
-        
-        controller.ui.view.translatesAutoresizingMaskIntoConstraints = false
-        controller.ui.view.topAnchor.constraint(equalTo: lower.view.topAnchor).isActive =  true
-        controller.ui.view.leadingAnchor.constraint(equalTo: lower.view.leadingAnchor).isActive =  true
-        controller.ui.view.trailingAnchor.constraint(equalTo: lower.view.trailingAnchor).isActive =  true
-        controller.ui.view.bottomAnchor.constraint(equalTo: lower.view.bottomAnchor).isActive =  true
+        ui.view.translatesAutoresizingMaskIntoConstraints = false
+        ui.view.topAnchor.constraint(equalTo: view.topAnchor).isActive =  true
+        ui.view.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive =  true
+        ui.view.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive =  true
+        ui.view.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive =  true
+    }
+}
+
+struct UI: View {
+    var lcd: LCDView
+    var joypad: JoypadView
+    
+    var body: some View {
+        VStack {
+            lcd
+            joypad
+        }.background(.black)
     }
 }
