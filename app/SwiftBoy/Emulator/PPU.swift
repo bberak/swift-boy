@@ -54,8 +54,8 @@ extension UIImage {
         
         guard let providerRef = CGDataProvider(data: Data(
             bytes: bitmap.pixels, count: bitmap.height * bytesPerRow
-            ) as CFData) else {
-                return nil
+        ) as CFData) else {
+            return nil
         }
         
         guard let cgImage = CGImage(
@@ -70,15 +70,15 @@ extension UIImage {
             decode: nil,
             shouldInterpolate: true,
             intent: .defaultIntent
-            ) else {
-                return nil
+        ) else {
+            return nil
         }
         
         self.init(cgImage: cgImage)
     }
 }
 
-public class LCDController: UIViewController {
+public class LCDBitmap: UIView {
     private let imageView = UIImageView()
     private var displayLink: CADisplayLink?
     internal var bitmap = Bitmap(width: 160, height: 144, pixel: Pixel(r: 0, g: 0, b: 0))
@@ -90,23 +90,28 @@ public class LCDController: UIViewController {
         }
     }
     
-    public init() {
-        super.init(nibName: nil, bundle: nil)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        didLoad()
     }
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
+        didLoad()
     }
     
-    override public func viewDidLoad() {
-        super.viewDidLoad()
+    convenience init() {
+        self.init(frame: CGRect.zero)
+    }
+    
+    func didLoad() {
+        addSubview(imageView)
         
-        view.addSubview(imageView)
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
-        imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
-        imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        imageView.topAnchor.constraint(equalTo: topAnchor).isActive = true
+        imageView.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
+        imageView.trailingAnchor.constraint(equalTo: trailingAnchor).isActive = true
+        imageView.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
         imageView.contentMode = .scaleAspectFit
         imageView.backgroundColor = .none
         imageView.layer.magnificationFilter = .nearest
@@ -114,7 +119,7 @@ public class LCDController: UIViewController {
     
     private func on() {
         if displayLink == nil {
-            displayLink = CADisplayLink(target: self, selector: #selector(draw))
+            displayLink = CADisplayLink(target: self, selector: #selector(refresh))
             displayLink!.add(to: .main, forMode: .common)
         }
         
@@ -127,19 +132,19 @@ public class LCDController: UIViewController {
         }
     }
     
-    @objc private func draw(_ displayLink: CADisplayLink) {
+    @objc private func refresh(_ displayLink: CADisplayLink) {
         imageView.image = UIImage(bitmap: bitmap)
     }
 }
 
-public struct LCDView: UIViewControllerRepresentable {
-    var controller: LCDController
-
-    public func makeUIViewController(context: Context) -> UIViewController {
-        controller
+public struct LCDBitmapView: UIViewRepresentable {
+    var child: LCDBitmap
+    
+    public func makeUIView(context: Context) -> UIView {
+        child
     }
 
-    public func updateUIViewController(_ viewController: UIViewController, context: Context) { }
+    public func updateUIView(_ uiView: UIView, context: Context) { }
 }
 
 struct Object {
@@ -157,7 +162,7 @@ let defaultPalette: [UInt8: Pixel] = [
 ]
 
 public class PPU {
-    public let view: LCDView
+    public let view: LCDBitmapView
     private let mmu: MMU
     private var queue: [Command] = []
     private var cycles: Int16 = 0
@@ -173,13 +178,13 @@ public class PPU {
     private var objectsEnabled = false
     private var objectsMemo = Memo<[Object]>()
     private var objectsTileDataMemo = Memo<[[UInt8]]>()
-        
+    
     public init(_ mmu: MMU) {
-        self.view = LCDView(controller: LCDController())
+        self.view = LCDBitmapView(child: LCDBitmap())
         self.mmu = mmu
         
         self.mmu.lcdControl.subscribe { byte in
-            self.view.controller.enabled = byte.bit(7)
+            self.view.child.enabled = byte.bit(7)
             self.windowTileMap = byte.bit(6) ? 1 : 0
             self.windowEnabled = byte.bit(5)
             self.backgroundTileSet = byte.bit(4) ? 1 : 0
@@ -336,17 +341,17 @@ public class PPU {
             self.setMode(3)
             
             var pixels = [Pixel]()
-
+            
             for data in data.bgTileData {
                 let arr = data.toBytes()
                 let lsb = arr[0]
                 let hsb = arr[1]
-
+                
                 for idx in (0...7).reversed() {
                     let bit = UInt8(idx) // Bit 7 represents the most leftmost pixel (idx=0)
                     let v1: UInt8 = lsb.bit(bit) ? 1 : 0
                     let v2: UInt8 = hsb.bit(bit) ? 2 : 0
-
+                    
                     pixels.append(self.bgPalette[v1 + v2]!)
                 }
             }
@@ -377,9 +382,9 @@ public class PPU {
                 }
             }
             
-            for col in 0..<self.view.controller.bitmap.width {
+            for col in 0..<self.view.child.bitmap.width {
                 let bgX = (Int(scx) + col) % pixels.count
-                self.view.controller.bitmap[col, Int(ly)] = pixels[bgX]
+                self.view.child.bitmap[col, Int(ly)] = pixels[bgX]
             }
             
             return continuation()
@@ -417,7 +422,7 @@ public class PPU {
         let scx = mmu.scrollX.read()
         let scy = mmu.scrollY.read()
         
-        if ly < view.controller.bitmap.height {
+        if ly < view.child.bitmap.height {
             return self.oamScan(ly: ly, scx: scx, scy: scy) { data in
                 return self.pixelTransfer(ly: ly, scx: scx, data: data) {
                     return self.hBlank(ly: ly);
@@ -429,7 +434,7 @@ public class PPU {
     }
     
     public func run(for time: Int16) throws {
-        if view.controller.enabled {
+        if view.child.enabled {
             cycles = cycles + time
             
             while cycles > 0 {

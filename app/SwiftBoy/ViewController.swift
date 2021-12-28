@@ -30,9 +30,9 @@ class ViewController: UIViewController {
         
         let ui = UIHostingController(rootView: UI(lcd: ppu.view,  joypad: joypad.view))
         
+        view.backgroundColor = .black
         view.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(ui.view)
-        addChild(ui)
         
         ui.view.translatesAutoresizingMaskIntoConstraints = false
         ui.view.topAnchor.constraint(equalTo: view.topAnchor).isActive =  true
@@ -43,13 +43,23 @@ class ViewController: UIViewController {
 }
 
 struct UI: View {
-    var lcd: LCDView
+    var lcd: LCDBitmapView
     var joypad: JoypadView
     
     var body: some View {
-        VStack {
-            lcd
-            joypad
-        }.background(.black)
+        GeometryReader{ geometry in
+            if geometry.size.width > geometry.size.height {
+                HStack {
+                    lcd
+                    joypad
+                }
+            } else {
+                VStack {
+                    lcd
+                    joypad
+                }
+            }
+        }
+        .background(.black)
     }
 }
