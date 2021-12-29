@@ -53,11 +53,13 @@ struct UI: View {
             if geometry.size.width > geometry.size.height {
                 HStack {
                     dPad
+                    lcd
                     VStack {
-                        lcd
-                        startSelect.padding()
+                        Spacer()
+                        ab
+                        Spacer()
+                        startSelect
                     }
-                    ab
                 }
             } else {
                 VStack{
