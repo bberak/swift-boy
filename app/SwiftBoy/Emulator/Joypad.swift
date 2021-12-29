@@ -65,42 +65,49 @@ struct GameButton<S>: View where S : Shape {
     }
 }
 
-struct JoypadView: View {
+struct DPadView: View {
     @ObservedObject var buttons: Buttons
     
     var body: some View {
         VStack {
-            Spacer()
             HStack {
-                VStack {
-                    HStack {
-                        Spacer()
-                        GameButton(shape: Circle(), onPress: { buttons.up = true }, onRelease: { buttons.up = false })
-                        Spacer()
-                    }.offset(x: 0, y: 10)
-                    HStack {
-                        GameButton(shape: Circle(), onPress: { buttons.left = true }, onRelease: { buttons.left = false })
-                        Spacer()
-                        GameButton(shape: Circle(), onPress: { buttons.right = true }, onRelease: { buttons.right = false })
-                    }
-                    HStack {
-                        Spacer()
-                        GameButton(shape: Circle(), onPress: { buttons.down = true }, onRelease: { buttons.down = false })
-                        Spacer()
-                    }.offset(x: 0, y: -10)
-                }.frame(width: 150)
                 Spacer()
-                HStack {
-                    GameButton(shape: Circle(), label: "B", onPress: { buttons.b = true }, onRelease: { buttons.b = false }).offset(x: 0, y: 30)
-                    GameButton(shape: Circle(), label: "A", onPress: { buttons.a = true }, onRelease: { buttons.a = false })
-                }
+                GameButton(shape: Circle(), onPress: { buttons.up = true }, onRelease: { buttons.up = false })
+                Spacer()
+            }.offset(x: 0, y: 10)
+            HStack {
+                GameButton(shape: Circle(), onPress: { buttons.left = true }, onRelease: { buttons.left = false })
+                Spacer()
+                GameButton(shape: Circle(), onPress: { buttons.right = true }, onRelease: { buttons.right = false })
             }
             HStack {
-                GameButton(shape: RoundedRectangle(cornerRadius: 5), width: 45, height: 10, label: "START", onPress: { buttons.start = true }, onRelease: { buttons.start = false }).padding(EdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5))
-                GameButton(shape: RoundedRectangle(cornerRadius: 5), width: 45, height: 10, label: "SELECT", onPress: { buttons.select = true }, onRelease: { buttons.select = false }).padding(EdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5))
-            }.offset(x: 0, y: 30)
-            Spacer()
-        }.padding().background(.black)
+                Spacer()
+                GameButton(shape: Circle(), onPress: { buttons.down = true }, onRelease: { buttons.down = false })
+                Spacer()
+            }.offset(x: 0, y: -10)
+        }.frame(width: 150)
+    }
+}
+
+struct ABView: View {
+    @ObservedObject var buttons: Buttons
+    
+    var body: some View {
+        HStack {
+            GameButton(shape: Circle(), label: "B", onPress: { buttons.b = true }, onRelease: { buttons.b = false }).offset(x: 0, y: 30)
+            GameButton(shape: Circle(), label: "A", onPress: { buttons.a = true }, onRelease: { buttons.a = false })
+        }
+    }
+}
+
+struct StartSelectView: View {
+    @ObservedObject var buttons: Buttons
+    
+    var body: some View {
+        HStack {
+            GameButton(shape: RoundedRectangle(cornerRadius: 5), width: 45, height: 10, label: "START", onPress: { buttons.start = true }, onRelease: { buttons.start = false }).padding(EdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5))
+            GameButton(shape: RoundedRectangle(cornerRadius: 5), width: 45, height: 10, label: "SELECT", onPress: { buttons.select = true }, onRelease: { buttons.select = false }).padding(EdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5))
+        }
     }
 }
 
@@ -108,12 +115,16 @@ public class Joypad {
     private let mmu: MMU
     private let buttons: Buttons
     
-    let view: JoypadView
+    let dPad: DPadView
+    let ab: ABView
+    let startSelect: StartSelectView
     
     init(_ mmu: MMU) {
         self.mmu = mmu
         self.buttons = Buttons()
-        self.view = JoypadView(buttons: self.buttons)
+        self.dPad = DPadView(buttons: self.buttons)
+        self.ab = ABView(buttons: self.buttons)
+        self.startSelect = StartSelectView(buttons: self.buttons)
         
         self.mmu.joypad.subscribe { input in
             var result = input

@@ -28,7 +28,7 @@ class ViewController: UIViewController {
         
         clock.start()
         
-        let ui = UIHostingController(rootView: UI(lcd: ppu.view,  joypad: joypad.view))
+        let ui = UIHostingController(rootView: UI(lcd: ppu.view, dPad: joypad.dPad, ab: joypad.ab, startSelect: joypad.startSelect))
         
         view.backgroundColor = .black
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -44,19 +44,34 @@ class ViewController: UIViewController {
 
 struct UI: View {
     var lcd: LCDBitmapView
-    var joypad: JoypadView
+    var dPad: DPadView
+    var ab: ABView
+    var startSelect: StartSelectView
     
     var body: some View {
         GeometryReader{ geometry in
             if geometry.size.width > geometry.size.height {
                 HStack {
-                    lcd
-                    joypad
+                    dPad
+                    VStack {
+                        lcd
+                        startSelect.padding()
+                    }
+                    ab
                 }
             } else {
-                VStack {
-                    lcd
-                    joypad
+                VStack{
+                    lcd.frame(height: geometry.size.height * 0.5)
+                    VStack{
+                        HStack {
+                            dPad
+                            Spacer()
+                            ab
+                        }
+                        startSelect.offset(x: 0, y: 30)
+                    }
+                    .padding()
+                    .frame(height: geometry.size.height * 0.5)
                 }
             }
         }
