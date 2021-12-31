@@ -357,7 +357,7 @@ public class PPU {
             }
             
             // TODO:
-            // Handle sprite priority
+            // Handle sprite priority + transparent pixel
             for obj in data.objectsWithTileData {
                 let palette = obj.object.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
                 let flipY = obj.object.attributes.bit(6)
