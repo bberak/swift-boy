@@ -103,5 +103,8 @@ web-build/
 /gb-cpu-code-generator/generated.swift
 /gb-cpu-code-generator/formatted.swift
 *.DS_Store
+deadeus.gb
+super-mario-land.gb
+tetris.gb
 
 # End of custom additions

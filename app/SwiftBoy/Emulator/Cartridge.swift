@@ -91,7 +91,10 @@ public class Cartridge: MemoryAccessArray {
     public init(rom: Data) {
         super.init()
         
-        let type = MBCType(rawValue: rom[0x0147])!
+        guard let type = MBCType(rawValue: rom[0x0147]) else {
+            print("MBC \(rom[0x0147]) is not currently supported")
+            return
+        }
         
         switch type {
         case .zero:

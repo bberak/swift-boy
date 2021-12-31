@@ -17,9 +17,11 @@ class ViewController: UIViewController {
         // let cpuTest09 = Cartridge(path: #fileLiteral(resourceName: "09-op r,r.gb"))
         // let cpuTest10 = Cartridge(path: #fileLiteral(resourceName: "10-bit ops.gb"))
         // let cpuTest11 = Cartridge(path: #fileLiteral(resourceName: "11-op a,(hl).gb"))
-        let tetris = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
+        //let deadeus = Cartridge(path: #fileLiteral(resourceName: "deadeus.gb"))
+        let mario = Cartridge(path: #fileLiteral(resourceName: "super-mario-land.gb"))
+        //let tetris = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
-        let mmu = MMU(tetris)
+        let mmu = MMU(mario)
         let ppu = PPU(mmu)
         let cpu = CPU(mmu, ppu)
         let timer = Timer(mmu)
