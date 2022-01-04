@@ -376,7 +376,7 @@ public class PPU {
                         let v2: UInt8 = hsb.bit(bit) ? 2 : 0
                         let p = v1 + v2
                         if p > 0 {
-                            pixels[x % pixels.count] = palette[p]!
+                            pixels[(x + Int(scx)) % pixels.count] = palette[p]!
                         }
                     }
                 }
