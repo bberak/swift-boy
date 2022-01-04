@@ -12,22 +12,6 @@ class Buttons: ObservableObject {
     @Published var select = false
 }
 
-struct PressActions: ViewModifier {
-    var onPress: () -> Void
-    var onRelease: () -> Void
-    
-    func body(content: Content) -> some View {
-        content
-            .onLongPressGesture(minimumDuration: 0.0001, maximumDistance: .infinity, perform: { }) { pressing in
-                if pressing {
-                    onPress()
-                } else {
-                    onRelease()
-                }
-            }
-    }
-}
-
 struct GameButton<S>: View where S : Shape {
     var shape: S
     var width: CGFloat = 50
@@ -39,20 +23,30 @@ struct GameButton<S>: View where S : Shape {
     
     @State var pressed = false
     
+    var pressInOut: some Gesture {
+        DragGesture( minimumDistance: 0, coordinateSpace: .local)
+            .onChanged { _ in
+                if !pressed {
+                    pressed = true
+                    onPress();
+                    haptics.impactOccurred(intensity: 1.0);
+                }
+            }
+            .onEnded { _ in
+                if pressed {
+                    pressed = false
+                    onRelease();
+                    haptics.impactOccurred(intensity: 0.5);
+                }
+            }
+    }
+    
     var body: some View {
         VStack {
             shape
                 .fill(pressed ? .cyan : .white)
                 .frame(width: width, height: height)
-                .modifier(PressActions(onPress: {
-                    onPress();
-                    pressed = true;
-                    haptics.impactOccurred(intensity: 1.0);
-                }, onRelease: {
-                    onRelease();
-                    pressed = false;
-                    haptics.impactOccurred(intensity: 0.5);
-                }))
+                .gesture(pressInOut)
                 .scaleEffect(pressed ? 1.2 : 1)
                 .animation(.spring().speed(4), value: pressed)
             
