@@ -282,6 +282,9 @@ public class PPU {
     
     struct OamScanData {
         let bgTileData: [UInt16]
+        let winTileData: [UInt16]?
+        let wy: UInt8
+        let wx: UInt8
         let objectsWithTileData: [(object: Object, data: [UInt8])]
         let bgy: UInt8
         let objSizeY: Int
@@ -309,6 +312,30 @@ public class PPU {
                 }
             }
             
+            let wy = self.mmu.windowY.read()
+            let wx = self.mmu.windowX.read()
+            var winTileData: [UInt16]? = nil
+            
+            if self.windowEnabled && ly >= wy && wy.isBetween(0, 143) && wx.isBetween(0, 166) {
+                let wly = ly - wy
+                let winTileMapRow = Int16(wly / 8)
+                let winTileMapStartIndex = UInt16(winTileMapRow * 20)
+                let winTileMapPointer: UInt16 = self.windowTileMap == 1 ? 0x9C00 : 0x9800
+                let winTileIndices: [UInt8] = try self.mmu.vramTileMaps.readBytes(address: winTileMapPointer &+ winTileMapStartIndex, count: 20 )
+                let winTileDataPointer: UInt16 = self.backgroundTileSet == 1 ? 0x8000 : 0x9000
+                winTileData = try winTileIndices.map { idx in
+                    if winTileDataPointer == 0x9000 {
+                        let delta = Int16(idx.toInt8()) * 16 + Int16(wly % 8) * 2
+                        let address = winTileDataPointer &+ delta.toUInt16()
+                        return try self.mmu.vramTileData.readWord(address: address)
+                    } else {
+                        let offset = UInt16(idx) * 16 + UInt16(wly % 8) * 2
+                        let address = winTileDataPointer &+ offset
+                        return try self.mmu.vramTileData.readWord(address: address)
+                    }
+                }
+            }
+            
             let allObjects = self.objectsMemo.get(deps: [self.mmu.oam.version]) {
                 return try! self.mmu.oam.readBytes(address: 0xFE00, count: 160).chunked(into: 4).map { arr in
                     return Object(x: arr[1], y: arr[0], index: arr[2], attributes: arr[3])
@@ -332,7 +359,7 @@ public class PPU {
             }
             let objectsWithTileData = Array(zip(visibleObjects, objTileData))
             
-            return continuation(OamScanData(bgTileData: bgTileData, objectsWithTileData: objectsWithTileData, bgy: bgy, objSizeY: objSizeY))
+            return continuation(OamScanData(bgTileData: bgTileData, winTileData: winTileData, wy: wy, wx: wx, objectsWithTileData: objectsWithTileData, bgy: bgy, objSizeY: objSizeY))
         }
     }
     
@@ -340,24 +367,58 @@ public class PPU {
         return Command(cycles: 144) {
             self.setMode(3)
             
-            var pixels = [Pixel]()
+            var pixels = self.backgroundEnabled ? [Pixel]() : [Pixel](repeating: Pixel.white, count: 256)
             
-            for data in data.bgTileData {
-                let arr = data.toBytes()
-                let lsb = arr[0]
-                let hsb = arr[1]
-                
-                for idx in (0...7).reversed() {
-                    let bit = UInt8(idx) // Bit 7 represents the most leftmost pixel (idx=0)
-                    let v1: UInt8 = lsb.bit(bit) ? 1 : 0
-                    let v2: UInt8 = hsb.bit(bit) ? 2 : 0
+            if self.backgroundEnabled {
+                for data in data.bgTileData {
+                    let arr = data.toBytes()
+                    let lsb = arr[0]
+                    let hsb = arr[1]
                     
-                    pixels.append(self.bgPalette[v1 + v2]!)
+                    for idx in (0...7).reversed() {
+                        let bit = UInt8(idx) // Bit 7 represents the most leftmost pixel (idx=0)
+                        let v1: UInt8 = lsb.bit(bit) ? 1 : 0
+                        let v2: UInt8 = hsb.bit(bit) ? 2 : 0
+                        
+                        pixels.append(self.bgPalette[v1 + v2]!)
+                    }
+                }
+                
+                if data.winTileData != nil {
+                    var x = Int(data.wx) - 7
+                    
+                    for data in data.winTileData! {
+                        let arr = data.toBytes()
+                        let lsb = arr[0]
+                        let hsb = arr[1]
+                        
+                        for idx in (0...7).reversed() {
+                            let bit = UInt8(idx) // Bit 7 represents the most leftmost pixel (idx=0)
+                            let v1: UInt8 = lsb.bit(bit) ? 1 : 0
+                            let v2: UInt8 = hsb.bit(bit) ? 2 : 0
+                            
+                            pixels[(x + Int(scx)) % pixels.count] = self.bgPalette[v1 + v2]!
+                            x = x + 1
+                            
+                            // TODO:
+                            // This double-break code is horrible - even for my standards..
+                            // Need a helper function like: let pixels =  fill(pallete, lsb: [0,1,2,3], hsb: [0,1,2,3])
+                            // And another: let pixels = mix(base: pixels1, with: pixels2, from: someIndex)
+                            if x >= pixels.count {
+                                break
+                            }
+                        }
+                        
+                        if x >= pixels.count {
+                            break
+                        }
+                    }
                 }
             }
             
             // TODO:
-            // Handle sprite priority + transparent pixel
+            // - Handle sprite priority: https://youtu.be/HyzD8pNlpwI?t=2179
+            // - Handle transparent pixel: https://youtu.be/HyzD8pNlpwI?t=3308
             for obj in data.objectsWithTileData {
                 let palette = obj.object.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
                 let flipY = obj.object.attributes.bit(6)

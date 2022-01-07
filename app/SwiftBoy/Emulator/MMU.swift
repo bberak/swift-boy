@@ -278,6 +278,8 @@ public class MMU: MemoryAccessArray {
     lazy var biosRegister = Address(0xFF50, self)
     lazy var interruptsEnabled = Address(0xFFFF, self)
     lazy var joypad = Address(0xFF00, self)
+    lazy var windowY = Address(0xFF4A, self)
+    lazy var windowX = Address(0xFF4B, self)
         
     public init(_ cartridge: Cartridge) {
         self.vramTileData = MemoryBlock(range: 0x8000...0x97FF, readOnly: false, enabled: true)

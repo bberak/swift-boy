@@ -81,6 +81,10 @@ public extension UInt8 {
         return Int8(bitPattern: self)
     }
     
+    func isBetween(_ lower: UInt8, _ upper: UInt8) -> Bool {
+        return self >= lower && self <= upper
+    }
+    
     subscript(index: UInt8) -> Bool {
         get {
             return bit(index)
