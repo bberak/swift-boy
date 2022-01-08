@@ -19,7 +19,7 @@ struct GameButton<S>: View where S : Shape {
     var label: String?
     var onPress: () -> Void
     var onRelease: () -> Void
-    var haptics = UIImpactFeedbackGenerator(style: .soft)
+    var haptics = UIImpactFeedbackGenerator(style: .medium)
     
     @State var pressed = false
     
