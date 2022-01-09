@@ -246,18 +246,6 @@ class StopWatch {
     }
 }
 
-class Job: Thread {
-    let work: ()->Void
-    
-    init(priority: QualityOfService, _ work: @escaping ()->Void) {
-        self.work = work;
-    }
-
-    override func main() {
-        self.work()
-    }
-}
-
 class Memo<T> {
     private var value: T?
     private var deps: [AnyHashable] = []
