@@ -28,7 +28,7 @@ class ViewController: UIViewController {
         let joypad = Joypad(mmu)
         let clock = Clock(mmu, ppu, cpu, timer)
         
-        Synth.shared.volume = 0.5
+        //Synth.shared.volume = 0.1
         
         clock.start()
         

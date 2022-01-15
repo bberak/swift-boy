@@ -129,30 +129,28 @@ public class Synth {
 }
 
 struct Voice {
-    var control: UInt8
-    var freq: UInt8
-    var volume: UInt8
-    var length: UInt8
-    var sweep: UInt8
+    var control: UInt8 = 0
+    var freq: UInt8 = 0
+    var volume: UInt8 = 0
+    var length: UInt8 = 0
+    var sweep: UInt8 = 0
 }
 
-class PulseA {
+public class APU {
+    private let mmu: MMU
     
-}
-
-class PulseB {
+    private var pulseA = Voice()
+    private var pulseB = Voice()
+    private var wave = Voice()
+    private var noise = Voice()
     
-}
-
-class Wave {
+    private var channelControl: UInt8 = 0
+    private var panning: UInt8 = 0
+    private var on = false
     
-}
-
-class Noise {
-
-}
-
-class APU {
-    var on = false
-    var channelOutput: UInt8 = 0
+    init(mmu: MMU) {
+        self.mmu = mmu
+        
+        self.mmu.subscribe({ address, byte in address.isMultiple(of: 22)}, handler: <#T##(UInt8) -> Void#>)
+    }
 }
