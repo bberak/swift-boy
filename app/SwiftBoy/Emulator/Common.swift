@@ -113,6 +113,10 @@ public extension UInt16 {
         let mask = UInt16(0x0001 << pos)
         return (self & mask) == mask
     }
+    
+    func isBetween(_ lower: UInt16, _ upper: UInt16) -> Bool {
+        return self >= lower && self <= upper
+    }
 }
 
 public extension UInt64 {

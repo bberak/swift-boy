@@ -40,11 +40,11 @@ func mbcOne(_ rom: Data) -> MemoryAccessArray {
     let mbc = MemoryAccessArray([rom0, romBank, ramBank])
     var mode: UInt8 = 0
     
-    mbc.subscribe({ (a, _) in a <= 0x1FFF }) { byte in
+    mbc.subscribe({ addr, _ in addr <= 0x1FFF }) { _, byte in
         ramBank.enabled = (byte & 0x0A) == 0x0A
     }
     
-    mbc.subscribe({ (a, _) in a >= 0x2000 && a <= 0x3FFF }) { byte in
+    mbc.subscribe({ addr, _ in addr >= 0x2000 && addr <= 0x3FFF }) { _, byte in
         var bank = UInt8(0)
         var upper = UInt8(0)
         var lower = UInt8(0)
@@ -60,11 +60,11 @@ func mbcOne(_ rom: Data) -> MemoryAccessArray {
         romBank.bankIndex = bank
     }
     
-    mbc.subscribe({ (a, _) in a >= 0x6000 && a <= 0x7FFF }) { byte in
+    mbc.subscribe({ addr, _ in addr >= 0x6000 && addr <= 0x7FFF }) { _, byte in
         mode = byte
     }
     
-    mbc.subscribe({ (a, _) in a >= 0x4000 && a <= 0x5FFF }) { byte in
+    mbc.subscribe({ addr, _ in addr >= 0x4000 && addr <= 0x5FFF }) { _, byte in
         if mode == 0 {
             var bank = UInt8(0)
             var upper = UInt8(0)

@@ -144,7 +144,7 @@ class MemoryBlockBanked: MemoryBlock {
 
 struct Subscriber {
     let predicate: (UInt16, UInt8) -> Bool
-    let handler: (UInt8)->Void
+    let handler: (UInt16, UInt8) -> Void
 }
 
 public class MemoryAccessArray: MemoryAccess {
@@ -198,7 +198,7 @@ public class MemoryAccessArray: MemoryAccess {
             
             if publish {
                 let subs = subscribers.filter({ $0.predicate(address, byte) })
-                subs.forEach { $0.handler(byte) }
+                subs.forEach { $0.handler(address, byte) }
             }
             
             version = version &+ 1
@@ -209,12 +209,12 @@ public class MemoryAccessArray: MemoryAccess {
         throw MemoryAccessError.addressOutOfRange
     }
     
-    internal func subscribe(_ predicate: @escaping (UInt16, UInt8) -> Bool, handler: @escaping (UInt8) -> Void) {
+    internal func subscribe(_ predicate: @escaping (UInt16, UInt8) -> Bool, handler: @escaping (UInt16, UInt8) -> Void) {
         subscribers.append(Subscriber(predicate: predicate, handler: handler))
     }
     
-    internal func subscribe(address: UInt16, handler: @escaping (UInt8)->Void) {
-        subscribe({ (a, b) in a == address }, handler: handler)
+    internal func subscribe(address: UInt16, handler: @escaping (UInt8) -> Void) {
+        subscribe({ (a, b) in a == address }, handler: { _, byte in handler(byte) })
     }
 }
 
@@ -246,7 +246,7 @@ public struct Address {
     }
     
     func subscribe(_ predicate: @escaping (UInt8) -> Bool, handler: @escaping (UInt8) -> Void) {
-        arr.subscribe({ (a, b) in a == self.address && predicate(b) }, handler: handler)
+        arr.subscribe({ (a, b) in a == self.address && predicate(b) }, handler: { _, byte in handler(byte) })
     }
 }
 

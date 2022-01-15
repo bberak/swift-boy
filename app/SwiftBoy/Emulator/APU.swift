@@ -151,6 +151,8 @@ public class APU {
     init(mmu: MMU) {
         self.mmu = mmu
         
-        self.mmu.subscribe({ address, byte in address.isMultiple(of: 22)}, handler: <#T##(UInt8) -> Void#>)
+        self.mmu.subscribe({ address, _ in address.isBetween(0xFF10, 0xFF3F) }) { address, byte in
+            
+        }
     }
 }
