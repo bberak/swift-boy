@@ -29,7 +29,6 @@ class ViewController: UIViewController {
         let clock = Clock(mmu, ppu, cpu, timer)
         
         Synth.shared.volume = 0.025
-        Synth.shared.pan = 0
         
         clock.start()
         

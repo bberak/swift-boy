@@ -37,48 +37,16 @@ let triangle: Signal = { freq, time in
     return 2.0 * (value - 0.5)
 }
 
-// Source: https://github.com/GrantJEmerson/SwiftSynth/blob/master/Swift%20Synth/Audio/Synth.swift
-public class Synth {
-    public static let shared = Synth()
-    
-    public var volume: Float {
-        set {
-            audioEngine.mainMixerNode.outputVolume = newValue
-        }
-        get {
-            audioEngine.mainMixerNode.outputVolume
-        }
-    }
-    
-    public var frequencyRampValue: Float = 0
-    
-    public var frequency: Float = 440 {
-        didSet {
-            if oldValue != 0 {
-                frequencyRampValue = frequency - oldValue
-            } else {
-                frequencyRampValue = 0
-            }
-        }
-    }
-    
-    public var pan: Float {
-        get {
-            return sourceNode.pan
-        }
-        set {
-            sourceNode.pan = newValue
-        }
-    }
-
-    private var audioEngine: AVAudioEngine
-    
-    private lazy var sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList in
+class Voice {
+    let sampleRate: Double
+    let deltaTime: Float
+    var frequencyRampValue: Float = 0
+    var time: Float = 0
+    var signal: Signal
+    lazy var sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList in
         let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-                
         let localRampValue = self.frequencyRampValue
         let localFrequency = self.frequency - localRampValue
-        
         let period = 1 / localFrequency
 
         for frame in 0..<Int(frameCount) {
@@ -98,30 +66,76 @@ public class Synth {
         return noErr
     }
     
-    private var time: Float = 0
-    private let sampleRate: Double
-    private let deltaTime: Float
+    var volume: Float {
+        get {
+            sourceNode.volume
+        }
+        set {
+            sourceNode.volume = newValue
+        }
+    }
     
-    private var signal: Signal
+    var frequency: Float = 440 {
+        didSet {
+            if oldValue != 0 {
+                frequencyRampValue = frequency - oldValue
+            } else {
+                frequencyRampValue = 0
+            }
+        }
+    }
+    
+    var pan: Float {
+        get {
+            return sourceNode.pan
+        }
+        set {
+            sourceNode.pan = newValue
+        }
+    }
+    
+    init(format: AVAudioFormat, signal: @escaping Signal) {
+        self.sampleRate = format.sampleRate
+        self.deltaTime = 1 / Float(sampleRate)
+        self.signal = signal
+    }
+}
+
+// Source: https://github.com/GrantJEmerson/SwiftSynth/blob/master/Swift%20Synth/Audio/Synth.swift
+public class Synth {
+    public static let shared = Synth()
+    
+    public var volume: Float {
+        set {
+            audioEngine.mainMixerNode.outputVolume = newValue
+        }
+        get {
+            audioEngine.mainMixerNode.outputVolume
+        }
+    }
+    
+    private var voice1: Voice
+    private var voice2: Voice
+    private var audioEngine: AVAudioEngine
     
     init(signal: @escaping Signal = sine) {
         audioEngine = AVAudioEngine()
         let mainMixer = audioEngine.mainMixerNode
         let outputNode = audioEngine.outputNode
         let format = outputNode.inputFormat(forBus: 0)
+        
+        voice1 = Voice(format: format, signal: sine)
+        voice2 = Voice(format: format, signal: triangle)
 
-        sampleRate = format.sampleRate
-        deltaTime = 1 / Float(sampleRate)
-        
-        self.signal = signal
-        
         let inputFormat = AVAudioFormat(commonFormat: format.commonFormat,
                                         sampleRate: format.sampleRate,
                                         channels: 1,
                                         interleaved: format.isInterleaved)
         
-        audioEngine.attach(sourceNode)
-        audioEngine.connect(sourceNode, to: mainMixer, format: inputFormat)
+        audioEngine.attach(voice1.sourceNode)
+        audioEngine.connect(voice1.sourceNode, to: mainMixer, format: inputFormat)
+        audioEngine.attach(voice2.sourceNode)
+        audioEngine.connect(voice2.sourceNode, to: mainMixer, format: inputFormat)
         audioEngine.connect(mainMixer, to: outputNode, format: nil)
         mainMixer.outputVolume = 0
         
@@ -130,29 +144,21 @@ public class Synth {
         } catch {
             print("Could not start engine: \(error.localizedDescription)")
         }
-    }
         
-    public func setWaveformTo(_ signal: @escaping Signal) {
-        self.signal = signal
+        voice1.pan = -1
+        voice2.pan = 1
     }
 }
 
-struct Voice {
-    var on = false
-    var control: UInt8 = 0
-    var freq: UInt8 = 0
-    var volume: UInt8 = 0
-    var length: UInt8 = 0
-    var sweep: UInt8 = 0
-}
+
 
 public class APU {
     private let mmu: MMU
     
-    private var pulseA = Voice()
-    private var pulseB = Voice()
-    private var wave = Voice()
-    private var noise = Voice()
+//    private var pulseA = Voice()
+//    private var pulseB = Voice()
+//    private var wave = Voice()
+//    private var noise = Voice()
         
     init(mmu: MMU) {
         self.mmu = mmu
