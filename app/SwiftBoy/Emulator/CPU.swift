@@ -85,7 +85,6 @@ public class CPU {
     internal var sp: UInt16 = 0x0000
     internal var pc: UInt16 = 0x0000
     internal var ime: Bool = false
-    private let ppu: PPU
     private var queue: [Command] = []
     private var cycles: Int16 = 0
     public var printOpcodes = false
@@ -139,9 +138,8 @@ public class CPU {
         }
     }
     
-    public init(_ mmu: MMU, _ ppu: PPU) {
+    public init(_ mmu: MMU) {
         self.mmu = mmu
-        self.ppu = ppu
         
         self.mmu.interruptFlags.subscribe { flags in
             if flags > 0 && self.enabled == false {

@@ -61,8 +61,18 @@ public class Synth {
             }
         }
     }
+    
+    public var pan: Float {
+        get {
+            return sourceNode.pan
+        }
+        set {
+            sourceNode.pan = newValue
+        }
+    }
 
     private var audioEngine: AVAudioEngine
+    
     private lazy var sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList in
         let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
                 
@@ -96,7 +106,6 @@ public class Synth {
     
     init(signal: @escaping Signal = sine) {
         audioEngine = AVAudioEngine()
-        
         let mainMixer = audioEngine.mainMixerNode
         let outputNode = audioEngine.outputNode
         let format = outputNode.inputFormat(forBus: 0)
@@ -129,6 +138,7 @@ public class Synth {
 }
 
 struct Voice {
+    var on = false
     var control: UInt8 = 0
     var freq: UInt8 = 0
     var volume: UInt8 = 0
@@ -143,16 +153,19 @@ public class APU {
     private var pulseB = Voice()
     private var wave = Voice()
     private var noise = Voice()
-    
-    private var channelControl: UInt8 = 0
-    private var panning: UInt8 = 0
-    private var on = false
-    
+        
     init(mmu: MMU) {
         self.mmu = mmu
-        
-        self.mmu.subscribe({ address, _ in address.isBetween(0xFF10, 0xFF3F) }) { address, byte in
-            
-        }
+    }
+    
+    public func run(for time: Int16) throws {
+//        if on {
+//            let channelControl = self.mmu.nr50.read()
+//            let panning = self.mmu.nr51.read()
+//            let onOff = self.mmu.nr52.read()
+//            //-- Determine period
+//            //-- Build waves
+//            //-- Run synth
+//        }
     }
 }

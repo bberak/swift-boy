@@ -257,6 +257,7 @@ public class MMU: MemoryAccessArray {
     var vramTileData: MemoryBlock
     var vramTileMaps: MemoryBlock
     var oam: MemoryBlock
+    var wfram: MemoryBlock
     
     lazy var serialDataTransfer = Address(0xFF01, self)
     lazy var serialDataControl = Address(0xFF02, self)
@@ -280,11 +281,34 @@ public class MMU: MemoryAccessArray {
     lazy var joypad = Address(0xFF00, self)
     lazy var windowY = Address(0xFF4A, self)
     lazy var windowX = Address(0xFF4B, self)
+    
+    lazy var nr10 = Address(0xFF10, self)
+    lazy var nr11 = Address(0xFF11, self)
+    lazy var nr12 = Address(0xFF12, self)
+    lazy var nr13 = Address(0xFF13, self)
+    lazy var nr14 = Address(0xFF14, self)
+    lazy var nr21 = Address(0xFF16, self)
+    lazy var nr22 = Address(0xFF17, self)
+    lazy var nr23 = Address(0xFF18, self)
+    lazy var nr24 = Address(0xFF19, self)
+    lazy var nr30 = Address(0xFF1A, self)
+    lazy var nr31 = Address(0xFF1B, self)
+    lazy var nr32 = Address(0xFF1C, self)
+    lazy var nr33 = Address(0xFF1D, self)
+    lazy var nr34 = Address(0xFF1E, self)
+    lazy var nr41 = Address(0xFF20, self)
+    lazy var nr42 = Address(0xFF21, self)
+    lazy var nr43 = Address(0xFF22, self)
+    lazy var nr44 = Address(0xFF23, self)
+    lazy var nr50 = Address(0xFF24, self)
+    lazy var nr51 = Address(0xFF25, self)
+    lazy var nr52 = Address(0xFF26, self)
         
     public init(_ cartridge: Cartridge) {
         self.vramTileData = MemoryBlock(range: 0x8000...0x97FF, readOnly: false, enabled: true)
         self.vramTileMaps = MemoryBlock(range: 0x9800...0x9FFF, readOnly: false, enabled: true)
         self.oam = MemoryBlock(range: 0xFE00...0xFE9F, readOnly: false, enabled: true)
+        self.wfram = MemoryBlock(range: 0xFF30...0xFF3F, readOnly: false, enabled: true)
         
         let bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
         let wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false, enabled: true)
@@ -300,6 +324,7 @@ public class MMU: MemoryAccessArray {
             wram,
             echo,
             oam,
+            wfram,
             hram,
             rest
         ])

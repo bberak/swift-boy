@@ -23,12 +23,13 @@ class ViewController: UIViewController {
         
         let mmu = MMU(cart)
         let ppu = PPU(mmu)
-        let cpu = CPU(mmu, ppu)
+        let cpu = CPU(mmu)
         let timer = Timer(mmu)
         let joypad = Joypad(mmu)
         let clock = Clock(mmu, ppu, cpu, timer)
         
-        //Synth.shared.volume = 0.1
+        Synth.shared.volume = 0.025
+        Synth.shared.pan = 0
         
         clock.start()
         
