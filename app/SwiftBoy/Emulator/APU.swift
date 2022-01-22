@@ -40,31 +40,10 @@ let triangle: Signal = { freq, time in
 class Voice {
     let sampleRate: Double
     let deltaTime: Float
-    var frequencyRampValue: Float = 0
+    
+    var frequency: Float = 440
     var time: Float = 0
     var signal: Signal
-    lazy var sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList in
-        let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-        let localRampValue = self.frequencyRampValue
-        let localFrequency = self.frequency - localRampValue
-        let period = 1 / localFrequency
-
-        for frame in 0..<Int(frameCount) {
-            let percentComplete = self.time / period
-            let sampleVal = self.signal(localFrequency + localRampValue * percentComplete, self.time)
-            self.time += self.deltaTime
-            self.time = fmod(self.time, period)
-            
-            for buffer in ablPointer {
-                let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(buffer)
-                buf[frame] = sampleVal
-            }
-        }
-        
-        self.frequencyRampValue = 0
-        
-        return noErr
-    }
     
     var volume: Float {
         get {
@@ -75,16 +54,6 @@ class Voice {
         }
     }
     
-    var frequency: Float = 440 {
-        didSet {
-            if oldValue != 0 {
-                frequencyRampValue = frequency - oldValue
-            } else {
-                frequencyRampValue = 0
-            }
-        }
-    }
-    
     var pan: Float {
         get {
             return sourceNode.pan
@@ -92,6 +61,24 @@ class Voice {
         set {
             sourceNode.pan = newValue
         }
+    }
+    
+    lazy var sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList in
+        let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
+        let period = 1 / self.frequency
+
+        for frame in 0..<Int(frameCount) {
+            let sample = self.signal(self.frequency, self.time)
+            self.time += self.deltaTime
+            self.time = fmod(self.time, period) // This line ensures that 'time' corectly stays within the range of zero to 'period'
+            
+            for buffer in ablPointer {
+                let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(buffer)
+                buf[frame] = sample
+            }
+        }
+                
+        return noErr
     }
     
     init(format: AVAudioFormat, signal: @escaping Signal) {
@@ -114,8 +101,9 @@ public class Synth {
         }
     }
     
-    private var voice1: Voice
-    private var voice2: Voice
+    var voice1: Voice
+    var voice2: Voice
+    
     private var audioEngine: AVAudioEngine
     
     init(signal: @escaping Signal = sine) {
