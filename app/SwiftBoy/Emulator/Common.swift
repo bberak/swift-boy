@@ -202,6 +202,18 @@ public struct Command {
     }
 }
 
+func maybe(doThis: () -> Void) {
+    if Int.random(in: 0...100) == 7 {
+        doThis()
+    }
+}
+
+func rarely(doThis: () -> Void) {
+    if Int.random(in: 0...10000) == 7 {
+        doThis()
+    }
+}
+
 class StopWatch {
     static let global = StopWatch()
     
@@ -244,7 +256,7 @@ class StopWatch {
     }
     
     func maybePrintAll() {
-        if Int.random(in: 0...100) == 7 {
+        maybe {
             printAll()
         }
     }

@@ -4,15 +4,17 @@ public class Clock {
     private let mmu: MMU
     private let ppu: PPU
     private let cpu: CPU
+    private let apu: APU
     private let timer: Timer
     private let fps: Double
     private let frameTime: Double
     public var printFrameDuration = false
     
-    public init(_ mmu: MMU, _ ppu: PPU, _ cpu: CPU, _ timer: Timer) {
+    public init(_ mmu: MMU, _ ppu: PPU, _ cpu: CPU, _ apu: APU, _ timer: Timer) {
         self.mmu = mmu
         self.ppu = ppu
         self.cpu = cpu
+        self.apu = apu
         self.timer = timer
         self.fps = 60
         self.frameTime = 1 / fps
@@ -64,6 +66,10 @@ public class Clock {
             StopWatch.global.start("ppu")
             try ppu.run(for: cycles / 2)
             StopWatch.global.stop("ppu")
+            
+            StopWatch.global.start("apu")
+            try apu.run(for: cycles / 16)
+            StopWatch.global.stop("apu")
             
             StopWatch.global.start("timer")
             try timer.run(for: cycles / 16)

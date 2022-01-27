@@ -90,21 +90,22 @@ class Voice {
 
 // Source: https://github.com/GrantJEmerson/SwiftSynth/blob/master/Swift%20Synth/Audio/Synth.swift
 public class Synth {
-    public static let shared = Synth()
-    
     public var volume: Float {
-        set {
-            audioEngine.mainMixerNode.outputVolume = newValue
-        }
         get {
             audioEngine.mainMixerNode.outputVolume
         }
+        set {
+            audioEngine.mainMixerNode.outputVolume = newValue
+        }
+        
     }
+        
+    let voice1: Voice
+    let voice2: Voice
+    let voice3: Voice
+    let voice4: Voice
     
-    var voice1: Voice
-    var voice2: Voice
-    
-    private var audioEngine: AVAudioEngine
+    private let audioEngine: AVAudioEngine
     
     init(signal: @escaping Signal = sine) {
         audioEngine = AVAudioEngine()
@@ -114,6 +115,8 @@ public class Synth {
         
         voice1 = Voice(format: format, signal: sine)
         voice2 = Voice(format: format, signal: triangle)
+        voice3 = Voice(format: format, signal: sine)
+        voice4 = Voice(format: format, signal: triangle)
 
         let inputFormat = AVAudioFormat(commonFormat: format.commonFormat,
                                         sampleRate: format.sampleRate,
@@ -122,44 +125,116 @@ public class Synth {
         
         audioEngine.attach(voice1.sourceNode)
         audioEngine.connect(voice1.sourceNode, to: mainMixer, format: inputFormat)
+        
         audioEngine.attach(voice2.sourceNode)
         audioEngine.connect(voice2.sourceNode, to: mainMixer, format: inputFormat)
-        audioEngine.connect(mainMixer, to: outputNode, format: nil)
-        mainMixer.outputVolume = 0
         
+        audioEngine.attach(voice3.sourceNode)
+        audioEngine.connect(voice3.sourceNode, to: mainMixer, format: inputFormat)
+        
+        audioEngine.attach(voice4.sourceNode)
+        audioEngine.connect(voice4.sourceNode, to: mainMixer, format: inputFormat)
+        
+        audioEngine.connect(mainMixer, to: outputNode, format: nil)
+        
+        mainMixer.outputVolume = 0.5
+    }
+    
+    func start() {
         do {
-            try audioEngine.start()
+            if !audioEngine.isRunning {
+                try audioEngine.start()
+            }
         } catch {
             print("Could not start engine: \(error.localizedDescription)")
         }
+    }
+    
+    func stop() {
+        if audioEngine.isRunning {
+            audioEngine.stop()
+        }
+    }
+    
+    func setLeftChannelVolume(_ val: Float) {
+        if voice1.pan < 0 {
+            voice1.volume = val
+        }
         
-        voice1.pan = -1
-        voice2.pan = 1
+        if voice2.pan < 0 {
+            voice2.volume = val
+        }
+        
+        if voice3.pan < 0 {
+            voice3.volume = val
+        }
+        
+        if voice4.pan < 0 {
+            voice4.volume = val
+        }
+    }
+    
+    func setRightChannelVolume(_ val: Float) {
+        if voice1.pan > 0 {
+            voice1.volume = val
+        }
+        
+        if voice2.pan > 0 {
+            voice2.volume = val
+        }
+        
+        if voice3.pan > 0 {
+            voice3.volume = val
+        }
+        
+        if voice4.pan > 0 {
+            voice4.volume = val
+        }
     }
 }
 
-
-
 public class APU {
     private let mmu: MMU
-    
-//    private var pulseA = Voice()
-//    private var pulseB = Voice()
-//    private var wave = Voice()
-//    private var noise = Voice()
+    private let synth: Synth
         
-    init(mmu: MMU) {
+    init(_ mmu: MMU) {
         self.mmu = mmu
+        self.synth = Synth()
+        self.synth.volume = 0.01
     }
     
     public func run(for time: Int16) throws {
-//        if on {
-//            let channelControl = self.mmu.nr50.read()
-//            let panning = self.mmu.nr51.read()
-//            let onOff = self.mmu.nr52.read()
-//            //-- Determine period
-//            //-- Build waves
-//            //-- Run synth
-//        }
+        let nr52 = self.mmu.nr52.read()
+        let nr51 = self.mmu.nr51.read()
+        let nr50 = self.mmu.nr50.read()
+        
+        if nr52.bit(7) {
+            self.synth.start()
+        } else {
+            self.synth.stop()
+        }
+        
+        let leftChannelVolume: Float = Float(nr50 & 0b00000111) / 7.0
+        let rightChannelVolume: Float = Float((nr50 & 0b01110000) >> 4) / 7.0
+        
+        self.synth.setLeftChannelVolume(leftChannelVolume)
+        self.synth.setRightChannelVolume(rightChannelVolume)
+        
+        rarely {
+            print("nr51", nr51)
+            print("on", nr52.bit(7))
+            print("channelVolumes", leftChannelVolume, rightChannelVolume)
+        }
+        
+        /*
+        if on {
+            let channelControl = self.mmu.nr50.read()
+            let panning = self.mmu.nr51.read()
+            let onOff = self.mmu.nr52.read()
+            // Determine period
+            // Build waves
+            // Run synth
+        }
+         */
     }
 }
