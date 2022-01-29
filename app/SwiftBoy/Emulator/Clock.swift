@@ -79,7 +79,9 @@ public class Clock {
         }
         
         StopWatch.global.stop("frame")
-        StopWatch.global.maybePrintAll()
+        maybe {
+            StopWatch.global.printAll()
+        }
         StopWatch.global.resetAll()
     }
 }

@@ -340,8 +340,7 @@ public class MMU: MemoryAccessArray {
         }
     }
     
-    // TODO:
-    // Make sure only HRAM is accessible to the CPU during the DMA transfer process
+    // TODO: Make sure only HRAM is accessible to the CPU during the DMA transfer process
     func startDMATransfer(byte: UInt8) {
         let start = UInt16(byte) << 8
         for offset in 0..<0xA0 {

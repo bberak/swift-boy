@@ -3,38 +3,16 @@ import AVFoundation
 
 public typealias Signal = (_ frequency: Float, _ time: Float) -> Float
 
-let twoPi = 2 * Float.pi
-
-let sine: Signal = { freq, time in
-    return sin(twoPi * freq * time)
-}
-
-let whiteNoise: Signal = { freq, time in
-    return ((Float(arc4random_uniform(UINT32_MAX)) / Float(UINT32_MAX)) * 2 - 1)
-}
-
-let sawtoothUp: Signal = { freq, time in
-    return 1.0 - 2.0 * (freq * time * (1.0 / twoPi))
-}
-
-let sawtoothDown: Signal = { freq, time in
-    return (2.0 * (freq * time * (1.0 / twoPi))) - 1.0
-}
-
 let square: Signal = { freq, time in
-    if (freq * time) <= Float.pi {
+    if (freq * time) <= 0.5 {
         return 1.0
     } else {
         return -1.0
     }
 }
 
-let triangle: Signal = { freq, time in
-    var value = (2.0 * (freq * time * (1.0 / twoPi))) - 1.0
-    if value < 0.0 {
-        value = -value
-    }
-    return 2.0 * (value - 0.5)
+let noise: Signal = { freq, time in
+    return ((Float(arc4random_uniform(UINT32_MAX)) / Float(UINT32_MAX)) * 2 - 1)
 }
 
 class Voice {
@@ -43,6 +21,7 @@ class Voice {
     
     var frequency: Float = 440
     var time: Float = 0
+    var amplitude: Float = 1 // Similar to volume, but used for envelopes
     var signal: Signal
     
     var volume: Float {
@@ -68,9 +47,9 @@ class Voice {
         let period = 1 / self.frequency
 
         for frame in 0..<Int(frameCount) {
-            let sample = self.signal(self.frequency, self.time)
+            let sample = self.signal(self.frequency, self.time) * self.amplitude
             self.time += self.deltaTime
-            self.time = fmod(self.time, period) // This line ensures that 'time' corectly stays within the range of zero to 'period'
+            self.time = fmod(self.time, period) // This line ensures that 'time' corectly stays within the range of zero and one 'period'
             
             for buffer in ablPointer {
                 let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(buffer)
@@ -104,19 +83,21 @@ public class Synth {
     let voice2: Voice
     let voice3: Voice
     let voice4: Voice
+    let voices: [Voice]
     
     private let audioEngine: AVAudioEngine
     
-    init(signal: @escaping Signal = sine) {
+    init(volume: Float = 0.5) {
         audioEngine = AVAudioEngine()
         let mainMixer = audioEngine.mainMixerNode
         let outputNode = audioEngine.outputNode
         let format = outputNode.inputFormat(forBus: 0)
         
-        voice1 = Voice(format: format, signal: sine)
-        voice2 = Voice(format: format, signal: triangle)
-        voice3 = Voice(format: format, signal: sine)
-        voice4 = Voice(format: format, signal: triangle)
+        voice1 = Voice(format: format, signal: square)
+        voice2 = Voice(format: format, signal: square)
+        voice3 = Voice(format: format, signal: noise) // TODO: This will be a custom wave signal
+        voice4 = Voice(format: format, signal: noise)
+        voices = [voice1, voice2, voice3, voice4]
 
         let inputFormat = AVAudioFormat(commonFormat: format.commonFormat,
                                         sampleRate: format.sampleRate,
@@ -137,7 +118,7 @@ public class Synth {
         
         audioEngine.connect(mainMixer, to: outputNode, format: nil)
         
-        mainMixer.outputVolume = 0.5
+        mainMixer.outputVolume = volume
     }
     
     func start() {
@@ -157,38 +138,18 @@ public class Synth {
     }
     
     func setLeftChannelVolume(_ val: Float) {
-        if voice1.pan < 0 {
-            voice1.volume = val
-        }
-        
-        if voice2.pan < 0 {
-            voice2.volume = val
-        }
-        
-        if voice3.pan < 0 {
-            voice3.volume = val
-        }
-        
-        if voice4.pan < 0 {
-            voice4.volume = val
+        for voice in voices {
+            if voice.pan < 0 || voice.pan == 0 {
+                voice.volume = val
+            }
         }
     }
     
     func setRightChannelVolume(_ val: Float) {
-        if voice1.pan > 0 {
-            voice1.volume = val
-        }
-        
-        if voice2.pan > 0 {
-            voice2.volume = val
-        }
-        
-        if voice3.pan > 0 {
-            voice3.volume = val
-        }
-        
-        if voice4.pan > 0 {
-            voice4.volume = val
+        for voice in voices {
+            if voice.pan > 0 || voice.pan == 0 {
+                voice.volume = val
+            }
         }
     }
 }
@@ -196,11 +157,16 @@ public class Synth {
 public class APU {
     private let mmu: MMU
     private let synth: Synth
-        
+    
     init(_ mmu: MMU) {
         self.mmu = mmu
         self.synth = Synth()
-        self.synth.volume = 0.01
+        self.synth.volume = 0.00125
+        // TODO: remove amplitude setters below
+        self.synth.voice1.amplitude = 0
+        self.synth.voice2.amplitude = 1
+        self.synth.voice3.amplitude = 0
+        self.synth.voice4.amplitude = 0
     }
     
     public func run(for time: Int16) throws {
@@ -208,23 +174,46 @@ public class APU {
         let nr51 = self.mmu.nr51.read()
         let nr50 = self.mmu.nr50.read()
         
+        // Sound on or off
         if nr52.bit(7) {
             self.synth.start()
         } else {
             self.synth.stop()
         }
         
+        var pan: Float = nr51.bit(2) ? 1 : 0
+        pan = pan + (nr51.bit(5) ? -1 : 0)
+        self.synth.voice2.pan = pan
+        
+        /*
+        if nr51.bit(2) && nr51.bit(5) {
+            self.synth.voice2.pan = 0
+        } else if nr51.bit(2) {
+            self.synth.voice2.pan = 1
+        } else if nr51.bit(5) {
+            self.synth.voice2.pan = -1
+        } else {
+            self.synth.voice2.volume = 0
+        }
+        */
+        
+        // Left and right channel volume
         let leftChannelVolume: Float = Float(nr50 & 0b00000111) / 7.0
         let rightChannelVolume: Float = Float((nr50 & 0b01110000) >> 4) / 7.0
         
         self.synth.setLeftChannelVolume(leftChannelVolume)
         self.synth.setRightChannelVolume(rightChannelVolume)
         
+        // Left, right, center or no channel output
+        
+        
+        /*
         rarely {
             print("nr51", nr51)
             print("on", nr52.bit(7))
             print("channelVolumes", leftChannelVolume, rightChannelVolume)
         }
+        */
         
         /*
         if on {
@@ -235,6 +224,6 @@ public class APU {
             // Build waves
             // Run synth
         }
-         */
+        */
     }
 }

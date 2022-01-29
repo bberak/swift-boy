@@ -244,13 +244,11 @@ public class CPU {
         while cycles > 0 && enabled {
             if queue.count > 0 {
                 let cmd = queue.removeFirst()
-                
-                // TODO:
-                // Only execute cmd if you have enough cycles?
-                // if cmd.cycles > cycles {
-                //     queue.insert(cmd, at: 0)
-                //     return
-                // }
+                // TODO: Only execute cmd if you have enough cycles?
+                // TODO: if cmd.cycles > cycles {
+                // TODO:    queue.insert(cmd, at: 0)
+                // TODO:    return
+                // TODO: }
                 
                 let next = try cmd.run()
                 

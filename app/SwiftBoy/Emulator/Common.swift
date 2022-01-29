@@ -69,8 +69,7 @@ public extension UInt8 {
         return self | mask
     }
     
-    // TODO:
-    // Rename this to swapNibbles
+    // TODO: Rename this to swapNibbles
     func swap() -> UInt8 {
         let hb = self << 4
         let lb = self >> 4
@@ -253,12 +252,6 @@ class StopWatch {
         })
         
         print(all.joined(separator: ", "))
-    }
-    
-    func maybePrintAll() {
-        maybe {
-            printAll()
-        }
     }
 }
 
