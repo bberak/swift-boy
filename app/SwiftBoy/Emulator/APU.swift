@@ -16,6 +16,9 @@ let noise: Signal = { freq, time in
 }
 
 class Voice {
+    private(set) var leftChannelOutput = true
+    private(set) var rightChannelOutput = true
+
     let sampleRate: Double
     let deltaTime: Float
     
@@ -23,6 +26,15 @@ class Voice {
     var time: Float = 0
     var amplitude: Float = 1 // Similar to volume, but used for envelopes
     var signal: Signal
+    var lengthEnvelopeEnabled = true
+    var enabled = true {
+        didSet {
+            if !oldValue && enabled {
+                //time = 0
+                // TODO: Do I need to reset envelopes and amplitude here?
+            }
+        }
+    }
     
     var volume: Float {
         get {
@@ -47,9 +59,13 @@ class Voice {
         let period = 1 / self.frequency
 
         for frame in 0..<Int(frameCount) {
-            let sample = self.signal(self.frequency, self.time) * self.amplitude
-            self.time += self.deltaTime
-            self.time = fmod(self.time, period) // This line ensures that 'time' corectly stays within the range of zero and one 'period'
+            var sample: Float = 0
+            
+            if self.enabled && (self.leftChannelOutput || self.rightChannelOutput) {
+                sample = self.signal(self.frequency, self.time) * self.amplitude
+                self.time += self.deltaTime
+                self.time = fmod(self.time, period) // This line ensures that 'time' corectly stays within the range of zero and one 'period'
+            }
             
             for buffer in ablPointer {
                 let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(buffer)
@@ -64,6 +80,19 @@ class Voice {
         self.sampleRate = format.sampleRate
         self.deltaTime = 1 / Float(sampleRate)
         self.signal = signal
+    }
+    
+    func setChannels(left: Bool, right: Bool) {
+        if left && right {
+            pan = 0
+        } else if left {
+            pan = -1
+        } else if right {
+            pan = 1
+        }
+        
+        self.leftChannelOutput = left
+        self.rightChannelOutput = right
     }
 }
 
@@ -139,7 +168,7 @@ public class Synth {
     
     func setLeftChannelVolume(_ val: Float) {
         for voice in voices {
-            if voice.pan < 0 || voice.pan == 0 {
+            if voice.leftChannelOutput {
                 voice.volume = val
             }
         }
@@ -147,7 +176,7 @@ public class Synth {
     
     func setRightChannelVolume(_ val: Float) {
         for voice in voices {
-            if voice.pan > 0 || voice.pan == 0 {
+            if voice.rightChannelOutput {
                 voice.volume = val
             }
         }
@@ -162,14 +191,14 @@ public class APU {
         self.mmu = mmu
         self.synth = Synth()
         self.synth.volume = 0.00125
-        // TODO: remove amplitude setters below
-        self.synth.voice1.amplitude = 0
-        self.synth.voice2.amplitude = 1
-        self.synth.voice3.amplitude = 0
-        self.synth.voice4.amplitude = 0
     }
     
     public func run(for time: Int16) throws {
+        // TODO: Remove temporary statements below
+        self.synth.voice1.enabled = false
+        self.synth.voice3.enabled = false
+        self.synth.voice4.enabled = false
+        
         let nr52 = self.mmu.nr52.read()
         let nr51 = self.mmu.nr51.read()
         let nr50 = self.mmu.nr50.read()
@@ -181,49 +210,30 @@ public class APU {
             self.synth.stop()
         }
         
-        var pan: Float = nr51.bit(2) ? 1 : 0
-        pan = pan + (nr51.bit(5) ? -1 : 0)
-        self.synth.voice2.pan = pan
+        // Left or right channel output
+        self.synth.voice1.setChannels(left: nr51.bit(4), right: nr51.bit(0))
+        self.synth.voice2.setChannels(left: nr51.bit(5), right: nr51.bit(1))
+        self.synth.voice3.setChannels(left: nr51.bit(6), right: nr51.bit(2))
+        self.synth.voice4.setChannels(left: nr51.bit(7), right: nr51.bit(3))
         
-        /*
-        if nr51.bit(2) && nr51.bit(5) {
-            self.synth.voice2.pan = 0
-        } else if nr51.bit(2) {
-            self.synth.voice2.pan = 1
-        } else if nr51.bit(5) {
-            self.synth.voice2.pan = -1
-        } else {
-            self.synth.voice2.volume = 0
-        }
-        */
-        
-        // Left and right channel volume
+        // Left and right channel master volume
         let leftChannelVolume: Float = Float(nr50 & 0b00000111) / 7.0
         let rightChannelVolume: Float = Float((nr50 & 0b01110000) >> 4) / 7.0
         
         self.synth.setLeftChannelVolume(leftChannelVolume)
         self.synth.setRightChannelVolume(rightChannelVolume)
         
-        // Left, right, center or no channel output
+        // Voice specific controls
+        let nr24 = self.mmu.nr24.read()
+        let nr23 = self.mmu.nr23.read()
+        let nr22 = self.mmu.nr22.read()
+        let nr21 = self.mmu.nr21.read()
+        
+        synth.voice2.enabled = nr24.bit(7)
+        synth.voice2.lengthEnvelopeEnabled = nr24.bit(6)
+        synth.voice2.frequency = 131072 / (2048 - Float(UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8)))
         
         
-        /*
-        rarely {
-            print("nr51", nr51)
-            print("on", nr52.bit(7))
-            print("channelVolumes", leftChannelVolume, rightChannelVolume)
-        }
-        */
-        
-        /*
-        if on {
-            let channelControl = self.mmu.nr50.read()
-            let panning = self.mmu.nr51.read()
-            let onOff = self.mmu.nr52.read()
-            // Determine period
-            // Build waves
-            // Run synth
-        }
-        */
+        // Increment voice envelopes (amplitude, frequency) by "time" (clock cycles)
     }
 }
