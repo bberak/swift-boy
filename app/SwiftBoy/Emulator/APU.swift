@@ -24,16 +24,24 @@ class Voice {
     
     var frequency: Float = 440
     var time: Float = 0
-    var amplitude: Float = 1 // Similar to volume, but used for envelopes
     var signal: Signal
+    lazy var enabled = Observable<Bool>(true) {
+        self.time = 0
+        self.amplitudeEnvelopeElapsedTime = 0
+    }
+    
     var lengthEnvelopeEnabled = true
-    var enabled = true {
-        didSet {
-            if !oldValue && enabled {
-                //time = 0
-                // TODO: Do I need to reset envelopes and amplitude here?
-            }
-        }
+    
+    var amplitude: Float = 0 // Similar to volume, but used for envelopes
+    var amplitudeEnvelopeElapsedTime: Float = 0
+    lazy var amplitudeEnvelopeStartStep = Observable<Int>(0) {
+        self.amplitudeEnvelopeElapsedTime = 0
+    }
+    lazy var amplitudeEnvelopeIncreasing = Observable<Bool>(false) {
+        self.amplitudeEnvelopeElapsedTime = 0
+    }
+    lazy var amplitudeEnvelopeStepDuration = Observable<Float>(0) {
+        self.amplitudeEnvelopeElapsedTime = 0
     }
     
     var volume: Float {
@@ -61,7 +69,7 @@ class Voice {
         for frame in 0..<Int(frameCount) {
             var sample: Float = 0
             
-            if self.enabled && (self.leftChannelOutput || self.rightChannelOutput) {
+            if self.enabled.value && (self.leftChannelOutput || self.rightChannelOutput) {
                 sample = self.signal(self.frequency, self.time) * self.amplitude
                 self.time += self.deltaTime
                 self.time = fmod(self.time, period) // This line ensures that 'time' corectly stays within the range of zero and one 'period'
@@ -93,6 +101,18 @@ class Voice {
         
         self.leftChannelOutput = left
         self.rightChannelOutput = right
+    }
+    
+    func applyAmplitudeEnvelope(seconds: Float) {
+        if amplitudeEnvelopeStepDuration.value == 0 {
+            return
+        }
+
+        amplitudeEnvelopeElapsedTime += seconds
+        let deltaSteps = Int(amplitudeEnvelopeElapsedTime / amplitudeEnvelopeStepDuration.value) * (amplitudeEnvelopeIncreasing.value ? 1 : -1)
+        let currentStep = (amplitudeEnvelopeStartStep.value + deltaSteps).clamp(min: 0, max: 0x0F)
+        
+        amplitude = Float(currentStep) / 0x0F
     }
 }
 
@@ -194,10 +214,12 @@ public class APU {
     }
     
     public func run(for time: Int16) throws {
+        let seconds = Float(time) / 4000000
+        
         // TODO: Remove temporary statements below
-        self.synth.voice1.enabled = false
-        self.synth.voice3.enabled = false
-        self.synth.voice4.enabled = false
+        self.synth.voice1.enabled.value = false
+        self.synth.voice3.enabled.value = false
+        self.synth.voice4.enabled.value = false
         
         let nr52 = self.mmu.nr52.read()
         let nr51 = self.mmu.nr51.read()
@@ -229,10 +251,14 @@ public class APU {
         let nr22 = self.mmu.nr22.read()
         let nr21 = self.mmu.nr21.read()
         
-        synth.voice2.enabled = nr24.bit(7)
+        synth.voice2.enabled.value = nr24.bit(7)
         synth.voice2.lengthEnvelopeEnabled = nr24.bit(6)
         synth.voice2.frequency = 131072 / (2048 - Float(UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8)))
-        
+                
+        synth.voice2.amplitudeEnvelopeStartStep.value = Int((nr22 & 0b11110000) >> 4)
+        synth.voice2.amplitudeEnvelopeIncreasing.value = nr22.bit(3)
+        synth.voice2.amplitudeEnvelopeStepDuration.value = Float(nr22 & 0b00000111) * 1/64
+        synth.voice2.applyAmplitudeEnvelope(seconds: seconds)
         
         // Increment voice envelopes (amplitude, frequency) by "time" (clock cycles)
     }

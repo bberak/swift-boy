@@ -140,6 +140,15 @@ public extension Int16 {
     }
 }
 
+public extension Int {
+    func clamp(min: Int, max: Int) -> Int {
+        if (self > max) { return max }
+        if (self < min) { return min }
+            
+        return self
+    }
+}
+
 public struct ByteOp {
     public var value: UInt8
     public var halfCarry: Bool
@@ -266,5 +275,22 @@ class Memo<T> {
         }
         
         return value!
+    }
+}
+
+struct Observable<T: Equatable> {
+    var value: T {
+        didSet {
+            if oldValue != value {
+                onChange()
+            }
+        }
+    }
+    
+    let onChange: () -> Void
+    
+    init(_ value: T, onChange: @escaping () -> Void) {
+        self.value = value
+        self.onChange = onChange
     }
 }
