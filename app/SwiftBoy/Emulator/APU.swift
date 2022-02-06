@@ -32,7 +32,7 @@ class Voice {
     
     var lengthEnvelopeEnabled = true
     
-    var amplitude: Float = 0 // Similar to volume, but used for envelopes
+    var amplitude: Float = 1 // Similar to volume, but used for envelopes
     var amplitudeEnvelopeElapsedTime: Float = 0
     lazy var amplitudeEnvelopeStartStep = Observable<Int>(0) {
         self.amplitudeEnvelopeElapsedTime = 0
