@@ -1,18 +1,50 @@
 import Foundation
 import AVFoundation
 
-public typealias Signal = (_ frequency: Float, _ time: Float) -> Float
+protocol Oscillator {
+    func signal(_ frequency: Float, _ time: Float) -> Float
+}
 
-let square: Signal = { freq, time in
-    if (freq * time) <= 0.5 {
-        return 1.0
-    } else {
-        return -1.0
+class Pulse: Oscillator {
+    var duty: Float = 0.5
+    
+    func signal(_ frequency: Float, _ time: Float) -> Float {
+        if (frequency * time) <= duty {
+            return 1.0
+        } else {
+            return -1.0
+        }
     }
 }
 
-let noise: Signal = { freq, time in
-    return ((Float(arc4random_uniform(UINT32_MAX)) / Float(UINT32_MAX)) * 2 - 1)
+class Noise: Oscillator {
+    func signal(_ frequency: Float, _ time: Float) -> Float {
+        return ((Float(arc4random_uniform(UINT32_MAX)) / Float(UINT32_MAX)) * 2 - 1)
+    }
+}
+
+class AmplitudeEnvelope: Oscillator {
+    var inner: Oscillator
+    
+    init(_ inner: Oscillator) {
+        self.inner = inner
+    }
+    
+    func signal(_ frequency: Float, _ time: Float) -> Float {
+        return inner.signal(frequency, time)
+    }
+}
+
+class DurationEnvelope: Oscillator {
+    var inner: Oscillator
+    
+    init(_ inner: Oscillator) {
+        self.inner = inner
+    }
+    
+    func signal(_ frequency: Float, _ time: Float) -> Float {
+        return inner.signal(frequency, time)
+    }
 }
 
 class Voice {
@@ -24,24 +56,46 @@ class Voice {
     
     var frequency: Float = 440
     var time: Float = 0
-    var signal: Signal
-    lazy var enabled = Observable<Bool>(true) {
+    var oscillator: Oscillator
+    lazy var enabled = Observable<Bool>(true) { _, _ in
         self.time = 0
         self.amplitudeEnvelopeElapsedTime = 0
+        self.lengthEnvelopeElapsedTime = 0
     }
     
-    var lengthEnvelopeEnabled = true
-    
+    // TODO: Refactor these to use an envelope class (see above)
     var amplitude: Float = 1 // Similar to volume, but used for envelopes
     var amplitudeEnvelopeElapsedTime: Float = 0
-    lazy var amplitudeEnvelopeStartStep = Observable<Int>(0) {
+    lazy var amplitudeEnvelopeStartStep = Observable<Int>(0) { _, _ in
         self.amplitudeEnvelopeElapsedTime = 0
     }
-    lazy var amplitudeEnvelopeIncreasing = Observable<Bool>(false) {
+    lazy var amplitudeEnvelopeIncreasing = Observable<Bool>(false) { _, _ in
         self.amplitudeEnvelopeElapsedTime = 0
     }
-    lazy var amplitudeEnvelopeStepDuration = Observable<Float>(0) {
+    lazy var amplitudeEnvelopeStepDuration = Observable<Float>(0) { _, _ in
         self.amplitudeEnvelopeElapsedTime = 0
+    }
+    
+    // TODO: Refactor these to use an envelope class (see above)
+    var lengthEnvelopeElapsedTime: Float = 0
+    var lengthEnvelopeSatisfied: Bool {
+        get {
+            if !lengthEnvelopeEnabled.value {
+                return true
+            }
+            
+            if lengthEnvelopeElapsedTime < lengthEnvelopDuration.value {
+                return true
+            }
+            
+            return false
+        }
+    }
+    lazy var lengthEnvelopeEnabled = Observable<Bool>(false) { _, _ in
+        self.lengthEnvelopeElapsedTime = 0
+    }
+    lazy var lengthEnvelopDuration = Observable<Float>(0) { _, _ in
+        self.lengthEnvelopeElapsedTime = 0
     }
     
     var volume: Float {
@@ -69,8 +123,8 @@ class Voice {
         for frame in 0..<Int(frameCount) {
             var sample: Float = 0
             
-            if self.enabled.value && (self.leftChannelOutput || self.rightChannelOutput) {
-                sample = self.signal(self.frequency, self.time) * self.amplitude
+            if self.enabled.value && self.lengthEnvelopeSatisfied && (self.leftChannelOutput || self.rightChannelOutput) {
+                sample = self.oscillator.signal(self.frequency, self.time) * self.amplitude
                 self.time += self.deltaTime
                 self.time = fmod(self.time, period) // This line ensures that 'time' corectly stays within the range of zero and one 'period'
             }
@@ -84,10 +138,10 @@ class Voice {
         return noErr
     }
     
-    init(format: AVAudioFormat, signal: @escaping Signal) {
+    init(format: AVAudioFormat, oscillator: Oscillator) {
         self.sampleRate = format.sampleRate
         self.deltaTime = 1 / Float(sampleRate)
-        self.signal = signal
+        self.oscillator = oscillator
     }
     
     func setChannels(left: Bool, right: Bool) {
@@ -103,7 +157,7 @@ class Voice {
         self.rightChannelOutput = right
     }
     
-    func applyAmplitudeEnvelope(seconds: Float) {
+    func advanceAmplitudeEnvelope(seconds: Float) {
         if amplitudeEnvelopeStepDuration.value == 0 {
             return
         }
@@ -113,6 +167,26 @@ class Voice {
         let currentStep = (amplitudeEnvelopeStartStep.value + deltaSteps).clamp(min: 0, max: 0x0F)
         
         amplitude = Float(currentStep) / 0x0F
+    }
+    
+    func advanceLengthEnvelope(seconds: Float) -> Bool {
+        if !lengthEnvelopeEnabled.value {
+            return false
+        }
+        
+        if lengthEnvelopDuration.value == 0 {
+            return false
+        }
+        
+        if lengthEnvelopeElapsedTime < lengthEnvelopDuration.value {
+            lengthEnvelopeElapsedTime += seconds
+            
+            if lengthEnvelopeElapsedTime > lengthEnvelopDuration.value {
+                return true // TODO: This boolean indicates expiry.. Probably should be more explicit with the return type.
+            }
+        }
+        
+        return false
     }
 }
 
@@ -142,10 +216,11 @@ public class Synth {
         let outputNode = audioEngine.outputNode
         let format = outputNode.inputFormat(forBus: 0)
         
-        voice1 = Voice(format: format, signal: square)
-        voice2 = Voice(format: format, signal: square)
-        voice3 = Voice(format: format, signal: noise) // TODO: This will be a custom wave signal
-        voice4 = Voice(format: format, signal: noise)
+        voice1 = Voice(format: format, oscillator: Pulse())
+        voice2 = Voice(format: format, oscillator: Pulse())
+        voice3 = Voice(format: format, oscillator: Noise()) // TODO: This will be a custom wave signal
+        voice4 = Voice(format: format, oscillator: Noise())
+        
         voices = [voice1, voice2, voice3, voice4]
 
         let inputFormat = AVAudioFormat(commonFormat: format.commonFormat,
@@ -251,15 +326,39 @@ public class APU {
         let nr22 = self.mmu.nr22.read()
         let nr21 = self.mmu.nr21.read()
         
-        synth.voice2.enabled.value = nr24.bit(7)
-        synth.voice2.lengthEnvelopeEnabled = nr24.bit(6)
+        let (next, prev) = synth.voice2.enabled.setValue(nr24.bit(7))
         synth.voice2.frequency = 131072 / (2048 - Float(UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8)))
-                
+        
         synth.voice2.amplitudeEnvelopeStartStep.value = Int((nr22 & 0b11110000) >> 4)
         synth.voice2.amplitudeEnvelopeIncreasing.value = nr22.bit(3)
-        synth.voice2.amplitudeEnvelopeStepDuration.value = Float(nr22 & 0b00000111) * 1/64
-        synth.voice2.applyAmplitudeEnvelope(seconds: seconds)
+        synth.voice2.amplitudeEnvelopeStepDuration.value = Float(nr22 & 0b00000111) * 1 / 64
+        synth.voice2.advanceAmplitudeEnvelope(seconds: seconds)
         
-        // Increment voice envelopes (amplitude, frequency) by "time" (clock cycles)
+        if var pulse = synth.voice2.oscillator as? Pulse {
+            switch(nr21 & 0b11000000) {
+            case 0b00000000: pulse.duty = 0.125
+            case 0b01000000: pulse.duty = 0.25
+            case 0b10000000: pulse.duty = 0.5
+            case 0b11000000: pulse.duty = 0.75
+            default: print("Duty pattern not handled for voice2")
+            }
+        }
+        
+        synth.voice2.lengthEnvelopeEnabled.value = nr24.bit(6)
+        synth.voice2.lengthEnvelopDuration.value = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
+        let expired = synth.voice2.advanceLengthEnvelope(seconds: seconds)
+        
+//        FF26 - NR52 - Sound on/off
+//
+//        If your GB programs don’t use sound then write 00h to this register to save 16% or more on GB power consumption. Disabling the sound controller by clearing Bit 7 destroys the contents of all sound registers. Also, it is not possible to access any sound registers (execpt FF26) while the sound controller is disabled.
+//
+//
+//         Bit 7 - All sound on/off  (0: stop all sound circuits) (Read/Write)
+//         Bit 3 - Sound 4 ON flag (Read Only)
+//         Bit 2 - Sound 3 ON flag (Read Only)
+//         Bit 1 - Sound 2 ON flag (Read Only)
+//         Bit 0 - Sound 1 ON flag (Read Only)
+//
+//        Bits 0-3 of this register are read only status bits, writing to these bits does NOT enable/disable sound. The flags get set when sound output is restarted by setting the Initial flag (Bit 7 in NR14-NR44), the flag remains set until the sound length has expired (if enabled). A volume envelopes which has decreased to zero volume will NOT cause the sound flag to go off.
     }
 }

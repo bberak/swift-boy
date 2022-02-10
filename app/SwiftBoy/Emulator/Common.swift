@@ -282,15 +282,21 @@ struct Observable<T: Equatable> {
     var value: T {
         didSet {
             if oldValue != value {
-                onChange()
+                onChange(value, oldValue)
             }
         }
     }
     
-    let onChange: () -> Void
+    let onChange: (T, T) -> Void
     
-    init(_ value: T, onChange: @escaping () -> Void) {
+    init(_ value: T, onChange: @escaping (T, T) -> Void) {
         self.value = value
         self.onChange = onChange
+    }
+    
+    mutating func setValue(_ next: T) -> (next: T, prev: T) {
+        let prev = value
+        value = next
+        return (next, prev)
     }
 }
