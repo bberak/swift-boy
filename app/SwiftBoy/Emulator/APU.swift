@@ -57,17 +57,20 @@ class Voice {
     var frequency: Float = 440
     var time: Float = 0
     var oscillator: Oscillator
-    lazy var enabled = Observable<Bool>(true) { _, _ in
-        self.time = 0
-        self.amplitudeEnvelopeElapsedTime = 0
-        self.lengthEnvelopeElapsedTime = 0
+    lazy var enabled = Observable<Bool>(false) { next, _ in
+        if next {
+            self.time = 0
+            self.amplitudeEnvelopeElapsedTime = 0
+            self.lengthEnvelopeElapsedTime = 0
+        }
     }
     
-    // TODO: Refactor these to use an envelope class (see above)
-    var amplitude: Float = 1 // Similar to volume, but used for envelopes
+    // TODO: Refactor these to use an envelope class (see above) and the maybe "time" from the AVSourceNode
+    var amplitude: Float = 0 // Similar to volume, but used for envelopes
     var amplitudeEnvelopeElapsedTime: Float = 0
-    lazy var amplitudeEnvelopeStartStep = Observable<Int>(0) { _, _ in
+    lazy var amplitudeEnvelopeStartStep = Observable<Int>(0) { next, _ in
         self.amplitudeEnvelopeElapsedTime = 0
+        self.amplitude = Float(next) / 0x0F
     }
     lazy var amplitudeEnvelopeIncreasing = Observable<Bool>(false) { _, _ in
         self.amplitudeEnvelopeElapsedTime = 0
@@ -76,12 +79,12 @@ class Voice {
         self.amplitudeEnvelopeElapsedTime = 0
     }
     
-    // TODO: Refactor these to use an envelope class (see above)
+    // TODO: Refactor these to use an envelope class (see above) and the maybe "time" from the AVSourceNode
     var lengthEnvelopeElapsedTime: Float = 0
     var lengthEnvelopeSatisfied: Bool {
         get {
             if !lengthEnvelopeEnabled.value {
-                return true
+                return true // The length envelope is disabled, so the envelope conditions do no apply
             }
             
             if lengthEnvelopeElapsedTime < lengthEnvelopDuration.value {
@@ -116,6 +119,29 @@ class Voice {
         }
     }
     
+    func diagnose() {
+        print("----🔊-Diagnosis-Start-🔊----")
+        print("enabled", enabled.value)
+        print("leftChannelOutput", leftChannelOutput)
+        print("rightChannelOutput", rightChannelOutput)
+        print("sampleRate", sampleRate)
+        print("deltaTime", deltaTime)
+        print("frequency", frequency)
+        print("time", time)
+        print("amplitude", amplitude)
+        print("amplitudeEnvelopeElapsedTime", amplitudeEnvelopeElapsedTime)
+        print("amplitudeEnvelopeStartStep", amplitudeEnvelopeStartStep.value)
+        print("amplitudeEnvelopeIncreasing", amplitudeEnvelopeIncreasing.value)
+        print("amplitudeEnvelopeStepDuration", amplitudeEnvelopeStepDuration.value)
+        print("lengthEnvelopeElapsedTime", lengthEnvelopeElapsedTime)
+        print("lengthEnvelopeSatisfied", lengthEnvelopeSatisfied)
+        print("lengthEnvelopeEnabled", lengthEnvelopeEnabled.value)
+        print("lengthEnvelopDuration", lengthEnvelopDuration.value)
+        print("volume", volume)
+        print("pan", pan)
+        print("----🔊-Diagnosis-Stop--🔊----")
+    }
+    
     lazy var sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList in
         let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
         let period = 1 / self.frequency
@@ -123,7 +149,7 @@ class Voice {
         for frame in 0..<Int(frameCount) {
             var sample: Float = 0
             
-            if self.enabled.value && self.lengthEnvelopeSatisfied && (self.leftChannelOutput || self.rightChannelOutput) {
+            if self.enabled.value && self.lengthEnvelopeSatisfied && (self.leftChannelOutput || self.rightChannelOutput) && self.amplitude > 0 {
                 sample = self.oscillator.signal(self.frequency, self.time) * self.amplitude
                 self.time += self.deltaTime
                 self.time = fmod(self.time, period) // This line ensures that 'time' corectly stays within the range of zero and one 'period'
@@ -158,6 +184,10 @@ class Voice {
     }
     
     func advanceAmplitudeEnvelope(seconds: Float) {
+        if !enabled.value {
+            return
+        }
+        
         if amplitudeEnvelopeStepDuration.value == 0 {
             return
         }
@@ -170,6 +200,12 @@ class Voice {
     }
     
     func advanceLengthEnvelope(seconds: Float) -> Bool {
+        // TODO: The return boolean indicates expiry.. Probably should be more explicit with the return type.
+        
+        if !enabled.value {
+            return false
+        }
+        
         if !lengthEnvelopeEnabled.value {
             return false
         }
@@ -182,7 +218,7 @@ class Voice {
             lengthEnvelopeElapsedTime += seconds
             
             if lengthEnvelopeElapsedTime > lengthEnvelopDuration.value {
-                return true // TODO: This boolean indicates expiry.. Probably should be more explicit with the return type.
+                return true
             }
         }
         
@@ -296,7 +332,35 @@ public class APU {
         self.synth.voice3.enabled.value = false
         self.synth.voice4.enabled.value = false
         
-        let nr52 = self.mmu.nr52.read()
+        // Voice specific controls
+        let nr24 = self.mmu.nr24.read()
+        let nr23 = self.mmu.nr23.read()
+        let nr22 = self.mmu.nr22.read()
+        let nr21 = self.mmu.nr21.read()
+        
+        synth.voice2.frequency = 131072 / (2048 - Float(UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8)))
+        synth.voice2.amplitudeEnvelopeStartStep.value = Int((nr22 & 0b11110000) >> 4)
+        synth.voice2.amplitudeEnvelopeIncreasing.value = nr22.bit(3)
+        synth.voice2.amplitudeEnvelopeStepDuration.value = Float(nr22 & 0b00000111) * 1 / 64
+        synth.voice2.advanceAmplitudeEnvelope(seconds: seconds)
+        
+        if let pulse = synth.voice2.oscillator as? Pulse {
+            switch(nr21 & 0b11000000) {
+            case 0b00000000: pulse.duty = 0.125
+            case 0b01000000: pulse.duty = 0.25
+            case 0b10000000: pulse.duty = 0.5
+            case 0b11000000: pulse.duty = 0.75
+            default: print("Duty pattern not handled for voice2")
+            }
+        }
+        
+        synth.voice2.lengthEnvelopeEnabled.value = nr24.bit(6)
+        synth.voice2.lengthEnvelopDuration.value = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
+        let expired = synth.voice2.advanceLengthEnvelope(seconds: seconds)
+        let (next, prev) = synth.voice2.enabled.setValue(nr24.bit(7))
+        
+        // Global controls
+        var nr52 = self.mmu.nr52.read()
         let nr51 = self.mmu.nr51.read()
         let nr50 = self.mmu.nr50.read()
         
@@ -305,6 +369,8 @@ public class APU {
             self.synth.start()
         } else {
             self.synth.stop()
+            // TODO: Clear all sound registers
+            // TODO: Make exit this entire function if disabled
         }
         
         // Left or right channel output
@@ -320,45 +386,18 @@ public class APU {
         self.synth.setLeftChannelVolume(leftChannelVolume)
         self.synth.setRightChannelVolume(rightChannelVolume)
         
-        // Voice specific controls
-        let nr24 = self.mmu.nr24.read()
-        let nr23 = self.mmu.nr23.read()
-        let nr22 = self.mmu.nr22.read()
-        let nr21 = self.mmu.nr21.read()
-        
-        let (next, prev) = synth.voice2.enabled.setValue(nr24.bit(7))
-        synth.voice2.frequency = 131072 / (2048 - Float(UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8)))
-        
-        synth.voice2.amplitudeEnvelopeStartStep.value = Int((nr22 & 0b11110000) >> 4)
-        synth.voice2.amplitudeEnvelopeIncreasing.value = nr22.bit(3)
-        synth.voice2.amplitudeEnvelopeStepDuration.value = Float(nr22 & 0b00000111) * 1 / 64
-        synth.voice2.advanceAmplitudeEnvelope(seconds: seconds)
-        
-        if var pulse = synth.voice2.oscillator as? Pulse {
-            switch(nr21 & 0b11000000) {
-            case 0b00000000: pulse.duty = 0.125
-            case 0b01000000: pulse.duty = 0.25
-            case 0b10000000: pulse.duty = 0.5
-            case 0b11000000: pulse.duty = 0.75
-            default: print("Duty pattern not handled for voice2")
-            }
+        if next && !prev {
+            nr52 = nr52.set(1)
         }
         
-        synth.voice2.lengthEnvelopeEnabled.value = nr24.bit(6)
-        synth.voice2.lengthEnvelopDuration.value = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
-        let expired = synth.voice2.advanceLengthEnvelope(seconds: seconds)
+        if expired {
+            nr52 = nr52.reset(1)
+        }
         
-//        FF26 - NR52 - Sound on/off
-//
-//        If your GB programs don’t use sound then write 00h to this register to save 16% or more on GB power consumption. Disabling the sound controller by clearing Bit 7 destroys the contents of all sound registers. Also, it is not possible to access any sound registers (execpt FF26) while the sound controller is disabled.
-//
-//
-//         Bit 7 - All sound on/off  (0: stop all sound circuits) (Read/Write)
-//         Bit 3 - Sound 4 ON flag (Read Only)
-//         Bit 2 - Sound 3 ON flag (Read Only)
-//         Bit 1 - Sound 2 ON flag (Read Only)
-//         Bit 0 - Sound 1 ON flag (Read Only)
-//
-//        Bits 0-3 of this register are read only status bits, writing to these bits does NOT enable/disable sound. The flags get set when sound output is restarted by setting the Initial flag (Bit 7 in NR14-NR44), the flag remains set until the sound length has expired (if enabled). A volume envelopes which has decreased to zero volume will NOT cause the sound flag to go off.
+        self.mmu.nr52.write(nr52)
+        
+        rarely {
+            synth.voice2.diagnose()
+        }
     }
 }
