@@ -281,24 +281,18 @@ public class Synth {
         mainMixer.outputVolume = volume
     }
     
-    var enabled: Bool {
-        get {
-            return audioEngine.isRunning
-        }
-
-        set {
-            if newValue && !audioEngine.isRunning {
-                do {
-                    try audioEngine.start()
-                } catch {
-                    print("Could not start engine: \(error.localizedDescription)")
-                }
-            } else if !newValue && audioEngine.isRunning {
-                audioEngine.stop()
+    lazy var enabled = Observable<Bool>(audioEngine.isRunning) { next, prev in
+        if next {
+            do {
+                try self.audioEngine.start()
+            } catch {
+                print("Could not start engine: \(error.localizedDescription)")
             }
+        } else {
+            self.audioEngine.stop()
         }
     }
-        
+    
     func setLeftChannelVolume(_ val: Float) {
         for voice in voices {
             if voice.leftChannelOutput {
@@ -334,15 +328,41 @@ public class APU {
     public func run(for time: Int16) throws {
         let seconds = Float(time) / 4000000
         
-        // Global controls
+        // Master sound output
         var nr52 = self.mmu.nr52.read()
+        let masterEnabledTx = self.synth.enabled.setValue(nr52.bit(7))
+        
+        if !masterEnabledTx.next && masterEnabledTx.prev {
+            // Clear all registers except
+            self.mmu.nr10.write(0)
+            self.mmu.nr11.write(0)
+            self.mmu.nr12.write(0)
+            self.mmu.nr13.write(0)
+            self.mmu.nr14.write(0)
+            self.mmu.nr21.write(0)
+            self.mmu.nr22.write(0)
+            self.mmu.nr23.write(0)
+            self.mmu.nr24.write(0)
+            self.mmu.nr30.write(0)
+            self.mmu.nr31.write(0)
+            self.mmu.nr32.write(0)
+            self.mmu.nr33.write(0)
+            self.mmu.nr34.write(0)
+            self.mmu.nr41.write(0)
+            self.mmu.nr42.write(0)
+            self.mmu.nr43.write(0)
+            self.mmu.nr44.write(0)
+            self.mmu.nr50.write(0)
+            self.mmu.nr51.write(0)
+            self.mmu.nr52.write(0)
+        } else if !masterEnabledTx.next {
+            // Exit early
+            return
+        }
+        
+        // Master controls
         let nr51 = self.mmu.nr51.read()
         let nr50 = self.mmu.nr50.read()
-        
-        // Sound on or off
-        self.synth.enabled = nr52.bit(7)
-        
-        // Exit early if possible
         
         // Left or right channel output
         self.synth.voice1.setChannels(left: nr51.bit(4), right: nr51.bit(0))
@@ -381,14 +401,14 @@ public class APU {
         
         synth.voice2.lengthEnvelopeEnabled.value = nr24.bit(6)
         synth.voice2.lengthEnvelopDuration.value = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
-        let expired = synth.voice2.advanceLengthEnvelope(seconds: seconds)
-        let (next, prev) = synth.voice2.enabled.setValue(nr24.bit(7))
+        let voice2LengthExpired = synth.voice2.advanceLengthEnvelope(seconds: seconds)
+        let voice2EnabledTx = synth.voice2.enabled.setValue(nr24.bit(7))
         
-        if next && !prev {
+        if voice2EnabledTx.next && !voice2EnabledTx.prev {
             nr52 = nr52.set(1)
         }
         
-        if expired {
+        if voice2LengthExpired {
             nr52 = nr52.reset(1)
         }
         
