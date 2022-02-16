@@ -278,6 +278,7 @@ class Memo<T> {
     }
 }
 
+// TODO: Is this type really necessary?
 struct Observable<T: Equatable> {
     var value: T {
         didSet {

@@ -281,22 +281,24 @@ public class Synth {
         mainMixer.outputVolume = volume
     }
     
-    func start() {
-        do {
-            if !audioEngine.isRunning {
-                try audioEngine.start()
+    var enabled: Bool {
+        get {
+            return audioEngine.isRunning
+        }
+
+        set {
+            if newValue && !audioEngine.isRunning {
+                do {
+                    try audioEngine.start()
+                } catch {
+                    print("Could not start engine: \(error.localizedDescription)")
+                }
+            } else if !newValue && audioEngine.isRunning {
+                audioEngine.stop()
             }
-        } catch {
-            print("Could not start engine: \(error.localizedDescription)")
         }
     }
-    
-    func stop() {
-        if audioEngine.isRunning {
-            audioEngine.stop()
-        }
-    }
-    
+        
     func setLeftChannelVolume(_ val: Float) {
         for voice in voices {
             if voice.leftChannelOutput {
@@ -321,16 +323,39 @@ public class APU {
     init(_ mmu: MMU) {
         self.mmu = mmu
         self.synth = Synth()
-        self.synth.volume = 0.00125
-    }
-    
-    public func run(for time: Int16) throws {
-        let seconds = Float(time) / 4000000
+        self.synth.volume = 0.125 // TODO: What's a good default here? 🤔
         
         // TODO: Remove temporary statements below
         self.synth.voice1.enabled.value = false
         self.synth.voice3.enabled.value = false
         self.synth.voice4.enabled.value = false
+    }
+    
+    public func run(for time: Int16) throws {
+        let seconds = Float(time) / 4000000
+        
+        // Global controls
+        var nr52 = self.mmu.nr52.read()
+        let nr51 = self.mmu.nr51.read()
+        let nr50 = self.mmu.nr50.read()
+        
+        // Sound on or off
+        self.synth.enabled = nr52.bit(7)
+        
+        // Exit early if possible
+        
+        // Left or right channel output
+        self.synth.voice1.setChannels(left: nr51.bit(4), right: nr51.bit(0))
+        self.synth.voice2.setChannels(left: nr51.bit(5), right: nr51.bit(1))
+        self.synth.voice3.setChannels(left: nr51.bit(6), right: nr51.bit(2))
+        self.synth.voice4.setChannels(left: nr51.bit(7), right: nr51.bit(3))
+        
+        // Left and right channel master volume
+        let leftChannelVolume: Float = Float(nr50 & 0b00000111) / 7.0
+        let rightChannelVolume: Float = Float((nr50 & 0b01110000) >> 4) / 7.0
+        
+        self.synth.setLeftChannelVolume(leftChannelVolume)
+        self.synth.setRightChannelVolume(rightChannelVolume)
         
         // Voice specific controls
         let nr24 = self.mmu.nr24.read()
@@ -359,33 +384,6 @@ public class APU {
         let expired = synth.voice2.advanceLengthEnvelope(seconds: seconds)
         let (next, prev) = synth.voice2.enabled.setValue(nr24.bit(7))
         
-        // Global controls
-        var nr52 = self.mmu.nr52.read()
-        let nr51 = self.mmu.nr51.read()
-        let nr50 = self.mmu.nr50.read()
-        
-        // Sound on or off
-        if nr52.bit(7) {
-            self.synth.start()
-        } else {
-            self.synth.stop()
-            // TODO: Clear all sound registers
-            // TODO: Make exit this entire function if disabled
-        }
-        
-        // Left or right channel output
-        self.synth.voice1.setChannels(left: nr51.bit(4), right: nr51.bit(0))
-        self.synth.voice2.setChannels(left: nr51.bit(5), right: nr51.bit(1))
-        self.synth.voice3.setChannels(left: nr51.bit(6), right: nr51.bit(2))
-        self.synth.voice4.setChannels(left: nr51.bit(7), right: nr51.bit(3))
-        
-        // Left and right channel master volume
-        let leftChannelVolume: Float = Float(nr50 & 0b00000111) / 7.0
-        let rightChannelVolume: Float = Float((nr50 & 0b01110000) >> 4) / 7.0
-        
-        self.synth.setLeftChannelVolume(leftChannelVolume)
-        self.synth.setRightChannelVolume(rightChannelVolume)
-        
         if next && !prev {
             nr52 = nr52.set(1)
         }
@@ -395,9 +393,5 @@ public class APU {
         }
         
         self.mmu.nr52.write(nr52)
-        
-        rarely {
-            synth.voice2.diagnose()
-        }
     }
 }
