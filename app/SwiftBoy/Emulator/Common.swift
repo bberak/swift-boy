@@ -279,10 +279,10 @@ class Memo<T> {
 }
 
 // TODO: Is this type really necessary?
-struct Observable<T: Equatable> {
+class Observable<T: Equatable> {
     var value: T {
         didSet {
-            if oldValue != value {
+            if value != oldValue {
                 onChange(value, oldValue)
             }
         }
@@ -295,7 +295,7 @@ struct Observable<T: Equatable> {
         self.onChange = onChange
     }
     
-    mutating func setValue(_ next: T) -> (next: T, prev: T) {
+    func setValue(_ next: T) -> (next: T, prev: T) {
         let prev = value
         value = next
         return (next, prev)

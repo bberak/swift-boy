@@ -54,19 +54,24 @@ class Voice {
     let sampleRate: Double
     let deltaTime: Float
     
-    var frequency: Float = 440
+    var frequency: Float = 0
     var time: Float = 0
     var oscillator: Oscillator
     lazy var enabled = Observable<Bool>(false) { next, _ in
         if next {
+            self.frequency = 0
             self.time = 0
             self.amplitudeEnvelopeElapsedTime = 0
             self.lengthEnvelopeElapsedTime = 0
+            
+            maybe {
+                self.diagnose()
+            }
         }
     }
     
     // TODO: Refactor these to use an envelope class (see above) and the maybe "time" from the AVSourceNode
-    var amplitude: Float = 0 // Similar to volume, but used for envelopes
+    var amplitude: Float = 0
     var amplitudeEnvelopeElapsedTime: Float = 0
     lazy var amplitudeEnvelopeStartStep = Observable<Int>(0) { next, _ in
         self.amplitudeEnvelopeElapsedTime = 0
