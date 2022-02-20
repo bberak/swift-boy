@@ -1,6 +1,5 @@
 import Foundation
 import AVFoundation
-import Accelerate
 
 protocol Oscillator {
     func signal(_ frequency: Float, _ time: Float) -> Float
