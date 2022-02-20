@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import Accelerate
 
 protocol Oscillator {
     func signal(_ frequency: Float, _ time: Float) -> Float
@@ -23,88 +24,140 @@ class Noise: Oscillator {
     }
 }
 
-class AmplitudeEnvelope: Oscillator {
-    var inner: Oscillator
+enum EnvelopeStatus {
+    case active
+    case deactivated
+    case notApplicable
+}
+
+protocol Envelope: Oscillator {
+    func advance(seconds: Float) -> EnvelopeStatus
+    func restart() -> Void
+}
+
+class AmplitudeEnvelope: Envelope {
+    private let inner: Oscillator
+    private var elapsedTime: Float = 0
+    private var amplitude: Float = 0
+    
+    var startStep: Int = 0 {
+        didSet {
+            if startStep != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    var increasing = false {
+        didSet {
+            if increasing != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    var stepDuration: Float = 0 {
+        didSet {
+            if stepDuration != oldValue {
+                restart()
+            }
+        }
+    }
     
     init(_ inner: Oscillator) {
         self.inner = inner
     }
     
     func signal(_ frequency: Float, _ time: Float) -> Float {
-        return inner.signal(frequency, time)
+        return inner.signal(frequency, time) * amplitude
+    }
+    
+    @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
+        if stepDuration == 0 {
+            return .notApplicable
+        }
+        
+        elapsedTime += seconds
+          
+        let deltaSteps = Int(elapsedTime / stepDuration) * (increasing ? 1 : -1)
+        let currentStep = (startStep + deltaSteps).clamp(min: 0, max: 0x0F)
+        
+        amplitude = Float(currentStep) / 0x0F
+        
+        return .notApplicable
+    }
+    
+    func restart() {
+        elapsedTime = 0
+        amplitude = Float(startStep) / 0x0F
     }
 }
 
-class DurationEnvelope: Oscillator {
-    var inner: Oscillator
+class LengthEnvelope: Envelope {
+    private var inner: Oscillator
+    private var elapsedTime: Float = 0
+    
+    var enabled = false {
+        didSet {
+            if enabled != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    var duration: Float = 0 {
+        didSet {
+            if duration != oldValue {
+                restart()
+            }
+        }
+    }
     
     init(_ inner: Oscillator) {
         self.inner = inner
     }
     
     func signal(_ frequency: Float, _ time: Float) -> Float {
-        return inner.signal(frequency, time)
+        if enabled {
+            return elapsedTime < duration ? inner.signal(frequency, time) : 0
+        } else {
+            return inner.signal(frequency, time)
+        }
+    }
+    
+    func advance(seconds: Float) -> EnvelopeStatus {
+        if !enabled {
+            return .notApplicable
+        }
+        
+        if duration == 0 {
+            return .notApplicable
+        }
+        
+        if elapsedTime < duration {
+            elapsedTime += seconds
+            
+            return .active
+        }
+        
+        return .deactivated
+    }
+    
+    func restart() {
+        elapsedTime = 0
     }
 }
 
 class Voice {
     private(set) var leftChannelOutput = true
     private(set) var rightChannelOutput = true
-
-    let deltaTime: Float
     
+    var sampleRate: Float = 0
     var frequency: Float = 0
     var time: Float = 0
     var oscillator: Oscillator
-    lazy var enabled = Observable<Bool>(false) { next, _ in
-        if next {
-            self.frequency = 0
-            self.time = 0
-            self.amplitudeEnvelopeElapsedTime = 0
-            self.lengthEnvelopeElapsedTime = 0
-            
-            maybe {
-                self.diagnose()
-            }
-        }
-    }
-    
-    // TODO: Refactor these to use an envelope class (see above) and the maybe "time" from the AVSourceNode
-    var amplitude: Float = 0
-    var amplitudeEnvelopeElapsedTime: Float = 0
-    lazy var amplitudeEnvelopeStartStep = Observable<Int>(0) { next, _ in
-        self.amplitudeEnvelopeElapsedTime = 0
-        self.amplitude = Float(next) / 0x0F
-    }
-    lazy var amplitudeEnvelopeIncreasing = Observable<Bool>(false) { _, _ in
-        self.amplitudeEnvelopeElapsedTime = 0
-    }
-    lazy var amplitudeEnvelopeStepDuration = Observable<Float>(0) { _, _ in
-        self.amplitudeEnvelopeElapsedTime = 0
-    }
-    
-    // TODO: Refactor these to use an envelope class (see above) and the maybe "time" from the AVSourceNode
-    var lengthEnvelopeElapsedTime: Float = 0
-    var lengthEnvelopeSatisfied: Bool {
-        get {
-            if !lengthEnvelopeEnabled.value {
-                return true // The length envelope is disabled, so the envelope conditions do no apply
-            }
-            
-            if lengthEnvelopeElapsedTime < lengthEnvelopDuration.value {
-                return true
-            }
-            
-            return false
-        }
-    }
-    lazy var lengthEnvelopeEnabled = Observable<Bool>(false) { _, _ in
-        self.lengthEnvelopeElapsedTime = 0
-    }
-    lazy var lengthEnvelopDuration = Observable<Float>(0) { _, _ in
-        self.lengthEnvelopeElapsedTime = 0
-    }
-    
+    var enabled = false
+        
     var volume: Float {
         get {
             sourceNode.volume
@@ -123,38 +176,17 @@ class Voice {
         }
     }
     
-    func diagnose() {
-        print("----🔊-Diagnosis-Start-🔊----")
-        print("enabled", enabled.value)
-        print("leftChannelOutput", leftChannelOutput)
-        print("rightChannelOutput", rightChannelOutput)
-        print("deltaTime", deltaTime)
-        print("frequency", frequency)
-        print("time", time)
-        print("amplitude", amplitude)
-        print("amplitudeEnvelopeElapsedTime", amplitudeEnvelopeElapsedTime)
-        print("amplitudeEnvelopeStartStep", amplitudeEnvelopeStartStep.value)
-        print("amplitudeEnvelopeIncreasing", amplitudeEnvelopeIncreasing.value)
-        print("amplitudeEnvelopeStepDuration", amplitudeEnvelopeStepDuration.value)
-        print("lengthEnvelopeElapsedTime", lengthEnvelopeElapsedTime)
-        print("lengthEnvelopeSatisfied", lengthEnvelopeSatisfied)
-        print("lengthEnvelopeEnabled", lengthEnvelopeEnabled.value)
-        print("lengthEnvelopDuration", lengthEnvelopDuration.value)
-        print("volume", volume)
-        print("pan", pan)
-        print("----🔊-Diagnosis-Stop--🔊----")
-    }
-    
     lazy var sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList in
         let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
         let period = 1 / self.frequency
-
+        let deltaTime = 1 / self.sampleRate
+        
         for frame in 0..<Int(frameCount) {
             var sample: Float = 0
             
-            if self.enabled.value && self.lengthEnvelopeSatisfied && (self.leftChannelOutput || self.rightChannelOutput) && self.amplitude > 0 {
-                sample = self.oscillator.signal(self.frequency, self.time) * self.amplitude
-                self.time += self.deltaTime
+            if self.enabled && (self.leftChannelOutput || self.rightChannelOutput) {
+                sample = self.oscillator.signal(self.frequency, self.time)
+                self.time += deltaTime
                 self.time = fmod(self.time, period) // This line ensures that 'time' corectly stays within the range of zero and one 'period'
             }
             
@@ -167,8 +199,7 @@ class Voice {
         return noErr
     }
     
-    init(sampleRate: Float, oscillator: Oscillator) {
-        self.deltaTime = 1 / sampleRate
+    init(oscillator: Oscillator) {
         self.oscillator = oscillator
     }
     
@@ -184,52 +215,13 @@ class Voice {
         self.leftChannelOutput = left
         self.rightChannelOutput = right
     }
-    
-    func advanceAmplitudeEnvelope(seconds: Float) {
-        if !enabled.value {
-            return
-        }
-        
-        if amplitudeEnvelopeStepDuration.value == 0 {
-            return
-        }
-
-        amplitudeEnvelopeElapsedTime += seconds
-        let deltaSteps = Int(amplitudeEnvelopeElapsedTime / amplitudeEnvelopeStepDuration.value) * (amplitudeEnvelopeIncreasing.value ? 1 : -1)
-        let currentStep = (amplitudeEnvelopeStartStep.value + deltaSteps).clamp(min: 0, max: 0x0F)
-        
-        amplitude = Float(currentStep) / 0x0F
-    }
-    
-    func advanceLengthEnvelope(seconds: Float) -> Bool {
-        // TODO: The return boolean indicates expiry.. Probably should be more explicit with the return type.
-        
-        if !enabled.value {
-            return false
-        }
-        
-        if !lengthEnvelopeEnabled.value {
-            return false
-        }
-        
-        if lengthEnvelopDuration.value == 0 {
-            return false
-        }
-        
-        if lengthEnvelopeElapsedTime < lengthEnvelopDuration.value {
-            lengthEnvelopeElapsedTime += seconds
-            
-            if lengthEnvelopeElapsedTime > lengthEnvelopDuration.value {
-                return true
-            }
-        }
-        
-        return false
-    }
 }
 
 // Source: https://github.com/GrantJEmerson/SwiftSynth/blob/master/Swift%20Synth/Audio/Synth.swift
-public class Synth {
+class Synth {
+    let voices: [Voice]
+    let audioEngine: AVAudioEngine
+    
     public var volume: Float {
         get {
             audioEngine.mainMixerNode.outputVolume
@@ -237,63 +229,45 @@ public class Synth {
         set {
             audioEngine.mainMixerNode.outputVolume = newValue
         }
-        
     }
+    
+    var enabled = false {
+        didSet {
+            if enabled && !audioEngine.isRunning {
+                do {
+                    try self.audioEngine.start()
+                } catch {
+                    print("Could not start engine: \(error.localizedDescription)")
+                }
+            }
+            
+            if !enabled && audioEngine.isRunning {
+                self.audioEngine.stop()
+            }
+        }
+    }
+    
+    init(volume: Float = 0.5, voices: [Voice]) {
+        self.voices = voices
+        self.audioEngine = AVAudioEngine()
         
-    let voice1: Voice
-    let voice2: Voice
-    let voice3: Voice
-    let voice4: Voice
-    let voices: [Voice]
-    
-    private let audioEngine: AVAudioEngine
-    
-    init(volume: Float = 0.5) {
-        audioEngine = AVAudioEngine()
         let mainMixer = audioEngine.mainMixerNode
         let outputNode = audioEngine.outputNode
         let format = outputNode.inputFormat(forBus: 0)
-        let sampleRate = Float(format.sampleRate)
-        
-        voice1 = Voice(sampleRate: sampleRate, oscillator: Pulse())
-        voice2 = Voice(sampleRate: sampleRate, oscillator: Pulse())
-        voice3 = Voice(sampleRate: sampleRate, oscillator: Noise()) // TODO: This will be a custom wave signal
-        voice4 = Voice(sampleRate: sampleRate, oscillator: Noise())
-        
-        voices = [voice1, voice2, voice3, voice4]
-
         let inputFormat = AVAudioFormat(commonFormat: format.commonFormat,
                                         sampleRate: format.sampleRate,
                                         channels: 1,
                                         interleaved: format.isInterleaved)
         
-        audioEngine.attach(voice1.sourceNode)
-        audioEngine.connect(voice1.sourceNode, to: mainMixer, format: inputFormat)
-        
-        audioEngine.attach(voice2.sourceNode)
-        audioEngine.connect(voice2.sourceNode, to: mainMixer, format: inputFormat)
-        
-        audioEngine.attach(voice3.sourceNode)
-        audioEngine.connect(voice3.sourceNode, to: mainMixer, format: inputFormat)
-        
-        audioEngine.attach(voice4.sourceNode)
-        audioEngine.connect(voice4.sourceNode, to: mainMixer, format: inputFormat)
-        
+        for voice in voices {
+            voice.sampleRate = Float(format.sampleRate)
+            audioEngine.attach(voice.sourceNode)
+            audioEngine.connect(voice.sourceNode, to: mainMixer, format: inputFormat)
+        }
+                
         audioEngine.connect(mainMixer, to: outputNode, format: nil)
         
         mainMixer.outputVolume = volume
-    }
-    
-    lazy var enabled = Observable<Bool>(audioEngine.isRunning) { next, prev in
-        if next {
-            do {
-                try self.audioEngine.start()
-            } catch {
-                print("Could not start engine: \(error.localizedDescription)")
-            }
-        } else {
-            self.audioEngine.stop()
-        }
     }
     
     func setLeftChannelVolume(_ val: Float) {
@@ -313,29 +287,56 @@ public class Synth {
     }
 }
 
+class PulseB: Voice {
+    let wave: Pulse
+    let amplitudeEnvelope: AmplitudeEnvelope
+    let lengthEnvelope: LengthEnvelope
+    
+    override var enabled: Bool {
+        didSet {
+            if enabled && !oldValue {
+                amplitudeEnvelope.restart()
+                lengthEnvelope.restart()
+            }
+        }
+    }
+    
+    init() {
+        self.wave = Pulse()
+        self.amplitudeEnvelope = AmplitudeEnvelope(self.wave)
+        self.lengthEnvelope = LengthEnvelope(self.amplitudeEnvelope)
+        
+        super.init(oscillator: self.lengthEnvelope)
+    }
+}
+
 public class APU {
     private let mmu: MMU
-    private let synth: Synth
+    private let master: Synth
+    private let pulseB: PulseB
     
     init(_ mmu: MMU) {
         self.mmu = mmu
-        self.synth = Synth()
-        self.synth.volume = 0.125 // TODO: What's a good default here? 🤔
-        
-        // TODO: Remove temporary statements below
-        self.synth.voice1.enabled.value = false
-        self.synth.voice3.enabled.value = false
-        self.synth.voice4.enabled.value = false
+        self.pulseB = PulseB()
+        self.master = Synth(voices: [self.pulseB])
+        self.master.volume = 0.125 // TODO: What's a good default here? 🤔
     }
     
     public func run(for time: Int16) throws {
         let seconds = Float(time) / 4000000
         
-        // Master sound output
+        // Master sound registers
         var nr52 = self.mmu.nr52.read()
-        let masterEnabledTx = self.synth.enabled.setValue(nr52.bit(7))
+        let nr51 = self.mmu.nr51.read()
+        let nr50 = self.mmu.nr50.read()
         
-        if !masterEnabledTx.next && masterEnabledTx.prev {
+        // Master sound output
+        let masterEnabledPrev = self.master.enabled
+        let masterEnabledNext = nr52.bit(7)
+        
+        self.master.enabled = masterEnabledNext
+        
+        if !masterEnabledNext && masterEnabledPrev {
             // Clear all registers except
             self.mmu.nr10.write(0)
             self.mmu.nr11.write(0)
@@ -358,27 +359,20 @@ public class APU {
             self.mmu.nr50.write(0)
             self.mmu.nr51.write(0)
             self.mmu.nr52.write(0)
-        } else if !masterEnabledTx.next {
+        } else if !masterEnabledNext  {
             // Exit early
             return
         }
         
-        // Master controls
-        let nr51 = self.mmu.nr51.read()
-        let nr50 = self.mmu.nr50.read()
-        
         // Left or right channel output
-        self.synth.voice1.setChannels(left: nr51.bit(4), right: nr51.bit(0))
-        self.synth.voice2.setChannels(left: nr51.bit(5), right: nr51.bit(1))
-        self.synth.voice3.setChannels(left: nr51.bit(6), right: nr51.bit(2))
-        self.synth.voice4.setChannels(left: nr51.bit(7), right: nr51.bit(3))
+        self.pulseB.setChannels(left: nr51.bit(5), right: nr51.bit(1))
         
         // Left and right channel master volume
         let leftChannelVolume: Float = Float(nr50 & 0b00000111) / 7.0
         let rightChannelVolume: Float = Float((nr50 & 0b01110000) >> 4) / 7.0
         
-        self.synth.setLeftChannelVolume(leftChannelVolume)
-        self.synth.setRightChannelVolume(rightChannelVolume)
+        self.master.setLeftChannelVolume(leftChannelVolume)
+        self.master.setRightChannelVolume(rightChannelVolume)
         
         // Voice specific controls
         let nr24 = self.mmu.nr24.read()
@@ -386,31 +380,36 @@ public class APU {
         let nr22 = self.mmu.nr22.read()
         let nr21 = self.mmu.nr21.read()
         
-        synth.voice2.frequency = 131072 / (2048 - Float(UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8)))
-        synth.voice2.amplitudeEnvelopeStartStep.value = Int((nr22 & 0b11110000) >> 4)
-        synth.voice2.amplitudeEnvelopeIncreasing.value = nr22.bit(3)
-        synth.voice2.amplitudeEnvelopeStepDuration.value = Float(nr22 & 0b00000111) * 1 / 64
-        synth.voice2.advanceAmplitudeEnvelope(seconds: seconds)
+        self.pulseB.frequency = 131072 / (2048 - Float(UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8)))
         
-        if let pulse = synth.voice2.oscillator as? Pulse {
-            switch(nr21 & 0b11000000) {
-            case 0b00000000: pulse.duty = 0.125
-            case 0b01000000: pulse.duty = 0.25
-            case 0b10000000: pulse.duty = 0.5
-            case 0b11000000: pulse.duty = 0.75
-            default: print("Duty pattern not handled for voice2")
-            }
+        self.pulseB.amplitudeEnvelope.startStep = Int((nr22 & 0b11110000) >> 4)
+        self.pulseB.amplitudeEnvelope.stepDuration = Float(nr22 & 0b00000111) * 1 / 64
+        self.pulseB.amplitudeEnvelope.increasing = nr22.bit(3)
+        self.pulseB.amplitudeEnvelope.advance(seconds: seconds)
+        
+        self.pulseB.lengthEnvelope.enabled = nr24.bit(6)
+        self.pulseB.lengthEnvelope.duration = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
+        let pulseBLengthStatus = self.pulseB.lengthEnvelope.advance(seconds: seconds)
+        
+        if pulseBLengthStatus == .deactivated {
+           nr52 = nr52.reset(1)
+       }
+        
+        switch(nr21 & 0b11000000) {
+        case 0b00000000: self.pulseB.wave.duty = 0.125
+        case 0b01000000: self.pulseB.wave.duty = 0.25
+        case 0b10000000: self.pulseB.wave.duty = 0.5
+        case 0b11000000: self.pulseB.wave.duty = 0.75
+        default: print("Duty pattern not handled for voice2")
         }
         
-        synth.voice2.lengthEnvelopeEnabled.value = nr24.bit(6)
-        synth.voice2.lengthEnvelopDuration.value = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
-        let voice2LengthExpired = synth.voice2.advanceLengthEnvelope(seconds: seconds)
-        let voice2EnabledTx = synth.voice2.enabled.setValue(nr24.bit(7))
+        let pulseBEnabledPrev = self.pulseB.enabled
+        let pulseBEnabledNext = nr24.bit(7)
         
-        if voice2EnabledTx.next && !voice2EnabledTx.prev {
+        self.pulseB.enabled = pulseBEnabledNext
+        
+        if pulseBEnabledNext && !pulseBEnabledPrev {
             nr52 = nr52.set(1)
-        } else if voice2LengthExpired {
-            nr52 = nr52.reset(1)
         }
         
         self.mmu.nr52.write(nr52)

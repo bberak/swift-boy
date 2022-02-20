@@ -277,27 +277,3 @@ class Memo<T> {
         return value!
     }
 }
-
-// TODO: Is this type really necessary?
-class Observable<T: Equatable> {
-    var value: T {
-        didSet {
-            if value != oldValue {
-                onChange(value, oldValue)
-            }
-        }
-    }
-    
-    let onChange: (T, T) -> Void
-    
-    init(_ value: T, onChange: @escaping (T, T) -> Void) {
-        self.value = value
-        self.onChange = onChange
-    }
-    
-    func setValue(_ next: T) -> (next: T, prev: T) {
-        let prev = value
-        value = next
-        return (next, prev)
-    }
-}
