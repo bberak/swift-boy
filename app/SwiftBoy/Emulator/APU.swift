@@ -411,7 +411,7 @@ public class APU {
         
         if voice2EnabledTx.next && !voice2EnabledTx.prev {
             nr52 = nr52.set(1)
-        }els if voice2LengthExpired {
+        } else if voice2LengthExpired {
             nr52 = nr52.reset(1)
         }
         
