@@ -152,7 +152,7 @@ class Voice {
     private(set) var leftChannelOutput = true
     private(set) var rightChannelOutput = true
     
-    var sampleRate: Float = 0
+    var sampleRate: Float = 44100
     var frequency: Float = 0
     var time: Float = 0
     var oscillator: Oscillator
@@ -400,7 +400,7 @@ public class APU {
         case 0b01000000: self.pulseB.wave.duty = 0.25
         case 0b10000000: self.pulseB.wave.duty = 0.5
         case 0b11000000: self.pulseB.wave.duty = 0.75
-        default: print("Duty pattern not handled for voice2")
+        default: print("Duty pattern not handled for PulseB")
         }
         
         let pulseBEnabledPrev = self.pulseB.enabled
