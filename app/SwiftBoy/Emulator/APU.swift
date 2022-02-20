@@ -51,7 +51,6 @@ class Voice {
     private(set) var leftChannelOutput = true
     private(set) var rightChannelOutput = true
 
-    let sampleRate: Double
     let deltaTime: Float
     
     var frequency: Float = 0
@@ -129,7 +128,6 @@ class Voice {
         print("enabled", enabled.value)
         print("leftChannelOutput", leftChannelOutput)
         print("rightChannelOutput", rightChannelOutput)
-        print("sampleRate", sampleRate)
         print("deltaTime", deltaTime)
         print("frequency", frequency)
         print("time", time)
@@ -169,9 +167,8 @@ class Voice {
         return noErr
     }
     
-    init(format: AVAudioFormat, oscillator: Oscillator) {
-        self.sampleRate = format.sampleRate
-        self.deltaTime = 1 / Float(sampleRate)
+    init(sampleRate: Float, oscillator: Oscillator) {
+        self.deltaTime = 1 / sampleRate
         self.oscillator = oscillator
     }
     
@@ -256,11 +253,12 @@ public class Synth {
         let mainMixer = audioEngine.mainMixerNode
         let outputNode = audioEngine.outputNode
         let format = outputNode.inputFormat(forBus: 0)
+        let sampleRate = Float(format.sampleRate)
         
-        voice1 = Voice(format: format, oscillator: Pulse())
-        voice2 = Voice(format: format, oscillator: Pulse())
-        voice3 = Voice(format: format, oscillator: Noise()) // TODO: This will be a custom wave signal
-        voice4 = Voice(format: format, oscillator: Noise())
+        voice1 = Voice(sampleRate: sampleRate, oscillator: Pulse())
+        voice2 = Voice(sampleRate: sampleRate, oscillator: Pulse())
+        voice3 = Voice(sampleRate: sampleRate, oscillator: Noise()) // TODO: This will be a custom wave signal
+        voice4 = Voice(sampleRate: sampleRate, oscillator: Noise())
         
         voices = [voice1, voice2, voice3, voice4]
 
