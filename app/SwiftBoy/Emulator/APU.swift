@@ -153,7 +153,7 @@ class Voice {
     private(set) var rightChannelOutput = true
     
     var sampleRate: Float = 44100
-    var frequency: Float = 0
+    var frequency: Float = 0 // TODO: I think frequency needs to be interpolated/eased to avoid pops and clicks?
     var time: Float = 0
     var oscillator: Oscillator
     var enabled = false
@@ -288,7 +288,7 @@ class Synth {
 }
 
 class PulseB: Voice {
-    let wave: Pulse
+    let signal: Pulse
     let amplitudeEnvelope: AmplitudeEnvelope
     let lengthEnvelope: LengthEnvelope
     
@@ -302,24 +302,125 @@ class PulseB: Voice {
     }
     
     init() {
-        self.wave = Pulse()
-        self.amplitudeEnvelope = AmplitudeEnvelope(self.wave)
+        self.signal = Pulse()
+        self.amplitudeEnvelope = AmplitudeEnvelope(self.signal)
         self.lengthEnvelope = LengthEnvelope(self.amplitudeEnvelope)
         
         super.init(oscillator: self.lengthEnvelope)
     }
 }
 
+class PulseA: PulseB {
+    // TODO: Need to add sweep functionality
+}
+
 public class APU {
     private let mmu: MMU
     private let master: Synth
+    private let pulseA: PulseA
     private let pulseB: PulseB
     
     init(_ mmu: MMU) {
         self.mmu = mmu
+        self.pulseA = PulseA()
         self.pulseB = PulseB()
-        self.master = Synth(voices: [self.pulseB])
+        self.master = Synth(voices: [self.pulseA, self.pulseB])
         self.master.volume = 0.125 // TODO: What's a good default here? 🤔
+    }
+    
+    func playPulseA(seconds: Float) -> Bool {
+        var playing = true
+        
+        let nr14 = self.mmu.nr14.read()
+        let nr13 = self.mmu.nr13.read()
+        let nr12 = self.mmu.nr12.read()
+        let nr11 = self.mmu.nr11.read()
+        _ = self.mmu.nr10.read()
+        
+        self.pulseA.frequency = 131072 / (2048 - Float(UInt16(nr13) + (UInt16(nr14 & 0b00000111) << 8)))
+        
+        self.pulseA.amplitudeEnvelope.startStep = Int((nr12 & 0b11110000) >> 4)
+        self.pulseA.amplitudeEnvelope.stepDuration = Float(nr12 & 0b00000111) * 1 / 64
+        self.pulseA.amplitudeEnvelope.increasing = nr12.bit(3)
+        self.pulseA.amplitudeEnvelope.advance(seconds: seconds)
+        
+        self.pulseA.lengthEnvelope.enabled = nr14.bit(6)
+        self.pulseA.lengthEnvelope.duration = (64 - Float(nr11 & 0b00111111)) * (1 / 256)
+        let pulseALengthStatus = self.pulseA.lengthEnvelope.advance(seconds: seconds)
+        
+        if pulseALengthStatus == .deactivated {
+           playing = false
+       }
+        
+        switch(nr11 & 0b11000000) {
+        case 0b00000000: self.pulseA.signal.duty = 0.125
+        case 0b01000000: self.pulseA.signal.duty = 0.25
+        case 0b10000000: self.pulseA.signal.duty = 0.5
+        case 0b11000000: self.pulseA.signal.duty = 0.75
+        default: print("Duty pattern not handled for PulseA")
+        }
+        
+        let pulseAEnabledPrev = self.pulseA.enabled
+        let pulseAEnabledNext = nr14.bit(7)
+        
+        self.pulseA.enabled = pulseAEnabledNext
+        
+        if pulseAEnabledNext && !pulseAEnabledPrev {
+            playing = true
+        }
+        
+        return playing
+    }
+    
+    func playPulseB(seconds: Float) -> Bool {
+        var playing = true
+        
+        let nr24 = self.mmu.nr24.read()
+        let nr23 = self.mmu.nr23.read()
+        let nr22 = self.mmu.nr22.read()
+        let nr21 = self.mmu.nr21.read()
+        
+        self.pulseB.frequency = 131072 / (2048 - Float(UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8)))
+        
+        self.pulseB.amplitudeEnvelope.startStep = Int((nr22 & 0b11110000) >> 4)
+        self.pulseB.amplitudeEnvelope.stepDuration = Float(nr22 & 0b00000111) * 1 / 64
+        self.pulseB.amplitudeEnvelope.increasing = nr22.bit(3)
+        self.pulseB.amplitudeEnvelope.advance(seconds: seconds)
+        
+        self.pulseB.lengthEnvelope.enabled = nr24.bit(6)
+        self.pulseB.lengthEnvelope.duration = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
+        let pulseBLengthStatus = self.pulseB.lengthEnvelope.advance(seconds: seconds)
+        
+        if pulseBLengthStatus == .deactivated {
+           playing = false
+       }
+        
+        switch(nr21 & 0b11000000) {
+        case 0b00000000: self.pulseB.signal.duty = 0.125
+        case 0b01000000: self.pulseB.signal.duty = 0.25
+        case 0b10000000: self.pulseB.signal.duty = 0.5
+        case 0b11000000: self.pulseB.signal.duty = 0.75
+        default: print("Duty pattern not handled for PulseB")
+        }
+        
+        let pulseBEnabledPrev = self.pulseB.enabled
+        let pulseBEnabledNext = nr24.bit(7)
+        
+        self.pulseB.enabled = pulseBEnabledNext
+        
+        if pulseBEnabledNext && !pulseBEnabledPrev {
+            playing = true
+        }
+        
+        return playing
+    }
+    
+    func playWave(seconds: Float) -> Bool {
+        return false
+    }
+    
+    func playNoise(seconds: Float) -> Bool {
+        return false
     }
     
     public func run(for time: Int16) throws {
@@ -365,6 +466,7 @@ public class APU {
         }
         
         // Left or right channel output
+        self.pulseA.setChannels(left: nr51.bit(4), right: nr51.bit(0))
         self.pulseB.setChannels(left: nr51.bit(5), right: nr51.bit(1))
         
         // Left and right channel master volume
@@ -375,42 +477,10 @@ public class APU {
         self.master.setRightChannelVolume(rightChannelVolume)
         
         // Voice specific controls
-        let nr24 = self.mmu.nr24.read()
-        let nr23 = self.mmu.nr23.read()
-        let nr22 = self.mmu.nr22.read()
-        let nr21 = self.mmu.nr21.read()
-        
-        self.pulseB.frequency = 131072 / (2048 - Float(UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8)))
-        
-        self.pulseB.amplitudeEnvelope.startStep = Int((nr22 & 0b11110000) >> 4)
-        self.pulseB.amplitudeEnvelope.stepDuration = Float(nr22 & 0b00000111) * 1 / 64
-        self.pulseB.amplitudeEnvelope.increasing = nr22.bit(3)
-        self.pulseB.amplitudeEnvelope.advance(seconds: seconds)
-        
-        self.pulseB.lengthEnvelope.enabled = nr24.bit(6)
-        self.pulseB.lengthEnvelope.duration = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
-        let pulseBLengthStatus = self.pulseB.lengthEnvelope.advance(seconds: seconds)
-        
-        if pulseBLengthStatus == .deactivated {
-           nr52 = nr52.reset(1)
-       }
-        
-        switch(nr21 & 0b11000000) {
-        case 0b00000000: self.pulseB.wave.duty = 0.125
-        case 0b01000000: self.pulseB.wave.duty = 0.25
-        case 0b10000000: self.pulseB.wave.duty = 0.5
-        case 0b11000000: self.pulseB.wave.duty = 0.75
-        default: print("Duty pattern not handled for PulseB")
-        }
-        
-        let pulseBEnabledPrev = self.pulseB.enabled
-        let pulseBEnabledNext = nr24.bit(7)
-        
-        self.pulseB.enabled = pulseBEnabledNext
-        
-        if pulseBEnabledNext && !pulseBEnabledPrev {
-            nr52 = nr52.set(1)
-        }
+        nr52[0] = playPulseA(seconds: seconds)
+        nr52[1] = playPulseB(seconds: seconds)
+        nr52[2] = playWave(seconds: seconds)
+        nr52[3] = playNoise(seconds: seconds)
         
         self.mmu.nr52.write(nr52)
     }
