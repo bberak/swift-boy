@@ -1,11 +1,11 @@
 import Foundation
 import AVFoundation
 
-protocol Oscillator {
+protocol Oscillator: AnyObject {
     func signal(_ frequency: Float, _ time: Float) -> Float
 }
 
-class Pulse: Oscillator {
+class Square: Oscillator {
     var duty: Float = 0.5
     
     func signal(_ frequency: Float, _ time: Float) -> Float {
@@ -30,14 +30,16 @@ enum EnvelopeStatus {
 }
 
 protocol Envelope: Oscillator {
+    var inner: Oscillator? { get set }
     func advance(seconds: Float) -> EnvelopeStatus
     func restart() -> Void
 }
 
 class AmplitudeEnvelope: Envelope {
-    private let inner: Oscillator
     private var elapsedTime: Float = 0
     private var amplitude: Float = 0
+    
+    var inner: Oscillator?
     
     var startStep: Int = 0 {
         didSet {
@@ -63,12 +65,13 @@ class AmplitudeEnvelope: Envelope {
         }
     }
     
-    init(_ inner: Oscillator) {
+    init(_ inner: Oscillator? = nil) {
         self.inner = inner
     }
     
     func signal(_ frequency: Float, _ time: Float) -> Float {
-        return inner.signal(frequency, time) * amplitude
+        // TODO: Should this sample be lerped between -1 an 1?
+        return (inner?.signal(frequency, time) ?? 0) * amplitude
     }
     
     @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
@@ -93,8 +96,9 @@ class AmplitudeEnvelope: Envelope {
 }
 
 class LengthEnvelope: Envelope {
-    private var inner: Oscillator
     private var elapsedTime: Float = 0
+    
+    var inner: Oscillator?
     
     var enabled = false {
         didSet {
@@ -112,15 +116,15 @@ class LengthEnvelope: Envelope {
         }
     }
     
-    init(_ inner: Oscillator) {
+    init(_ inner: Oscillator? = nil) {
         self.inner = inner
     }
     
     func signal(_ frequency: Float, _ time: Float) -> Float {
         if enabled {
-            return elapsedTime < duration ? inner.signal(frequency, time) : 0
+            return elapsedTime < duration ? inner?.signal(frequency, time) ?? 0 : 0
         } else {
-            return inner.signal(frequency, time)
+            return inner?.signal(frequency, time) ?? 0
         }
     }
     
@@ -144,6 +148,33 @@ class LengthEnvelope: Envelope {
     
     func restart() {
         elapsedTime = 0
+    }
+}
+
+class FrequencySweepEnvelope: Envelope {
+    private var elapsedTime: Float = 0
+    private var shadowFrequency: Float = 0
+    private var enabled = false
+    
+    var inner: Oscillator?
+    var increasing = false
+    var shifts: UInt8 = 0
+    var sweepTime: Float = 0
+    
+    init(_ inner: Oscillator? = nil) {
+        self.inner = inner
+    }
+    
+    func signal(_ frequency: Float, _ time: Float) -> Float {
+        return inner?.signal(frequency, time) ?? 0
+    }
+    
+    func advance(seconds: Float) -> EnvelopeStatus {
+        return .notApplicable
+    }
+    
+    func restart() {
+        
     }
 }
 
@@ -286,8 +317,8 @@ class Synth {
     }
 }
 
-class PulseB: Voice {
-    let signal: Pulse
+class Pulse: Voice {
+    let wave: Square
     let amplitudeEnvelope: AmplitudeEnvelope
     let lengthEnvelope: LengthEnvelope
     
@@ -300,29 +331,42 @@ class PulseB: Voice {
         }
     }
     
-    init() {
-        self.signal = Pulse()
-        self.amplitudeEnvelope = AmplitudeEnvelope(self.signal)
+    init(connect connector: Envelope? = nil) {
+        self.wave = Square()
+        self.amplitudeEnvelope = AmplitudeEnvelope(self.wave)
         self.lengthEnvelope = LengthEnvelope(self.amplitudeEnvelope)
         
-        super.init(oscillator: self.lengthEnvelope)
+        if connector != nil {
+            connector!.inner = self.lengthEnvelope
+            super.init(oscillator: connector!)
+        } else {
+            super.init(oscillator: self.lengthEnvelope)
+        }
     }
 }
 
-class PulseA: PulseB {
-    // TODO: Need to add sweep functionality
+class PulseWithSweep: Pulse {
+    //let frequencySweepEnvelope: FrequencySweepEnvelope
+    
+   init() {
+       //self.frequencySweepEnvelope = FrequencySweepEnvelope()
+       
+       //super.init(connect: self.frequencySweepEnvelope)
+       
+       super.init()
+    }
 }
 
 public class APU {
     private let mmu: MMU
     private let master: Synth
-    private let pulseA: PulseA
-    private let pulseB: PulseB
+    private let pulseA: PulseWithSweep
+    private let pulseB: Pulse
     
     init(_ mmu: MMU) {
         self.mmu = mmu
-        self.pulseA = PulseA()
-        self.pulseB = PulseB()
+        self.pulseA = PulseWithSweep()
+        self.pulseB = Pulse()
         self.master = Synth(voices: [self.pulseA, self.pulseB])
         self.master.volume = 0.125 // TODO: What's a good default here? 🤔
     }
@@ -334,7 +378,11 @@ public class APU {
         let nr13 = self.mmu.nr13.read()
         let nr12 = self.mmu.nr12.read()
         let nr11 = self.mmu.nr11.read()
-        _ = self.mmu.nr10.read()
+        let nr10 = self.mmu.nr10.read()
+        
+        let numberOfSweepShifts = nr10 & 0b00000111
+        let sweepIncreasing = nr10.bit(3)
+        let sweepTime = (nr10 & 0b01110000) >> 4
         
         self.pulseA.frequency = 131072 / (2048 - Float(UInt16(nr13) + (UInt16(nr14 & 0b00000111) << 8)))
         
@@ -352,10 +400,10 @@ public class APU {
        }
         
         switch(nr11 & 0b11000000) {
-        case 0b00000000: self.pulseA.signal.duty = 0.125
-        case 0b01000000: self.pulseA.signal.duty = 0.25
-        case 0b10000000: self.pulseA.signal.duty = 0.5
-        case 0b11000000: self.pulseA.signal.duty = 0.75
+        case 0b00000000: self.pulseA.wave.duty = 0.125
+        case 0b01000000: self.pulseA.wave.duty = 0.25
+        case 0b10000000: self.pulseA.wave.duty = 0.5
+        case 0b11000000: self.pulseA.wave.duty = 0.75
         default: print("Duty pattern not handled for PulseA")
         }
         
@@ -395,10 +443,10 @@ public class APU {
        }
         
         switch(nr21 & 0b11000000) {
-        case 0b00000000: self.pulseB.signal.duty = 0.125
-        case 0b01000000: self.pulseB.signal.duty = 0.25
-        case 0b10000000: self.pulseB.signal.duty = 0.5
-        case 0b11000000: self.pulseB.signal.duty = 0.75
+        case 0b00000000: self.pulseB.wave.duty = 0.125
+        case 0b01000000: self.pulseB.wave.duty = 0.25
+        case 0b10000000: self.pulseB.wave.duty = 0.5
+        case 0b11000000: self.pulseB.wave.duty = 0.75
         default: print("Duty pattern not handled for PulseB")
         }
         

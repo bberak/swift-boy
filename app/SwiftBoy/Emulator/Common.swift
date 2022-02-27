@@ -149,6 +149,23 @@ public extension Int {
     }
 }
 
+public extension Float {
+    func clamp(min: Float, max: Float) -> Float {
+        if (self > max) { return max }
+        if (self < min) { return min }
+            
+        return self
+    }
+    
+    func lerp(min: Float, max: Float, targetMin: Float, targetMax: Float) -> Float {
+        let scale = (targetMax - targetMin) / (max - min)
+        let normalized = self - min
+        let value = normalized * scale
+        
+        return value.clamp(min: targetMin, max: targetMax)
+    }
+}
+
 public struct ByteOp {
     public var value: UInt8
     public var halfCarry: Bool
