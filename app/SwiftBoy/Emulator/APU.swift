@@ -95,6 +95,68 @@ class AmplitudeEnvelope: Envelope {
     }
 }
 
+func bitsToFrequency(bits: UInt16) -> Float {
+    return 131072 / (2048 - Float(bits))
+}
+
+func frequencyToBits(frequency: Float) -> UInt16 {
+    return UInt16(2048 - (131072 / frequency))
+}
+
+class FrequencySweepEnvelope: Envelope {
+    private var elapsedTime: Float = 0
+    private var adjustedFrequency: Float = 0
+    private var startFrequency: Float = 0 {
+        didSet {
+            if startFrequency != oldValue {
+                calculateAdjustedFrequency()
+            }
+        }
+    }
+    
+    var inner: Oscillator?
+    var sweepIncreasing = false
+    var sweepShifts: UInt8 = 0
+    var sweepTime: Float = 0
+    
+    init(_ inner: Oscillator? = nil) {
+        self.inner = inner
+    }
+    
+    func signal(_ frequency: Float, _ time: Float) -> Float {
+        startFrequency = frequency
+        
+        return inner?.signal(adjustedFrequency, time) ?? 0
+    }
+    
+    @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
+        elapsedTime += seconds
+        
+        return calculateAdjustedFrequency()
+    }
+    
+    func calculateAdjustedFrequency() -> EnvelopeStatus {
+        guard startFrequency > 0 else { return }
+        guard sweepTime > 0 else { return }
+        
+        let totalShifts = Int(elapsedTime / sweepTime) * Int(sweepShifts)
+        
+        guard totalShifts > 0 else { return }
+        
+        let shiftedBits = sweepIncreasing ? frequencyToBits(frequency: startFrequency) >> totalShifts : frequencyToBits(frequency: startFrequency) << totalShifts
+        
+        guard shiftedBits < 2048 else { return }
+        // guard shiftedBits > 0 else { return }
+
+        adjustedFrequency = bitsToFrequency(bits: shiftedBits)
+    }
+    
+    func restart() {
+        elapsedTime = 0
+        calculateAdjustedFrequency()
+    }
+}
+
 class LengthEnvelope: Envelope {
     private var elapsedTime: Float = 0
     
@@ -148,33 +210,6 @@ class LengthEnvelope: Envelope {
     
     func restart() {
         elapsedTime = 0
-    }
-}
-
-class FrequencySweepEnvelope: Envelope {
-    private var elapsedTime: Float = 0
-    private var shadowFrequency: Float = 0
-    private var enabled = false
-    
-    var inner: Oscillator?
-    var increasing = false
-    var shifts: UInt8 = 0
-    var sweepTime: Float = 0
-    
-    init(_ inner: Oscillator? = nil) {
-        self.inner = inner
-    }
-    
-    func signal(_ frequency: Float, _ time: Float) -> Float {
-        return inner?.signal(frequency, time) ?? 0
-    }
-    
-    func advance(seconds: Float) -> EnvelopeStatus {
-        return .notApplicable
-    }
-    
-    func restart() {
-        
     }
 }
 
@@ -346,14 +381,22 @@ class Pulse: Voice {
 }
 
 class PulseWithSweep: Pulse {
-    //let frequencySweepEnvelope: FrequencySweepEnvelope
+    let frequencySweepEnvelope: FrequencySweepEnvelope
     
-   init() {
-       //self.frequencySweepEnvelope = FrequencySweepEnvelope()
+    override var enabled: Bool {
+        didSet {
+            if enabled && !oldValue {
+                amplitudeEnvelope.restart()
+                lengthEnvelope.restart()
+                frequencySweepEnvelope.restart()
+            }
+        }
+    }
+    
+    init() {
+        self.frequencySweepEnvelope = FrequencySweepEnvelope()
        
-       //super.init(connect: self.frequencySweepEnvelope)
-       
-       super.init()
+        super.init(connect: self.frequencySweepEnvelope)
     }
 }
 
@@ -380,11 +423,22 @@ public class APU {
         let nr11 = self.mmu.nr11.read()
         let nr10 = self.mmu.nr10.read()
         
-        let numberOfSweepShifts = nr10 & 0b00000111
-        let sweepIncreasing = nr10.bit(3)
-        let sweepTime = (nr10 & 0b01110000) >> 4
+        self.pulseA.frequencySweepEnvelope.sweepShifts = nr10 & 0b00000111
+        self.pulseA.frequencySweepEnvelope.sweepIncreasing = nr10.bit(3)
+        switch ((nr10 & 0b01110000) >> 4) {
+        case 0b000: self.pulseA.frequencySweepEnvelope.sweepTime = 0
+        case 0b001: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0078
+        case 0b010: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0156
+        case 0b011: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0234
+        case 0b100: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0313
+        case 0b101: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0391
+        case 0b110: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0469
+        case 0b111: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0547
+        default: print("Sweep time not handled for PulseA")
+        }
+        self.pulseA.frequencySweepEnvelope.advance(seconds: seconds)
         
-        self.pulseA.frequency = 131072 / (2048 - Float(UInt16(nr13) + (UInt16(nr14 & 0b00000111) << 8)))
+        self.pulseA.frequency = bitsToFrequency(bits: UInt16(nr13) + (UInt16(nr14 & 0b00000111) << 8))
         
         self.pulseA.amplitudeEnvelope.startStep = Int((nr12 & 0b11110000) >> 4)
         self.pulseA.amplitudeEnvelope.stepDuration = Float(nr12 & 0b00000111) * 1 / 64
@@ -399,7 +453,7 @@ public class APU {
            playing = false
        }
         
-        switch(nr11 & 0b11000000) {
+        switch (nr11 & 0b11000000) {
         case 0b00000000: self.pulseA.wave.duty = 0.125
         case 0b01000000: self.pulseA.wave.duty = 0.25
         case 0b10000000: self.pulseA.wave.duty = 0.5
@@ -427,7 +481,7 @@ public class APU {
         let nr22 = self.mmu.nr22.read()
         let nr21 = self.mmu.nr21.read()
         
-        self.pulseB.frequency = 131072 / (2048 - Float(UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8)))
+        self.pulseB.frequency = bitsToFrequency(bits: UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8))
         
         self.pulseB.amplitudeEnvelope.startStep = Int((nr22 & 0b11110000) >> 4)
         self.pulseB.amplitudeEnvelope.stepDuration = Float(nr22 & 0b00000111) * 1 / 64
