@@ -183,19 +183,42 @@ class FrequencyRampEnvelope: Envelope {
 
 class FrequencySweepEnvelope: Envelope {
     private var elapsedTime: Float = 0
+    
     private var adjustedFrequency: Float = 0
+    
     private var startFrequency: Float = 0 {
         didSet {
             if startFrequency != oldValue {
-                calculateAdjustedFrequency()
+                restart()
             }
         }
     }
     
     var inner: Oscillator?
-    var sweepIncreasing = false
-    var sweepShifts: UInt8 = 0
-    var sweepTime: Float = 0
+    
+    var sweepIncreasing = false {
+        didSet {
+            if sweepIncreasing != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    var sweepShifts: UInt8 = 0 {
+        didSet {
+            if sweepShifts != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    var sweepTime: Float = 0 {
+        didSet {
+            if  sweepTime != oldValue {
+                restart()
+            }
+        }
+    }
     
     init(_ inner: Oscillator? = nil) {
         self.inner = inner
@@ -208,47 +231,32 @@ class FrequencySweepEnvelope: Envelope {
     }
     
     @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
+        if startFrequency == 0 {
+            restart()
+            return .notApplicable
+        }
+        
+        if sweepTime == 0 {
+            restart()
+            return .notApplicable
+        }
+        
+        if sweepShifts == 0 {
+            restart()
+            return .notApplicable
+        }
+        
         elapsedTime += seconds
         
-        return calculateAdjustedFrequency()
-    }
-    
-    @discardableResult func calculateAdjustedFrequency() -> EnvelopeStatus {
-        defer {
-            if adjustedFrequency != startFrequency {
-                print("freq", startFrequency, adjustedFrequency, elapsedTime, sweepTime, sweepShifts)
-                // TODO: freq 1048.576 131072.0 4.387903 0.0547 7 -> How do we get this state/result? 🤔
-            }
-        }
-        
-        if (startFrequency == 0) {
-            adjustedFrequency = startFrequency
-            return .notApplicable
-        }
-        
-        if (sweepTime == 0) {
-            adjustedFrequency = startFrequency
-            return .notApplicable
-        }
-        
-        if (sweepShifts == 0) {
-            adjustedFrequency = startFrequency
-            return .notApplicable
-        }
-        
-        let totalShifts = Int(elapsedTime / sweepTime) * Int(sweepShifts)
-            
-        if (totalShifts < 0) {
-            return .deactivated
-        }
-        
-        if (totalShifts > 11) {
-            return .deactivated
-        }
-        
+        let sweeps = Int(elapsedTime / sweepTime)
+        let totalShifts = sweeps > 0 ? sweeps * Int(sweepShifts) : 0
         let shiftedValue = sweepIncreasing ? frequencyToBits(frequency: startFrequency) << totalShifts : frequencyToBits(frequency: startFrequency) >> totalShifts
-            
-        if (shiftedValue > 2047) {
+        
+        if shiftedValue == 0 {
+            return .deactivated
+        }
+        
+        if shiftedValue > 2047 {
             return .deactivated
         }
         
@@ -259,7 +267,7 @@ class FrequencySweepEnvelope: Envelope {
     
     func restart() {
         elapsedTime = 0
-        calculateAdjustedFrequency()
+        adjustedFrequency = startFrequency
     }
 }
 
