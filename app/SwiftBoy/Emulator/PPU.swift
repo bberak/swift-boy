@@ -1,3 +1,10 @@
+// TODO: self.objectsEnabled is not currently being used anywhere
+// TODO: Handle sprite priority: https://youtu.be/HyzD8pNlpwI?t=2179
+// TODO: Handle transparent pixel: https://youtu.be/HyzD8pNlpwI?t=3308
+// TODO: Double-break code in pixelTransfer() function is horrible - even for my standards..
+// TODO: Need a helper function like: let pixels =  fill(pallete, lsb: [0,1,2,3], hsb: [0,1,2,3])
+// TODO: And another: let pixels = mix(base: pixels1, with: pixels2, from: someIndex)
+
 import Foundation
 import UIKit
 import SwiftUI
@@ -190,7 +197,7 @@ public class PPU {
             self.backgroundTileSet = byte.bit(4) ? 1 : 0
             self.backgroundTileMap = byte.bit(3) ? 1 : 0
             self.objSize = byte.bit(2) ? [8, 16] : [8, 8]
-            self.objectsEnabled = byte.bit(1) // TODO: self.objectsEnabled is not currently being used anywhere
+            self.objectsEnabled = byte.bit(1)
             self.backgroundEnabled = byte.bit(0)
         }
         
@@ -398,9 +405,6 @@ public class PPU {
                             pixels[(x + Int(scx)) % pixels.count] = self.bgPalette[v1 + v2]!
                             x = x + 1
                             
-                            // TODO: This double-break code is horrible - even for my standards..
-                            // TODO: Need a helper function like: let pixels =  fill(pallete, lsb: [0,1,2,3], hsb: [0,1,2,3])
-                            // TODO: And another: let pixels = mix(base: pixels1, with: pixels2, from: someIndex)
                             if x >= pixels.count {
                                 break
                             }
@@ -413,8 +417,6 @@ public class PPU {
                 }
             }
             
-            // TODO: Handle sprite priority: https://youtu.be/HyzD8pNlpwI?t=2179
-            // TODO: Handle transparent pixel: https://youtu.be/HyzD8pNlpwI?t=3308
             for obj in data.objectsWithTileData {
                 let palette = obj.object.attributes.bit(4) ? self.obj1Palette : self.obj0Palette
                 let flipY = obj.object.attributes.bit(6)

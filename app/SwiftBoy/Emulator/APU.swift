@@ -1,3 +1,11 @@
+// TODO: Figure out a good default for master volume 🤔
+// TODO: I think frequency needs to be interpolated/eased to avoid pops and clicks (see FrequencyRampEnvelope class)
+// TODO: I think amplitude needs to be interpolated/eased to avoid pops and clicks
+// TODO: Should sample returned from AmplitudeEnvelope be lerped between -1 an 1?
+// TODO: I think there is something wrong with PulseA's envelopes. I'm pretty sure it should be playing the Nintento ping during boot - but it doesn't
+// TODO: Frequency sweep doesn't seem to be working at all
+// TODO: Still experiencing the weird pops and clicks when changing music tracks on Tetris
+
 import Foundation
 import AVFoundation
 
@@ -78,7 +86,6 @@ class AmplitudeEnvelope: Envelope {
     }
     
     func signal(_ frequency: Float, _ time: Float) -> Float {
-        // TODO: Should this sample be lerped between -1 an 1?
         return (inner?.signal(frequency, time) ?? 0) * amplitude
     }
     
@@ -276,7 +283,7 @@ class Voice {
     private(set) var rightChannelOutput = true
     
     var sampleRate: Float = 44100
-    var frequency: Float = 0 // TODO: I think frequency needs to be interpolated/eased to avoid pops and clicks?
+    var frequency: Float = 0
     var time: Float = 0
     var oscillator: Oscillator
     var enabled = false
@@ -477,7 +484,7 @@ public class APU {
         self.pulseA = PulseWithSweep()
         self.pulseB = Pulse()
         self.master = Synth(voices: [self.pulseA, self.pulseB])
-        self.master.volume = 0.125 // TODO: What's a good default here? 🤔
+        self.master.volume = 0.125
     }
     
     func playPulseA(seconds: Float) -> Bool {

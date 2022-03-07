@@ -1,3 +1,5 @@
+// TODO: Rename UInt8.swap() function to swapNibbles()
+
 import Foundation
 
 public func readPath(path: URL) -> Data {
@@ -69,7 +71,6 @@ public extension UInt8 {
         return self | mask
     }
     
-    // TODO: Rename this to swapNibbles
     func swap() -> UInt8 {
         let hb = self << 4
         let lb = self >> 4

@@ -1,3 +1,5 @@
+// TODO: Refactor cycle calculations in the frame() function. Need to be more explicit and maybe encapsulated into their respective components
+
 import Foundation
 
 public class Clock {
@@ -55,8 +57,6 @@ public class Clock {
         StopWatch.global.start("frame")
         
         while total < 70224 {
-            // TODO: Think these cycle calculations need to be refactored. More explicit and maybe encapsulated into their respective components.
-            
             StopWatch.global.start("cpu")
             try cpu.run(for: cycles / 4) // 1 MHz
             StopWatch.global.stop("cpu")

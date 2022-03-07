@@ -3,6 +3,9 @@
 // https://retrocomputing.stackexchange.com/questions/11732/how-does-the-gameboys-memory-bank-switching-work
 // https://b13rg.github.io/Gameboy-MBC-Analysis/
 
+// TODO: Support more MBC types
+// TODO: Support RAM persistence to local storage (saves, games state etc)
+
 import Foundation
 
 enum MBCType: UInt8 {
