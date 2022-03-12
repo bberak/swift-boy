@@ -2,7 +2,7 @@
 // TODO: I think frequency needs to be interpolated/eased to avoid pops and clicks (see FrequencyRampEnvelope class)
 // TODO: I think amplitude needs to be interpolated/eased to avoid pops and clicks
 // TODO: Should sample returned from AmplitudeEnvelope be lerped between -1 an 1?
-// TODO: I think there is something wrong with PulseA's envelopes. I'm pretty sure it should be playing the Nintento ping during boot - but it doesn't
+// TODO: I think there is something wrong with PulseA's envelopes. I'm pretty sure it should be playing the Nintento ping during boot - but it doesn't. Check the amplitude envelope.
 // TODO: Frequency sweep doesn't seem to be working at all
 // TODO: Still experiencing the weird pops and clicks when changing music tracks on Tetris
 
