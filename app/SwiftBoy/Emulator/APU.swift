@@ -50,16 +50,22 @@ enum EnvelopeStatus {
 }
 
 protocol Envelope {
-    var inner: Node? { get set }
+    var inner: Voice? { get set }
     func advance(seconds: Float) -> EnvelopeStatus
     func restart() -> Void
 }
 
 class AmplitudeEnvelope: Envelope {
     private var elapsedTime: Float = 0
-    private var amplitude: Float = 0
+    private var amplitude: Float = 0 {
+        didSet {
+            if amplitude != oldValue {
+                inner?.amplitude = amplitude
+            }
+        }
+    }
     
-    var inner: Node?
+    var inner: Voice?
     
     var startStep: Int = 0 {
         didSet {
@@ -85,13 +91,9 @@ class AmplitudeEnvelope: Envelope {
         }
     }
     
-    init(_ inner: Oscillator? = nil) {
+    init(_ inner: Voice? = nil) {
         self.inner = inner
     }
-    
-//    func signal(_ frequency: Float, _ time: Float) -> Float {
-//        return (inner?.signal(frequency, time) ?? 0) * amplitude
-//    }
     
     @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
         if stepDuration == 0 {
@@ -117,7 +119,7 @@ class AmplitudeEnvelope: Envelope {
 class LengthEnvelope: Envelope {
     private var elapsedTime: Float = 0
     
-    var inner: Node?
+    var inner: Voice?
     
     var enabled = false {
         didSet {
@@ -135,7 +137,7 @@ class LengthEnvelope: Envelope {
         }
     }
     
-    init(_ inner: Oscillator? = nil) {
+    init(_ inner: Voice? = nil) {
         self.inner = inner
     }
     
@@ -170,12 +172,12 @@ class LengthEnvelope: Envelope {
     }
 }
 
-class FrequencyRampEnvelope {
-    var inner: Node?
+class FrequencyRampEnvelope: Envelope {
+    var inner: Voice?
     var frequencyRamped: Float = 0
     var rampFactor: Float = 0.01
     
-    init(_ inner: Oscillator? = nil) {
+    init(_ inner: Voice? = nil) {
         self.inner = inner
     }
     
@@ -205,7 +207,7 @@ class FrequencySweepEnvelope: Envelope {
         }
     }
     
-    var inner: Node?
+    var inner: Voice?
     
     var sweepIncreasing = false {
         didSet {
@@ -231,7 +233,7 @@ class FrequencySweepEnvelope: Envelope {
         }
     }
     
-    init(_ inner: Oscillator? = nil) {
+    init(_ inner: Voice? = nil) {
         self.inner = inner
     }
     
@@ -287,7 +289,7 @@ class Voice {
     private(set) var panner: Panner
     private(set) var leftChannelOn = true
     private(set) var rightChannelOn = true
-    private var targetVolume: Float = 0
+    private(set) var targetAmplitude: Float = 0
     
     var frequency: Float {
         get { oscillator.frequency }
@@ -296,13 +298,13 @@ class Voice {
         }
     }
     
-    var volume: Float {
+    var amplitude: Float {
         get {
             oscillator.amplitude
         }
         set {
+            targetAmplitude = newValue
             oscillator.$amplitude.ramp(to: newValue, duration: 0.01)
-            targetVolume = newValue
         }
     }
     
@@ -318,7 +320,7 @@ class Voice {
     var enabled: Bool = false {
         didSet {
             if enabled {
-                oscillator.amplitude = targetVolume
+                oscillator.amplitude = targetAmplitude
             }
             
             if !enabled {
@@ -345,7 +347,7 @@ class Voice {
         if !left && !right {
             oscillator.amplitude = 0
         } else {
-            oscillator.amplitude = targetVolume
+            oscillator.amplitude = targetAmplitude
         }
         
         leftChannelOn = left
@@ -354,9 +356,9 @@ class Voice {
 }
 
 class Pulse: Voice {
-    let wave: Square
-    let amplitudeEnvelope: AmplitudeEnvelope
-    let lengthEnvelope: LengthEnvelope
+    let wave = Square()
+    let amplitudeEnvelope = AmplitudeEnvelope()
+    let lengthEnvelope = LengthEnvelope()
     
     override var enabled: Bool {
         didSet {
@@ -368,22 +370,17 @@ class Pulse: Voice {
     }
     
     init() {
-        wave = Square()
-        amplitudeEnvelope = AmplitudeEnvelope()
-        lengthEnvelope = LengthEnvelope()
-        
-//        amplitudeEnvelope.inner = wave
-//        lengthEnvelope.inner = amplitudeEnvelope
-        
         super.init(oscillator: Oscillator(waveform: Table(.square)))
+        
+        amplitudeEnvelope.inner = self
     }
 }
 
 class PulseWithSweep: Voice {
-    let wave: Square
-    let amplitudeEnvelope: AmplitudeEnvelope
-    let lengthEnvelope: LengthEnvelope
-    let frequencySweepEnvelope: FrequencySweepEnvelope
+    let wave = Square()
+    let amplitudeEnvelope = AmplitudeEnvelope()
+    let lengthEnvelope = LengthEnvelope()
+    let frequencySweepEnvelope = FrequencySweepEnvelope()
     
     override var enabled: Bool {
         didSet {
@@ -396,16 +393,9 @@ class PulseWithSweep: Voice {
     }
     
     init() {
-        wave = Square()
-        amplitudeEnvelope = AmplitudeEnvelope()
-        lengthEnvelope = LengthEnvelope()
-        frequencySweepEnvelope = FrequencySweepEnvelope()
-        
-//        amplitudeEnvelope.inner = wave
-//        lengthEnvelope.inner = amplitudeEnvelope
-//        frequencySweepEnvelope.inner = lengthEnvelope
-        
         super.init(oscillator: Oscillator(waveform: Table(.square)))
+        
+        amplitudeEnvelope.inner = self
     }
 }
 
@@ -447,7 +437,7 @@ class Synthesizer {
     func setLeftChannelVolume(_ val: Float) {
         for voice in voices {
             if voice.leftChannelOn {
-                voice.volume = val
+                voice.amplitude = val
             }
         }
     }
@@ -455,7 +445,7 @@ class Synthesizer {
     func setRightChannelVolume(_ val: Float) {
         for voice in voices {
             if voice.rightChannelOn {
-                voice.volume = val
+                voice.amplitude = val
             }
         }
     }
