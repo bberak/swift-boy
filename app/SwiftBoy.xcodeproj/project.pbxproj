@@ -3,10 +3,12 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A11768D127E55F2600DC4751 /* AudioKit in Frameworks */ = {isa = PBXBuildFile; productRef = A11768D027E55F2600DC4751 /* AudioKit */; };
+		A11768D427E55F4100DC4751 /* SoundpipeAudioKit in Frameworks */ = {isa = PBXBuildFile; productRef = A11768D327E55F4100DC4751 /* SoundpipeAudioKit */; };
 		A11A5E2D277EB2DD00D12966 /* super-mario-land.gb in Resources */ = {isa = PBXBuildFile; fileRef = A11A5E2C277EB2DD00D12966 /* super-mario-land.gb */; };
 		A12B15FA2774851C00418291 /* Joypad.swift in Sources */ = {isa = PBXBuildFile; fileRef = A12B15F92774851C00418291 /* Joypad.swift */; };
 		A1514E37277EADA0005A50B5 /* deadeus.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1514E36277EABD8005A50B5 /* deadeus.gb */; };
@@ -81,6 +83,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A11768D427E55F4100DC4751 /* SoundpipeAudioKit in Frameworks */,
+				A11768D127E55F2600DC4751 /* AudioKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -174,6 +178,10 @@
 			dependencies = (
 			);
 			name = SwiftBoy;
+			packageProductDependencies = (
+				A11768D027E55F2600DC4751 /* AudioKit */,
+				A11768D327E55F4100DC4751 /* SoundpipeAudioKit */,
+			);
 			productName = "Swift Boy";
 			productReference = A1B4010E26EB5937002F4512 /* SwiftBoy.app */;
 			productType = "com.apple.product-type.application";
@@ -202,6 +210,10 @@
 				Base,
 			);
 			mainGroup = A1B4010526EB5937002F4512;
+			packageReferences = (
+				A11768CF27E55F2600DC4751 /* XCRemoteSwiftPackageReference "AudioKit" */,
+				A11768D227E55F4100DC4751 /* XCRemoteSwiftPackageReference "SoundpipeAudioKit" */,
+			);
 			productRefGroup = A1B4010F26EB5937002F4512 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -474,6 +486,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A11768CF27E55F2600DC4751 /* XCRemoteSwiftPackageReference "AudioKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AudioKit/AudioKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+		A11768D227E55F4100DC4751 /* XCRemoteSwiftPackageReference "SoundpipeAudioKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AudioKit/SoundpipeAudioKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A11768D027E55F2600DC4751 /* AudioKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A11768CF27E55F2600DC4751 /* XCRemoteSwiftPackageReference "AudioKit" */;
+			productName = AudioKit;
+		};
+		A11768D327E55F4100DC4751 /* SoundpipeAudioKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A11768D227E55F4100DC4751 /* XCRemoteSwiftPackageReference "SoundpipeAudioKit" */;
+			productName = SoundpipeAudioKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A1B4010626EB5937002F4512 /* Project object */;
 }

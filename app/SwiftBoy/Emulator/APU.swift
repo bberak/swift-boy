@@ -5,9 +5,11 @@
 // TODO: I think there is something wrong with PulseA's envelopes. I'm pretty sure it should be playing the Nintento ping during boot - but it doesn't. Check the amplitude envelope.
 // TODO: Frequency sweep doesn't seem to be working at all
 // TODO: Still experiencing the weird pops and clicks when changing music tracks on Tetris
+// TODO: Get rid of unecessary 'self' references? Or at least be consisten!
 
 import Foundation
-import AVFoundation
+import AudioKit
+import SoundpipeAudioKit
 
 func bitsToFrequency(bits: UInt16) -> Float {
     return 131072 / (2048 - Float(bits))
@@ -17,13 +19,14 @@ func frequencyToBits(frequency: Float) -> UInt16 {
     return UInt16(2048 - (131072 / frequency))
 }
 
-protocol Oscillator: AnyObject {
-    func signal(_ frequency: Float, _ time: Float) -> Float
-}
+//protocol Oscillator: AnyObject {
+//    func signal(_ frequency: Float, _ time: Float) -> Float
+//}
+//
 
-class Square: Oscillator {
+class Square {
     var duty: Float = 0.5
-    
+
     func signal(_ frequency: Float, _ time: Float) -> Float {
         if (frequency * time) <= duty {
             return 1.0
@@ -33,11 +36,12 @@ class Square: Oscillator {
     }
 }
 
-class Noise: Oscillator {
-    func signal(_ frequency: Float, _ time: Float) -> Float {
-        return ((Float(arc4random_uniform(UINT32_MAX)) / Float(UINT32_MAX)) * 2 - 1)
-    }
-}
+//
+//class Noise: Oscillator {
+//    func signal(_ frequency: Float, _ time: Float) -> Float {
+//        return ((Float(arc4random_uniform(UINT32_MAX)) / Float(UINT32_MAX)) * 2 - 1)
+//    }
+//}
 
 enum EnvelopeStatus {
     case active
@@ -45,8 +49,8 @@ enum EnvelopeStatus {
     case notApplicable
 }
 
-protocol Envelope: Oscillator {
-    var inner: Oscillator? { get set }
+protocol Envelope {
+    var inner: Node? { get set }
     func advance(seconds: Float) -> EnvelopeStatus
     func restart() -> Void
 }
@@ -55,7 +59,7 @@ class AmplitudeEnvelope: Envelope {
     private var elapsedTime: Float = 0
     private var amplitude: Float = 0
     
-    var inner: Oscillator?
+    var inner: Node?
     
     var startStep: Int = 0 {
         didSet {
@@ -85,9 +89,9 @@ class AmplitudeEnvelope: Envelope {
         self.inner = inner
     }
     
-    func signal(_ frequency: Float, _ time: Float) -> Float {
-        return (inner?.signal(frequency, time) ?? 0) * amplitude
-    }
+//    func signal(_ frequency: Float, _ time: Float) -> Float {
+//        return (inner?.signal(frequency, time) ?? 0) * amplitude
+//    }
     
     @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
         if stepDuration == 0 {
@@ -113,7 +117,7 @@ class AmplitudeEnvelope: Envelope {
 class LengthEnvelope: Envelope {
     private var elapsedTime: Float = 0
     
-    var inner: Oscillator?
+    var inner: Node?
     
     var enabled = false {
         didSet {
@@ -135,13 +139,13 @@ class LengthEnvelope: Envelope {
         self.inner = inner
     }
     
-    func signal(_ frequency: Float, _ time: Float) -> Float {
-        if enabled {
-            return elapsedTime < duration ? inner?.signal(frequency, time) ?? 0 : 0
-        } else {
-            return inner?.signal(frequency, time) ?? 0
-        }
-    }
+//    func signal(_ frequency: Float, _ time: Float) -> Float {
+//        if enabled {
+//            return elapsedTime < duration ? inner?.signal(frequency, time) ?? 0 : 0
+//        } else {
+//            return inner?.signal(frequency, time) ?? 0
+//        }
+//    }
     
     func advance(seconds: Float) -> EnvelopeStatus {
         if !enabled {
@@ -166,8 +170,8 @@ class LengthEnvelope: Envelope {
     }
 }
 
-class FrequencyRampEnvelope: Envelope {
-    var inner: Oscillator?
+class FrequencyRampEnvelope {
+    var inner: Node?
     var frequencyRamped: Float = 0
     var rampFactor: Float = 0.01
     
@@ -175,11 +179,11 @@ class FrequencyRampEnvelope: Envelope {
         self.inner = inner
     }
     
-    func signal(_ frequency: Float, _ time: Float) -> Float {
-        frequencyRamped = frequencyRamped + (frequency - frequencyRamped) * rampFactor
-        
-        return inner?.signal(frequencyRamped, time) ?? 0
-    }
+//    func signal(_ frequency: Float, _ time: Float) -> Float {
+//        frequencyRamped = frequencyRamped + (frequency - frequencyRamped) * rampFactor
+//
+//        return inner?.signal(frequencyRamped, time) ?? 0
+//    }
     
     @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
         return .notApplicable
@@ -201,7 +205,7 @@ class FrequencySweepEnvelope: Envelope {
         }
     }
     
-    var inner: Oscillator?
+    var inner: Node?
     
     var sweepIncreasing = false {
         didSet {
@@ -231,11 +235,11 @@ class FrequencySweepEnvelope: Envelope {
         self.inner = inner
     }
     
-    func signal(_ frequency: Float, _ time: Float) -> Float {
-        startFrequency = frequency
-        
-        return inner?.signal(adjustedFrequency, time) ?? 0
-    }
+//    func signal(_ frequency: Float, _ time: Float) -> Float {
+//        startFrequency = frequency
+//
+//        return inner?.signal(adjustedFrequency, time) ?? 0
+//    }
     
     @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
         if startFrequency == 0 {
@@ -281,56 +285,54 @@ class FrequencySweepEnvelope: Envelope {
 class Voice {
     private(set) var leftChannelOutput = true
     private(set) var rightChannelOutput = true
+    private var targetVolume: Float = 0
     
-    var sampleRate: Float = 44100
-    var frequency: Float = 0
-    var time: Float = 0
     var oscillator: Oscillator
-    var enabled = false
-        
+    var panner: Panner
+    
+    var frequency: Float {
+        get { oscillator.frequency }
+        set {
+            oscillator.$frequency.ramp(to: newValue, duration: 0.01)
+            //oscillator.frequency = newValue
+        }
+    }
+    
     var volume: Float {
         get {
-            sourceNode.volume
+            oscillator.amplitude
         }
         set {
-            sourceNode.volume = newValue
+            oscillator.$amplitude.ramp(to: newValue, duration: 0.01)
+            targetVolume = newValue
         }
     }
     
     var pan: Float {
         get {
-            return sourceNode.pan
+            return panner.pan
         }
         set {
-            sourceNode.pan = newValue
+            panner.$pan.ramp(to: newValue, duration: 0.01)
         }
     }
     
-    lazy var sourceNode = AVAudioSourceNode { _, _, frameCount, audioBufferList in
-        let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
-        let period = 1 / self.frequency
-        let deltaTime = 1 / self.sampleRate
-        
-        for frame in 0..<Int(frameCount) {
-            var sample: Float = 0
-            
-            if self.enabled && (self.leftChannelOutput || self.rightChannelOutput) {
-                sample = self.oscillator.signal(self.frequency, self.time)
-                self.time += deltaTime
-                self.time = fmod(self.time, period) // This line ensures that 'time' corectly stays within the range of zero and one 'period'
+    var enabled: Bool = false {
+        didSet {
+            if enabled {
+                oscillator.amplitude = targetVolume
             }
             
-            for buffer in ablPointer {
-                let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(buffer)
-                buf[frame] = sample
+            if !enabled {
+                oscillator.amplitude = 0
             }
         }
-                
-        return noErr
     }
     
     init(oscillator: Oscillator) {
         self.oscillator = oscillator
+        self.oscillator.start()
+        self.panner = Panner(oscillator)
     }
     
     func setChannels(left: Bool, right: Bool) {
@@ -350,54 +352,40 @@ class Voice {
 // Source: https://github.com/GrantJEmerson/SwiftSynth/blob/master/Swift%20Synth/Audio/Synth.swift
 class Synth {
     let voices: [Voice]
-    let audioEngine: AVAudioEngine
+    let engine: AudioEngine
+    let mixer: Mixer
     
     public var volume: Float {
         get {
-            audioEngine.mainMixerNode.outputVolume
+            engine.mainMixerNode?.volume ?? 0
         }
         set {
-            audioEngine.mainMixerNode.outputVolume = newValue
+            engine.mainMixerNode?.volume  = newValue
         }
     }
     
     var enabled = false {
         didSet {
-            if enabled && !audioEngine.isRunning {
+            if enabled && !engine.avEngine.isRunning {
                 do {
-                    try self.audioEngine.start()
+                    try self.engine.start()
                 } catch {
                     print("Could not start engine: \(error.localizedDescription)")
                 }
             }
             
-            if !enabled && audioEngine.isRunning {
-                self.audioEngine.stop()
+            if !enabled && engine.avEngine.isRunning {
+                self.engine.stop()
             }
         }
     }
     
     init(volume: Float = 0.5, voices: [Voice]) {
         self.voices = voices
-        self.audioEngine = AVAudioEngine()
-        
-        let mainMixer = audioEngine.mainMixerNode
-        let outputNode = audioEngine.outputNode
-        let format = outputNode.inputFormat(forBus: 0)
-        let inputFormat = AVAudioFormat(commonFormat: format.commonFormat,
-                                        sampleRate: format.sampleRate,
-                                        channels: 1,
-                                        interleaved: format.isInterleaved)
-        
-        for voice in voices {
-            voice.sampleRate = Float(format.sampleRate)
-            audioEngine.attach(voice.sourceNode)
-            audioEngine.connect(voice.sourceNode, to: mainMixer, format: inputFormat)
-        }
-                
-        audioEngine.connect(mainMixer, to: outputNode, format: nil)
-        
-        mainMixer.outputVolume = volume
+        self.mixer = Mixer(voices.map({ $0.panner }))
+        self.engine = AudioEngine()
+        self.engine.output = mixer
+        self.engine.mainMixerNode?.volume = volume
     }
     
     func setLeftChannelVolume(_ val: Float) {
@@ -436,10 +424,10 @@ class Pulse: Voice {
         amplitudeEnvelope = AmplitudeEnvelope()
         lengthEnvelope = LengthEnvelope()
         
-        amplitudeEnvelope.inner = wave
-        lengthEnvelope.inner = amplitudeEnvelope
+//        amplitudeEnvelope.inner = wave
+//        lengthEnvelope.inner = amplitudeEnvelope
         
-        super.init(oscillator: lengthEnvelope)
+        super.init(oscillator: Oscillator(waveform: Table(.square)))
     }
 }
 
@@ -465,11 +453,11 @@ class PulseWithSweep: Voice {
         lengthEnvelope = LengthEnvelope()
         frequencySweepEnvelope = FrequencySweepEnvelope()
         
-        amplitudeEnvelope.inner = wave
-        lengthEnvelope.inner = amplitudeEnvelope
-        frequencySweepEnvelope.inner = lengthEnvelope
+//        amplitudeEnvelope.inner = wave
+//        lengthEnvelope.inner = amplitudeEnvelope
+//        frequencySweepEnvelope.inner = lengthEnvelope
         
-        super.init(oscillator: frequencySweepEnvelope)
+        super.init(oscillator: Oscillator(waveform: Table(.square)))
     }
 }
 
@@ -484,7 +472,7 @@ public class APU {
         self.pulseA = PulseWithSweep()
         self.pulseB = Pulse()
         self.master = Synth(voices: [self.pulseA, self.pulseB])
-        self.master.volume = 0.125
+        //self.master.volume = 0.125
     }
     
     func playPulseA(seconds: Float) -> Bool {
