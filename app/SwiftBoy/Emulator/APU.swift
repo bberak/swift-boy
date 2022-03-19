@@ -283,18 +283,16 @@ class FrequencySweepEnvelope: Envelope {
 }
 
 class Voice {
-    private(set) var leftChannelOutput = true
-    private(set) var rightChannelOutput = true
+    private(set) var oscillator: Oscillator
+    private(set) var panner: Panner
+    private(set) var leftChannelOn = true
+    private(set) var rightChannelOn = true
     private var targetVolume: Float = 0
-    
-    var oscillator: Oscillator
-    var panner: Panner
     
     var frequency: Float {
         get { oscillator.frequency }
         set {
             oscillator.$frequency.ramp(to: newValue, duration: 0.01)
-            //oscillator.frequency = newValue
         }
     }
     
@@ -344,64 +342,14 @@ class Voice {
             pan = 1
         }
         
-        self.leftChannelOutput = left
-        self.rightChannelOutput = right
-    }
-}
-
-// Source: https://github.com/GrantJEmerson/SwiftSynth/blob/master/Swift%20Synth/Audio/Synth.swift
-class Synth {
-    let voices: [Voice]
-    let engine: AudioEngine
-    let mixer: Mixer
-    
-    public var volume: Float {
-        get {
-            engine.mainMixerNode?.volume ?? 0
+        if !left && !right {
+            oscillator.amplitude = 0
+        } else {
+            oscillator.amplitude = targetVolume
         }
-        set {
-            engine.mainMixerNode?.volume  = newValue
-        }
-    }
-    
-    var enabled = false {
-        didSet {
-            if enabled && !engine.avEngine.isRunning {
-                do {
-                    try self.engine.start()
-                } catch {
-                    print("Could not start engine: \(error.localizedDescription)")
-                }
-            }
-            
-            if !enabled && engine.avEngine.isRunning {
-                self.engine.stop()
-            }
-        }
-    }
-    
-    init(volume: Float = 0.5, voices: [Voice]) {
-        self.voices = voices
-        self.mixer = Mixer(voices.map({ $0.panner }))
-        self.engine = AudioEngine()
-        self.engine.output = mixer
-        self.engine.mainMixerNode?.volume = volume
-    }
-    
-    func setLeftChannelVolume(_ val: Float) {
-        for voice in voices {
-            if voice.leftChannelOutput {
-                voice.volume = val
-            }
-        }
-    }
-    
-    func setRightChannelVolume(_ val: Float) {
-        for voice in voices {
-            if voice.rightChannelOutput {
-                voice.volume = val
-            }
-        }
+        
+        leftChannelOn = left
+        rightChannelOn = right
     }
 }
 
@@ -461,9 +409,61 @@ class PulseWithSweep: Voice {
     }
 }
 
+// Source: https://github.com/GrantJEmerson/SwiftSynth/blob/master/Swift%20Synth/Audio/Synth.swift
+class Synthesizer {
+    let voices: [Voice]
+    let engine: AudioEngine
+    let mixer: Mixer
+    
+    public var volume: Float {
+        get {
+            engine.mainMixerNode?.volume ?? 0
+        }
+        set {
+            engine.mainMixerNode?.volume  = newValue
+        }
+    }
+    
+    var enabled = false {
+        didSet {
+            if enabled && !engine.avEngine.isRunning {
+                try? self.engine.start()
+            }
+            
+            if !enabled && engine.avEngine.isRunning {
+                self.engine.stop()
+            }
+        }
+    }
+    
+    init(volume: Float = 0.5, voices: [Voice]) {
+        self.voices = voices
+        self.mixer = Mixer(voices.map({ $0.panner }))
+        self.engine = AudioEngine()
+        self.engine.output = mixer
+        self.engine.mainMixerNode?.volume = volume
+    }
+    
+    func setLeftChannelVolume(_ val: Float) {
+        for voice in voices {
+            if voice.leftChannelOn {
+                voice.volume = val
+            }
+        }
+    }
+    
+    func setRightChannelVolume(_ val: Float) {
+        for voice in voices {
+            if voice.rightChannelOn {
+                voice.volume = val
+            }
+        }
+    }
+}
+
 public class APU {
     private let mmu: MMU
-    private let master: Synth
+    private let master: Synthesizer
     private let pulseA: PulseWithSweep
     private let pulseB: Pulse
     
@@ -471,8 +471,8 @@ public class APU {
         self.mmu = mmu
         self.pulseA = PulseWithSweep()
         self.pulseB = Pulse()
-        self.master = Synth(voices: [self.pulseA, self.pulseB])
-        //self.master.volume = 0.125
+        self.master = Synthesizer(voices: [self.pulseA, self.pulseB])
+        self.master.volume = 0.125
     }
     
     func playPulseA(seconds: Float) -> Bool {
