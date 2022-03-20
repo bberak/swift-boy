@@ -5,7 +5,7 @@
 // TODO: I think there is something wrong with PulseA's envelopes. I'm pretty sure it should be playing the Nintento ping during boot - but it doesn't. Check the amplitude envelope.
 // TODO: Frequency sweep doesn't seem to be working at all
 // TODO: Still experiencing the weird pops and clicks when changing music tracks on Tetris
-// TODO: Get rid of unecessary 'self' references? Or at least be consisten!
+// TODO: Get rid of unecessary 'self' references? Or at least be consistent..
 
 import Foundation
 import AudioKit
@@ -94,6 +94,18 @@ class Voice {
         leftChannelOn = left
         rightChannelOn = right
     }
+    
+    func start() {
+        if !oscillator.isStarted {
+            oscillator.start()
+        }
+    }
+    
+    func stop() {
+        if oscillator.isStarted {
+            oscillator.stop()
+        }
+    }
 }
 
 enum EnvelopeStatus {
@@ -105,7 +117,7 @@ enum EnvelopeStatus {
 protocol Envelope {
     var voice: Voice? { get set }
     func advance(seconds: Float) -> EnvelopeStatus
-    func restart() -> Void
+    func reset() -> Void
 }
 
 class AmplitudeEnvelope: Envelope {
@@ -123,7 +135,7 @@ class AmplitudeEnvelope: Envelope {
     var startStep: Int = 0 {
         didSet {
             if startStep != oldValue {
-                restart()
+                reset()
             }
         }
     }
@@ -131,7 +143,7 @@ class AmplitudeEnvelope: Envelope {
     var increasing = false {
         didSet {
             if increasing != oldValue {
-                restart()
+                reset()
             }
         }
     }
@@ -139,7 +151,7 @@ class AmplitudeEnvelope: Envelope {
     var stepDuration: Float = 0 {
         didSet {
             if stepDuration != oldValue {
-                restart()
+                reset()
             }
         }
     }
@@ -163,7 +175,7 @@ class AmplitudeEnvelope: Envelope {
         return .notApplicable
     }
     
-    func restart() {
+    func reset() {
         elapsedTime = 0
         amplitude = Float(startStep) / 0x0F
     }
@@ -171,13 +183,20 @@ class AmplitudeEnvelope: Envelope {
 
 class LengthEnvelope: Envelope {
     private var elapsedTime: Float = 0
+    private var amplitude: Float = 0 {
+        didSet {
+            if amplitude != oldValue {
+                voice?.amplitude = amplitude
+            }
+        }
+    }
     
     var voice: Voice?
     
     var enabled = false {
         didSet {
             if enabled != oldValue {
-                restart()
+                reset()
             }
         }
     }
@@ -185,7 +204,7 @@ class LengthEnvelope: Envelope {
     var duration: Float = 0 {
         didSet {
             if duration != oldValue {
-                restart()
+                reset()
             }
         }
     }
@@ -196,34 +215,46 @@ class LengthEnvelope: Envelope {
     
     func advance(seconds: Float) -> EnvelopeStatus {
         if !enabled {
+            voice?.start()
             return .notApplicable
         }
         
         if duration == 0 {
+            voice?.start()
             return .notApplicable
         }
         
         if elapsedTime < duration {
             elapsedTime += seconds
+            voice?.oscillator.start()
             
             return .active
         }
         
+        voice?.oscillator.stop()
+        
         return .deactivated
     }
     
-    func restart() {
+    func reset() {
         elapsedTime = 0
     }
 }
 
 class FrequencySweepEnvelope: Envelope {
     private var elapsedTime: Float = 0
-    private var adjustedFrequency: Float = 0
-    private var startFrequency: Float = 0 {
+    private var adjustedFrequency: Float = 0 {
+        didSet {
+            if adjustedFrequency != oldValue {
+                voice?.frequency = adjustedFrequency
+            }
+        }
+    }
+    
+    var startFrequency: Float = 0 {
         didSet {
             if startFrequency != oldValue {
-                restart()
+                reset()
             }
         }
     }
@@ -233,7 +264,7 @@ class FrequencySweepEnvelope: Envelope {
     var sweepIncreasing = false {
         didSet {
             if sweepIncreasing != oldValue {
-                restart()
+                reset()
             }
         }
     }
@@ -241,7 +272,7 @@ class FrequencySweepEnvelope: Envelope {
     var sweepShifts: UInt8 = 0 {
         didSet {
             if sweepShifts != oldValue {
-                restart()
+                reset()
             }
         }
     }
@@ -249,7 +280,7 @@ class FrequencySweepEnvelope: Envelope {
     var sweepTime: Float = 0 {
         didSet {
             if  sweepTime != oldValue {
-                restart()
+                reset()
             }
         }
     }
@@ -260,17 +291,17 @@ class FrequencySweepEnvelope: Envelope {
     
     @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
         if startFrequency == 0 {
-            restart()
+            reset()
             return .notApplicable
         }
         
         if sweepTime == 0 {
-            restart()
+            reset()
             return .notApplicable
         }
         
         if sweepShifts == 0 {
-            restart()
+            reset()
             return .notApplicable
         }
         
@@ -293,7 +324,7 @@ class FrequencySweepEnvelope: Envelope {
         return .active
     }
     
-    func restart() {
+    func reset() {
         elapsedTime = 0
         adjustedFrequency = startFrequency
     }
@@ -307,8 +338,8 @@ class Pulse: Voice {
     override var enabled: Bool {
         didSet {
             if enabled && !oldValue {
-                amplitudeEnvelope.restart()
-                lengthEnvelope.restart()
+                amplitudeEnvelope.reset()
+                lengthEnvelope.reset()
             }
         }
     }
@@ -317,6 +348,7 @@ class Pulse: Voice {
         super.init(oscillator: Oscillator(waveform: Table(.square)))
         
         amplitudeEnvelope.voice = self
+        lengthEnvelope.voice = self
     }
 }
 
@@ -329,9 +361,9 @@ class PulseWithSweep: Voice {
     override var enabled: Bool {
         didSet {
             if enabled && !oldValue {
-                amplitudeEnvelope.restart()
-                lengthEnvelope.restart()
-                frequencySweepEnvelope.restart()
+                amplitudeEnvelope.reset()
+                lengthEnvelope.reset()
+                frequencySweepEnvelope.reset()
             }
         }
     }
@@ -340,10 +372,11 @@ class PulseWithSweep: Voice {
         super.init(oscillator: Oscillator(waveform: Table(.square)))
         
         amplitudeEnvelope.voice = self
+        lengthEnvelope.voice = self
+        frequencySweepEnvelope.voice = self
     }
 }
 
-// Source: https://github.com/GrantJEmerson/SwiftSynth/blob/master/Swift%20Synth/Audio/Synth.swift
 class Synthesizer {
     let voices: [Voice]
     let engine: AudioEngine
@@ -418,6 +451,7 @@ public class APU {
         let nr11 = self.mmu.nr11.read()
         let nr10 = self.mmu.nr10.read()
         
+        self.pulseA.frequencySweepEnvelope.startFrequency = bitsToFrequency(bits: UInt16(nr13) + (UInt16(nr14 & 0b00000111) << 8))
         self.pulseA.frequencySweepEnvelope.sweepShifts = nr10 & 0b00000111
         self.pulseA.frequencySweepEnvelope.sweepIncreasing = nr10.bit(3)
         
@@ -438,8 +472,6 @@ public class APU {
         if pulseASweetStatus == .deactivated {
             playing = false
         }
-        
-        self.pulseA.frequency = bitsToFrequency(bits: UInt16(nr13) + (UInt16(nr14 & 0b00000111) << 8))
         
         self.pulseA.amplitudeEnvelope.startStep = Int((nr12 & 0b11110000) >> 4)
         self.pulseA.amplitudeEnvelope.stepDuration = Float(nr12 & 0b00000111) * 1 / 64
@@ -517,7 +549,7 @@ public class APU {
         return playing
     }
     
-    func playWave(seconds: Float) -> Bool {
+    func playWaveform(seconds: Float) -> Bool {
         return false
     }
     
@@ -581,7 +613,7 @@ public class APU {
         // Voice specific controls
         nr52[0] = playPulseA(seconds: seconds)
         nr52[1] = playPulseB(seconds: seconds)
-        nr52[2] = playWave(seconds: seconds)
+        nr52[2] = playWaveform(seconds: seconds)
         nr52[3] = playNoise(seconds: seconds)
         
         self.mmu.nr52.write(nr52)
