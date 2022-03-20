@@ -19,269 +19,8 @@ func frequencyToBits(frequency: Float) -> UInt16 {
     return UInt16(2048 - (131072 / frequency))
 }
 
-//protocol Oscillator: AnyObject {
-//    func signal(_ frequency: Float, _ time: Float) -> Float
-//}
-//
-
 class Square {
     var duty: Float = 0.5
-
-    func signal(_ frequency: Float, _ time: Float) -> Float {
-        if (frequency * time) <= duty {
-            return 1.0
-        } else {
-            return -1.0
-        }
-    }
-}
-
-//
-//class Noise: Oscillator {
-//    func signal(_ frequency: Float, _ time: Float) -> Float {
-//        return ((Float(arc4random_uniform(UINT32_MAX)) / Float(UINT32_MAX)) * 2 - 1)
-//    }
-//}
-
-enum EnvelopeStatus {
-    case active
-    case deactivated
-    case notApplicable
-}
-
-protocol Envelope {
-    var inner: Voice? { get set }
-    func advance(seconds: Float) -> EnvelopeStatus
-    func restart() -> Void
-}
-
-class AmplitudeEnvelope: Envelope {
-    private var elapsedTime: Float = 0
-    private var amplitude: Float = 0 {
-        didSet {
-            if amplitude != oldValue {
-                inner?.amplitude = amplitude
-            }
-        }
-    }
-    
-    var inner: Voice?
-    
-    var startStep: Int = 0 {
-        didSet {
-            if startStep != oldValue {
-                restart()
-            }
-        }
-    }
-    
-    var increasing = false {
-        didSet {
-            if increasing != oldValue {
-                restart()
-            }
-        }
-    }
-    
-    var stepDuration: Float = 0 {
-        didSet {
-            if stepDuration != oldValue {
-                restart()
-            }
-        }
-    }
-    
-    init(_ inner: Voice? = nil) {
-        self.inner = inner
-    }
-    
-    @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
-        if stepDuration == 0 {
-            return .notApplicable
-        }
-        
-        elapsedTime += seconds
-          
-        let deltaSteps = Int(elapsedTime / stepDuration) * (increasing ? 1 : -1)
-        let currentStep = (startStep + deltaSteps).clamp(min: 0, max: 0x0F)
-        
-        amplitude = Float(currentStep) / 0x0F
-        
-        return .notApplicable
-    }
-    
-    func restart() {
-        elapsedTime = 0
-        amplitude = Float(startStep) / 0x0F
-    }
-}
-
-class LengthEnvelope: Envelope {
-    private var elapsedTime: Float = 0
-    
-    var inner: Voice?
-    
-    var enabled = false {
-        didSet {
-            if enabled != oldValue {
-                restart()
-            }
-        }
-    }
-    
-    var duration: Float = 0 {
-        didSet {
-            if duration != oldValue {
-                restart()
-            }
-        }
-    }
-    
-    init(_ inner: Voice? = nil) {
-        self.inner = inner
-    }
-    
-//    func signal(_ frequency: Float, _ time: Float) -> Float {
-//        if enabled {
-//            return elapsedTime < duration ? inner?.signal(frequency, time) ?? 0 : 0
-//        } else {
-//            return inner?.signal(frequency, time) ?? 0
-//        }
-//    }
-    
-    func advance(seconds: Float) -> EnvelopeStatus {
-        if !enabled {
-            return .notApplicable
-        }
-        
-        if duration == 0 {
-            return .notApplicable
-        }
-        
-        if elapsedTime < duration {
-            elapsedTime += seconds
-            
-            return .active
-        }
-        
-        return .deactivated
-    }
-    
-    func restart() {
-        elapsedTime = 0
-    }
-}
-
-class FrequencyRampEnvelope: Envelope {
-    var inner: Voice?
-    var frequencyRamped: Float = 0
-    var rampFactor: Float = 0.01
-    
-    init(_ inner: Voice? = nil) {
-        self.inner = inner
-    }
-    
-//    func signal(_ frequency: Float, _ time: Float) -> Float {
-//        frequencyRamped = frequencyRamped + (frequency - frequencyRamped) * rampFactor
-//
-//        return inner?.signal(frequencyRamped, time) ?? 0
-//    }
-    
-    @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
-        return .notApplicable
-    }
-    
-    func restart() { }
-}
-
-class FrequencySweepEnvelope: Envelope {
-    private var elapsedTime: Float = 0
-    
-    private var adjustedFrequency: Float = 0
-    
-    private var startFrequency: Float = 0 {
-        didSet {
-            if startFrequency != oldValue {
-                restart()
-            }
-        }
-    }
-    
-    var inner: Voice?
-    
-    var sweepIncreasing = false {
-        didSet {
-            if sweepIncreasing != oldValue {
-                restart()
-            }
-        }
-    }
-    
-    var sweepShifts: UInt8 = 0 {
-        didSet {
-            if sweepShifts != oldValue {
-                restart()
-            }
-        }
-    }
-    
-    var sweepTime: Float = 0 {
-        didSet {
-            if  sweepTime != oldValue {
-                restart()
-            }
-        }
-    }
-    
-    init(_ inner: Voice? = nil) {
-        self.inner = inner
-    }
-    
-//    func signal(_ frequency: Float, _ time: Float) -> Float {
-//        startFrequency = frequency
-//
-//        return inner?.signal(adjustedFrequency, time) ?? 0
-//    }
-    
-    @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
-        if startFrequency == 0 {
-            restart()
-            return .notApplicable
-        }
-        
-        if sweepTime == 0 {
-            restart()
-            return .notApplicable
-        }
-        
-        if sweepShifts == 0 {
-            restart()
-            return .notApplicable
-        }
-        
-        elapsedTime += seconds
-        
-        let sweeps = Int(elapsedTime / sweepTime)
-        let totalShifts = sweeps > 0 ? sweeps * Int(sweepShifts) : 0
-        let shiftedValue = sweepIncreasing ? frequencyToBits(frequency: startFrequency) << totalShifts : frequencyToBits(frequency: startFrequency) >> totalShifts
-        
-        if shiftedValue == 0 {
-            return .deactivated
-        }
-        
-        if shiftedValue > 2047 {
-            return .deactivated
-        }
-        
-        adjustedFrequency = bitsToFrequency(bits: shiftedValue)
-        
-        return .active
-    }
-    
-    func restart() {
-        elapsedTime = 0
-        adjustedFrequency = startFrequency
-    }
 }
 
 class Voice {
@@ -292,7 +31,9 @@ class Voice {
     private(set) var targetAmplitude: Float = 0
     
     var frequency: Float {
-        get { oscillator.frequency }
+        get {
+            oscillator.frequency
+        }
         set {
             oscillator.$frequency.ramp(to: newValue, duration: 0.01)
         }
@@ -310,7 +51,7 @@ class Voice {
     
     var pan: Float {
         get {
-            return panner.pan
+            panner.pan
         }
         set {
             panner.$pan.ramp(to: newValue, duration: 0.01)
@@ -355,6 +96,209 @@ class Voice {
     }
 }
 
+enum EnvelopeStatus {
+    case active
+    case deactivated
+    case notApplicable
+}
+
+protocol Envelope {
+    var voice: Voice? { get set }
+    func advance(seconds: Float) -> EnvelopeStatus
+    func restart() -> Void
+}
+
+class AmplitudeEnvelope: Envelope {
+    private var elapsedTime: Float = 0
+    private var amplitude: Float = 0 {
+        didSet {
+            if amplitude != oldValue {
+                voice?.amplitude = amplitude
+            }
+        }
+    }
+    
+    var voice: Voice?
+    
+    var startStep: Int = 0 {
+        didSet {
+            if startStep != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    var increasing = false {
+        didSet {
+            if increasing != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    var stepDuration: Float = 0 {
+        didSet {
+            if stepDuration != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    init(_ voice: Voice? = nil) {
+        self.voice = voice
+    }
+    
+    @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
+        if stepDuration == 0 {
+            return .notApplicable
+        }
+        
+        elapsedTime += seconds
+          
+        let deltaSteps = Int(elapsedTime / stepDuration) * (increasing ? 1 : -1)
+        let currentStep = (startStep + deltaSteps).clamp(min: 0, max: 0x0F)
+        
+        amplitude = Float(currentStep) / 0x0F
+        
+        return .notApplicable
+    }
+    
+    func restart() {
+        elapsedTime = 0
+        amplitude = Float(startStep) / 0x0F
+    }
+}
+
+class LengthEnvelope: Envelope {
+    private var elapsedTime: Float = 0
+    
+    var voice: Voice?
+    
+    var enabled = false {
+        didSet {
+            if enabled != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    var duration: Float = 0 {
+        didSet {
+            if duration != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    init(_ voice: Voice? = nil) {
+        self.voice = voice
+    }
+    
+    func advance(seconds: Float) -> EnvelopeStatus {
+        if !enabled {
+            return .notApplicable
+        }
+        
+        if duration == 0 {
+            return .notApplicable
+        }
+        
+        if elapsedTime < duration {
+            elapsedTime += seconds
+            
+            return .active
+        }
+        
+        return .deactivated
+    }
+    
+    func restart() {
+        elapsedTime = 0
+    }
+}
+
+class FrequencySweepEnvelope: Envelope {
+    private var elapsedTime: Float = 0
+    private var adjustedFrequency: Float = 0
+    private var startFrequency: Float = 0 {
+        didSet {
+            if startFrequency != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    var voice: Voice?
+    
+    var sweepIncreasing = false {
+        didSet {
+            if sweepIncreasing != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    var sweepShifts: UInt8 = 0 {
+        didSet {
+            if sweepShifts != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    var sweepTime: Float = 0 {
+        didSet {
+            if  sweepTime != oldValue {
+                restart()
+            }
+        }
+    }
+    
+    init(_ voice: Voice? = nil) {
+        self.voice = voice
+    }
+    
+    @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
+        if startFrequency == 0 {
+            restart()
+            return .notApplicable
+        }
+        
+        if sweepTime == 0 {
+            restart()
+            return .notApplicable
+        }
+        
+        if sweepShifts == 0 {
+            restart()
+            return .notApplicable
+        }
+        
+        elapsedTime += seconds
+        
+        let sweeps = Int(elapsedTime / sweepTime)
+        let totalShifts = sweeps > 0 ? sweeps * Int(sweepShifts) : 0
+        let shiftedValue = sweepIncreasing ? frequencyToBits(frequency: startFrequency) << totalShifts : frequencyToBits(frequency: startFrequency) >> totalShifts
+        
+        if shiftedValue == 0 {
+            return .deactivated
+        }
+        
+        if shiftedValue > 2047 {
+            return .deactivated
+        }
+        
+        adjustedFrequency = bitsToFrequency(bits: shiftedValue)
+        
+        return .active
+    }
+    
+    func restart() {
+        elapsedTime = 0
+        adjustedFrequency = startFrequency
+    }
+}
+
 class Pulse: Voice {
     let wave = Square()
     let amplitudeEnvelope = AmplitudeEnvelope()
@@ -372,7 +316,7 @@ class Pulse: Voice {
     init() {
         super.init(oscillator: Oscillator(waveform: Table(.square)))
         
-        amplitudeEnvelope.inner = self
+        amplitudeEnvelope.voice = self
     }
 }
 
@@ -381,7 +325,7 @@ class PulseWithSweep: Voice {
     let amplitudeEnvelope = AmplitudeEnvelope()
     let lengthEnvelope = LengthEnvelope()
     let frequencySweepEnvelope = FrequencySweepEnvelope()
-    
+
     override var enabled: Bool {
         didSet {
             if enabled && !oldValue {
@@ -395,7 +339,7 @@ class PulseWithSweep: Voice {
     init() {
         super.init(oscillator: Oscillator(waveform: Table(.square)))
         
-        amplitudeEnvelope.inner = self
+        amplitudeEnvelope.voice = self
     }
 }
 
