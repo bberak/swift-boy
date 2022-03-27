@@ -1,7 +1,8 @@
 // TODO: Figure out a good default for master volume 🤔
 // TODO: Get rid of unecessary 'self' references? Or at least be consistent..
 // TODO: Need to work on setting duty cycle / pulse width. Get rid of Square class
-// TODO: Think there is something wrong with envelopes. Tetris plays buzzing sound when "OFF" track is selected. Check the LengthEnvelope logic.
+// TODO: Don't think Voice.enabled does what I initially thought. Think it's more of a restart trigger rather than sound enabler/disabler. Double check this logic.
+// TODO: Need to read docs to see all the ways that sound can be disabled.. Think it can be disabled if frequency sweep overflows too..
 
 import Foundation
 import AudioKit
@@ -25,7 +26,14 @@ class Voice {
     private(set) var panner: Panner
     private(set) var leftChannelOn = true
     private(set) var rightChannelOn = true
-    private(set) var targetAmplitude: Float = 0
+    
+    var enabled: Bool = false
+        
+    var muted: Bool = false
+    
+    var stopped: Bool = false
+    
+    var amplitude: Float = 0
     
     var frequency: Float {
         get {
@@ -33,16 +41,6 @@ class Voice {
         }
         set {
             oscillator.$frequency.ramp(to: newValue, duration: 0.01)
-        }
-    }
-    
-    var amplitude: Float {
-        get {
-            oscillator.amplitude
-        }
-        set {
-            targetAmplitude = newValue
-            oscillator.$amplitude.ramp(to: newValue, duration: 0.01)
         }
     }
     
@@ -55,21 +53,9 @@ class Voice {
         }
     }
     
-    var enabled: Bool = false {
-        didSet {
-            if enabled {
-                oscillator.amplitude = targetAmplitude
-            }
-            
-            if !enabled {
-                oscillator.amplitude = 0
-            }
-        }
-    }
-    
     init(oscillator: Oscillator) {
         self.oscillator = oscillator
-        self.oscillator.stop()
+        self.oscillator.start()
         self.oscillator.amplitude = 0
         self.oscillator.frequency = 0
         self.panner = Panner(oscillator)
@@ -84,26 +70,33 @@ class Voice {
             pan = 1
         }
         
-        if !left && !right {
-            oscillator.amplitude = 0
-        } else {
-            oscillator.amplitude = targetAmplitude
-        }
-        
         leftChannelOn = left
         rightChannelOn = right
     }
     
-    func start() {
-        if !oscillator.isStarted {
-            oscillator.start()
+    func updateAmplitude() {
+        if !leftChannelOn && !rightChannelOn {
+            oscillator.$amplitude.ramp(to: 0, duration: 0.01)
+            return
         }
-    }
-    
-    func stop() {
-        if oscillator.isStarted {
-            oscillator.stop()
+        
+        // MARK: As per above TODOs - I don't think this is really what the "enabled" flag was meant for
+        if !enabled {
+            oscillator.$amplitude.ramp(to: 0, duration: 0.01)
+            return
         }
+        
+        if muted {
+            oscillator.$amplitude.ramp(to: 0, duration: 0.01)
+            return
+        }
+        
+        if stopped {
+            oscillator.$amplitude.ramp(to: 0, duration: 0.01)
+            return
+        }
+        
+        oscillator.$amplitude.ramp(to: amplitude, duration: 0.01)
     }
 }
 
@@ -121,13 +114,6 @@ protocol Envelope {
 
 class AmplitudeEnvelope: Envelope {
     private var elapsedTime: Float = 0
-    private var amplitude: Float = 0 {
-        didSet {
-            if amplitude != oldValue {
-                voice?.amplitude = amplitude
-            }
-        }
-    }
     
     var voice: Voice?
     
@@ -169,14 +155,20 @@ class AmplitudeEnvelope: Envelope {
         let deltaSteps = Int(elapsedTime / stepDuration) * (increasing ? 1 : -1)
         let currentStep = (startStep + deltaSteps).clamp(min: 0, max: 0x0F)
         
-        amplitude = Float(currentStep) / 0x0F
+        voice?.amplitude = Float(currentStep) / 0x0F
         
         return .notApplicable
     }
     
     func reset() {
         elapsedTime = 0
-        amplitude = Float(startStep) / 0x0F
+        voice?.amplitude = Float(startStep) / 0x0F
+        
+        if stepDuration == 0 {
+            voice?.muted = true
+        } else {
+            voice?.muted = false
+        }
     }
 }
 
@@ -207,23 +199,23 @@ class LengthEnvelope: Envelope {
     
     func advance(seconds: Float) -> EnvelopeStatus {
         if !enabled {
-            voice?.start()
+            voice?.stopped = false
             return .notApplicable
         }
         
         if duration == 0 {
-            voice?.start()
+            voice?.stopped = false
             return .notApplicable
         }
         
         if elapsedTime < duration {
             elapsedTime += seconds
-            voice?.start()
+            voice?.stopped = false
             
             return .active
         }
         
-        voice?.stop()
+        voice?.stopped = true
         
         return .deactivated
     }
@@ -338,7 +330,7 @@ class Pulse: Voice {
     
     init() {
         super.init(oscillator: Oscillator(waveform: Table(.square)))
-        
+
         amplitudeEnvelope.voice = self
         lengthEnvelope.voice = self
     }
@@ -363,7 +355,6 @@ class PulseWithSweep: Voice {
     init() {
         super.init(oscillator: Oscillator(waveform: Table(.square)))
         
-        // MARK: uncomment below
         amplitudeEnvelope.voice = self
         lengthEnvelope.voice = self
         frequencySweepEnvelope.voice = self
@@ -417,6 +408,12 @@ class Synthesizer {
             if voice.rightChannelOn {
                 voice.amplitude = val
             }
+        }
+    }
+    
+    func updateAmplitudes() {
+        for voice in voices {
+            voice.updateAmplitude()
         }
     }
 }
@@ -519,7 +516,7 @@ public class APU {
         let pulseBLengthStatus = self.pulseB.lengthEnvelope.advance(seconds: seconds)
         
         if pulseBLengthStatus == .deactivated {
-           playing = false
+            playing = false
        }
         
         switch(nr21 & 0b11000000) {
@@ -602,12 +599,13 @@ public class APU {
         
         self.master.setLeftChannelVolume(leftChannelVolume)
         self.master.setRightChannelVolume(rightChannelVolume)
+        self.master.updateAmplitudes()
         
         // Voice specific controls
         nr52[0] = playPulseA(seconds: seconds)
         nr52[1] = playPulseB(seconds: seconds)
-        nr52[2] = playWaveform(seconds: seconds)
-        nr52[3] = playNoise(seconds: seconds)
+        //nr52[2] = playWaveform(seconds: seconds)
+        //nr52[3] = playNoise(seconds: seconds)
         
         self.mmu.nr52.write(nr52)
     }
