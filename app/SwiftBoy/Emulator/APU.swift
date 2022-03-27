@@ -1,11 +1,7 @@
 // TODO: Figure out a good default for master volume 🤔
-// TODO: I think frequency needs to be interpolated/eased to avoid pops and clicks (see FrequencyRampEnvelope class)
-// TODO: I think amplitude needs to be interpolated/eased to avoid pops and clicks
-// TODO: Should sample returned from AmplitudeEnvelope be lerped between -1 an 1?
-// TODO: I think there is something wrong with PulseA's envelopes. I'm pretty sure it should be playing the Nintento ping during boot - but it doesn't. Check the amplitude envelope.
-// TODO: Frequency sweep doesn't seem to be working at all
-// TODO: Still experiencing the weird pops and clicks when changing music tracks on Tetris
 // TODO: Get rid of unecessary 'self' references? Or at least be consistent..
+// TODO: Need to work on setting duty cycle / pulse width. Get rid of Square class
+// TODO: Think there is something wrong with envelopes. Tetris plays buzzing sound when "OFF" track is selected. Check the LengthEnvelope logic.
 
 import Foundation
 import AudioKit
@@ -24,7 +20,8 @@ class Square {
 }
 
 class Voice {
-    private(set) var oscillator: Oscillator
+    private let oscillator: Oscillator
+    
     private(set) var panner: Panner
     private(set) var leftChannelOn = true
     private(set) var rightChannelOn = true
@@ -72,7 +69,9 @@ class Voice {
     
     init(oscillator: Oscillator) {
         self.oscillator = oscillator
-        self.oscillator.start()
+        self.oscillator.stop()
+        self.oscillator.amplitude = 0
+        self.oscillator.frequency = 0
         self.panner = Panner(oscillator)
     }
     
@@ -183,13 +182,6 @@ class AmplitudeEnvelope: Envelope {
 
 class LengthEnvelope: Envelope {
     private var elapsedTime: Float = 0
-    private var amplitude: Float = 0 {
-        didSet {
-            if amplitude != oldValue {
-                voice?.amplitude = amplitude
-            }
-        }
-    }
     
     var voice: Voice?
     
@@ -226,12 +218,12 @@ class LengthEnvelope: Envelope {
         
         if elapsedTime < duration {
             elapsedTime += seconds
-            voice?.oscillator.start()
+            voice?.start()
             
             return .active
         }
         
-        voice?.oscillator.stop()
+        voice?.stop()
         
         return .deactivated
     }
@@ -251,6 +243,8 @@ class FrequencySweepEnvelope: Envelope {
         }
     }
     
+    var voice: Voice?
+    
     var startFrequency: Float = 0 {
         didSet {
             if startFrequency != oldValue {
@@ -258,8 +252,6 @@ class FrequencySweepEnvelope: Envelope {
             }
         }
     }
-    
-    var voice: Voice?
     
     var sweepIncreasing = false {
         didSet {
@@ -371,6 +363,7 @@ class PulseWithSweep: Voice {
     init() {
         super.init(oscillator: Oscillator(waveform: Table(.square)))
         
+        // MARK: uncomment below
         amplitudeEnvelope.voice = self
         lengthEnvelope.voice = self
         frequencySweepEnvelope.voice = self
@@ -467,9 +460,9 @@ public class APU {
         default: print("Sweep time not handled for PulseA")
         }
         
-        let pulseASweetStatus = self.pulseA.frequencySweepEnvelope.advance(seconds: seconds)
+        let pulseASweepStatus = self.pulseA.frequencySweepEnvelope.advance(seconds: seconds)
         
-        if pulseASweetStatus == .deactivated {
+        if pulseASweepStatus == .deactivated {
             playing = false
         }
         
