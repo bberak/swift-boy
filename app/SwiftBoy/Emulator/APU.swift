@@ -1,5 +1,7 @@
 // TODO: Figure out a good default for master volume 🤔
 // TODO: Get rid of unecessary 'self' references? Or at least be consistent..
+// TODO: Startup sound is still a bit off
+// TODO: Super Mario Land soundtrack sounds completely off..
 
 import Foundation
 import AudioKit
@@ -13,8 +15,15 @@ func frequencyToBits(frequency: Float) -> UInt16 {
     return UInt16(2048 - (131072 / frequency))
 }
 
+protocol OscillatorNode: Node {
+    var frequency: Float { get set }
+    var amplitude: Float { get set }
+    func rampFrequency(to: Float, duration: Float)
+    func rampAmplitude(to: Float, duration: Float)
+}
+
 class Voice {
-    private let oscillator: PWMOscillator
+    private let oscillator: OscillatorNode
     
     private(set) var panner: Panner
     private(set) var leftChannelOn = true
@@ -29,7 +38,7 @@ class Voice {
             oscillator.frequency
         }
         set {
-            oscillator.$frequency.ramp(to: newValue, duration: 0.01)
+            oscillator.rampFrequency(to: newValue, duration: 0.01)
         }
     }
     
@@ -75,21 +84,21 @@ class Voice {
     
     func update() {
         if !leftChannelOn && !rightChannelOn {
-            oscillator.$amplitude.ramp(to: 0, duration: 0.01)
+            oscillator.rampAmplitude(to: 0, duration: 0.01)
             return
         }
         
         if muted {
-            oscillator.$amplitude.ramp(to: 0, duration: 0.01)
+            oscillator.rampAmplitude(to: 0, duration: 0.01)
             return
         }
         
         if stopped {
-            oscillator.$amplitude.ramp(to: 0, duration: 0.01)
+            oscillator.rampAmplitude(to: 0, duration: 0.01)
             return
         }
         
-        oscillator.$amplitude.ramp(to: amplitude, duration: 0.01)
+        oscillator.rampAmplitude(to: amplitude, duration: 0.01)
     }
 }
 
@@ -299,6 +308,16 @@ class FrequencySweepEnvelope: Envelope {
     func reset() {
         elapsedTime = 0
         adjustedFrequency = startFrequency
+    }
+}
+
+extension PWMOscillator: OscillatorNode {
+    func rampFrequency(to: Float, duration: Float) {
+        $frequency.ramp(to: to, duration: duration)
+    }
+    
+    func rampAmplitude(to: Float, duration: Float) {
+       $amplitude.ramp(to: to, duration: duration)
     }
 }
 
