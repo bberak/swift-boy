@@ -102,6 +102,63 @@ class Voice {
     }
 }
 
+class Synthesizer {
+    let voices: [Voice]
+    let engine: AudioEngine
+    let mixer: Mixer
+    
+    public var volume: Float {
+        get {
+            engine.mainMixerNode?.volume ?? 0
+        }
+        set {
+            engine.mainMixerNode?.volume  = newValue
+        }
+    }
+    
+    var enabled = false {
+        didSet {
+            if enabled && !engine.avEngine.isRunning {
+                try? self.engine.start()
+            }
+            
+            if !enabled && engine.avEngine.isRunning {
+                self.engine.stop()
+            }
+        }
+    }
+    
+    init(volume: Float = 0.5, voices: [Voice]) {
+        self.voices = voices
+        self.mixer = Mixer(voices.map({ $0.panner }))
+        self.engine = AudioEngine()
+        self.engine.output = mixer
+        self.engine.mainMixerNode?.volume = volume
+    }
+    
+    func setLeftChannelVolume(_ val: Float) {
+        for voice in voices {
+            if voice.leftChannelOn {
+                voice.amplitude = val
+            }
+        }
+    }
+    
+    func setRightChannelVolume(_ val: Float) {
+        for voice in voices {
+            if voice.rightChannelOn {
+                voice.amplitude = val
+            }
+        }
+    }
+    
+    func update() {
+        for voice in voices {
+            voice.update()
+        }
+    }
+}
+
 enum EnvelopeStatus {
     case active
     case deactivated
@@ -352,63 +409,6 @@ class PulseWithSweep: Pulse {
         super.onTriggered()
         
         frequencySweepEnvelope.reset()
-    }
-}
-
-class Synthesizer {
-    let voices: [Voice]
-    let engine: AudioEngine
-    let mixer: Mixer
-    
-    public var volume: Float {
-        get {
-            engine.mainMixerNode?.volume ?? 0
-        }
-        set {
-            engine.mainMixerNode?.volume  = newValue
-        }
-    }
-    
-    var enabled = false {
-        didSet {
-            if enabled && !engine.avEngine.isRunning {
-                try? self.engine.start()
-            }
-            
-            if !enabled && engine.avEngine.isRunning {
-                self.engine.stop()
-            }
-        }
-    }
-    
-    init(volume: Float = 0.5, voices: [Voice]) {
-        self.voices = voices
-        self.mixer = Mixer(voices.map({ $0.panner }))
-        self.engine = AudioEngine()
-        self.engine.output = mixer
-        self.engine.mainMixerNode?.volume = volume
-    }
-    
-    func setLeftChannelVolume(_ val: Float) {
-        for voice in voices {
-            if voice.leftChannelOn {
-                voice.amplitude = val
-            }
-        }
-    }
-    
-    func setRightChannelVolume(_ val: Float) {
-        for voice in voices {
-            if voice.rightChannelOn {
-                voice.amplitude = val
-            }
-        }
-    }
-    
-    func update() {
-        for voice in voices {
-            voice.update()
-        }
     }
 }
 
