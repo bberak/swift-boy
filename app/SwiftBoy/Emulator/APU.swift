@@ -189,23 +189,18 @@ class LengthEnvelope: Envelope {
     
     func advance(seconds: Float) -> EnvelopeStatus {
         if !enabled {
-            voice?.stopped = false
             return .notApplicable
         }
         
         if duration == 0 {
-            voice?.stopped = false
             return .notApplicable
         }
         
         if elapsedTime < duration {
             elapsedTime += seconds
-            voice?.stopped = false
             
             return .active
         }
-        
-        voice?.stopped = true
         
         return .deactivated
     }
@@ -418,7 +413,7 @@ public class APU {
         self.mmu = mmu
         self.pulseA = PulseWithSweep()
         self.pulseB = Pulse()
-        self.master = Synthesizer(voices: [self.pulseA, self.pulseA])
+        self.master = Synthesizer(voices: [self.pulseA, self.pulseB])
         self.master.volume = 0.125
     }
     
@@ -475,6 +470,7 @@ public class APU {
         }
         
         self.pulseA.triggered = nr14.bit(7)
+        self.pulseA.stopped = !playing
         
         return playing
     }
@@ -511,6 +507,7 @@ public class APU {
         }
         
         self.pulseB.triggered = nr24.bit(7)
+        self.pulseB.stopped = !playing
         
         return playing
     }
