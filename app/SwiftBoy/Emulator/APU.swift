@@ -1,8 +1,5 @@
 // TODO: Figure out a good default for master volume 🤔
 // TODO: Get rid of unecessary 'self' references? Or at least be consistent..
-// TODO: Need to work on setting duty cycle / pulse width. Get rid of Square class
-// TODO: Don't think Voice.enabled does what I initially thought. Think it's more of a restart trigger rather than sound enabler/disabler. Double check this logic.
-// TODO: Need to read docs to see all the ways that sound can be disabled.. Think it can be disabled if frequency sweep overflows too..
 
 import Foundation
 import AudioKit
@@ -16,12 +13,8 @@ func frequencyToBits(frequency: Float) -> UInt16 {
     return UInt16(2048 - (131072 / frequency))
 }
 
-class Square {
-    var duty: Float = 0.5
-}
-
 class Voice {
-    private let oscillator: Oscillator
+    private let oscillator: PWMOscillator
     
     private(set) var panner: Panner
     private(set) var leftChannelOn = true
@@ -49,13 +42,23 @@ class Voice {
         }
     }
     
-    init(oscillator: Oscillator) {
+    var triggered: Bool = false {
+        didSet {
+            if triggered && triggered != oldValue {
+                onTriggered()
+            }
+        }
+    }
+    
+    init(oscillator: PWMOscillator) {
         self.oscillator = oscillator
         self.oscillator.start()
         self.oscillator.amplitude = 0
         self.oscillator.frequency = 0
         self.panner = Panner(oscillator)
     }
+    
+    func onTriggered() { }
     
     func setChannels(left: Bool, right: Bool) {
         if left && right {
@@ -300,49 +303,36 @@ class FrequencySweepEnvelope: Envelope {
 }
 
 class Pulse: Voice {
-    let wave = Square()
+    let wave = PWMOscillator()
     let amplitudeEnvelope = AmplitudeEnvelope()
     let lengthEnvelope = LengthEnvelope()
-    
-    var triggered: Bool = false {
-        didSet {
-            if triggered && triggered != oldValue {
-                amplitudeEnvelope.reset()
-                lengthEnvelope.reset()
-            }
-        }
-    }
         
     init() {
-        super.init(oscillator: Oscillator(waveform: Table(.square)))
+        super.init(oscillator: wave)
 
         amplitudeEnvelope.voice = self
         lengthEnvelope.voice = self
+    }
+    
+    override func onTriggered() {
+        amplitudeEnvelope.reset()
+        lengthEnvelope.reset()
     }
 }
 
-class PulseWithSweep: Voice {
-    let wave = Square()
-    let amplitudeEnvelope = AmplitudeEnvelope()
-    let lengthEnvelope = LengthEnvelope()
+class PulseWithSweep: Pulse {
     let frequencySweepEnvelope = FrequencySweepEnvelope()
-    
-    var triggered: Bool = false {
-        didSet {
-            if triggered && triggered != oldValue {
-                amplitudeEnvelope.reset()
-                lengthEnvelope.reset()
-                frequencySweepEnvelope.reset()
-            }
-        }
+        
+    override init() {
+        super.init()
+        
+        frequencySweepEnvelope.voice = self
     }
     
-    init() {
-        super.init(oscillator: Oscillator(waveform: Table(.square)))
+    override func onTriggered() {
+        super.onTriggered()
         
-        amplitudeEnvelope.voice = self
-        lengthEnvelope.voice = self
-        frequencySweepEnvelope.voice = self
+        frequencySweepEnvelope.reset()
     }
 }
 
@@ -462,10 +452,10 @@ public class APU {
         }
         
         switch (nr11 & 0b11000000) {
-        case 0b00000000: self.pulseA.wave.duty = 0.125
-        case 0b01000000: self.pulseA.wave.duty = 0.25
-        case 0b10000000: self.pulseA.wave.duty = 0.5
-        case 0b11000000: self.pulseA.wave.duty = 0.75
+        case 0b00000000: self.pulseA.wave.pulseWidth = 0.125;
+        case 0b01000000: self.pulseA.wave.pulseWidth = 0.25
+        case 0b10000000: self.pulseA.wave.pulseWidth = 0.5
+        case 0b11000000: self.pulseA.wave.pulseWidth = 0.75
         default: print("Duty pattern not handled for PulseA")
         }
         
@@ -499,10 +489,10 @@ public class APU {
        }
         
         switch(nr21 & 0b11000000) {
-        case 0b00000000: self.pulseB.wave.duty = 0.125
-        case 0b01000000: self.pulseB.wave.duty = 0.25
-        case 0b10000000: self.pulseB.wave.duty = 0.5
-        case 0b11000000: self.pulseB.wave.duty = 0.75
+        case 0b00000000: self.pulseB.wave.pulseWidth = 0.125
+        case 0b01000000: self.pulseB.wave.pulseWidth = 0.25
+        case 0b10000000: self.pulseB.wave.pulseWidth = 0.5
+        case 0b11000000: self.pulseB.wave.pulseWidth = 0.75
         default: print("Duty pattern not handled for PulseB")
         }
         
