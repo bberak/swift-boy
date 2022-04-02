@@ -26,13 +26,9 @@ class Voice {
     private(set) var panner: Panner
     private(set) var leftChannelOn = true
     private(set) var rightChannelOn = true
-    
-    var enabled: Bool = false
         
     var muted: Bool = false
-    
     var stopped: Bool = false
-    
     var amplitude: Float = 0
     
     var frequency: Float {
@@ -74,14 +70,8 @@ class Voice {
         rightChannelOn = right
     }
     
-    func updateAmplitude() {
+    func update() {
         if !leftChannelOn && !rightChannelOn {
-            oscillator.$amplitude.ramp(to: 0, duration: 0.01)
-            return
-        }
-        
-        // MARK: As per above TODOs - I don't think this is really what the "enabled" flag was meant for
-        if !enabled {
             oscillator.$amplitude.ramp(to: 0, duration: 0.01)
             return
         }
@@ -319,15 +309,15 @@ class Pulse: Voice {
     let amplitudeEnvelope = AmplitudeEnvelope()
     let lengthEnvelope = LengthEnvelope()
     
-    override var enabled: Bool {
+    var triggered: Bool = false {
         didSet {
-            if enabled && !oldValue {
+            if triggered && triggered != oldValue {
                 amplitudeEnvelope.reset()
                 lengthEnvelope.reset()
             }
         }
     }
-    
+        
     init() {
         super.init(oscillator: Oscillator(waveform: Table(.square)))
 
@@ -341,10 +331,10 @@ class PulseWithSweep: Voice {
     let amplitudeEnvelope = AmplitudeEnvelope()
     let lengthEnvelope = LengthEnvelope()
     let frequencySweepEnvelope = FrequencySweepEnvelope()
-
-    override var enabled: Bool {
+    
+    var triggered: Bool = false {
         didSet {
-            if enabled && !oldValue {
+            if triggered && triggered != oldValue {
                 amplitudeEnvelope.reset()
                 lengthEnvelope.reset()
                 frequencySweepEnvelope.reset()
@@ -411,9 +401,9 @@ class Synthesizer {
         }
     }
     
-    func updateAmplitudes() {
+    func update() {
         for voice in voices {
-            voice.updateAmplitude()
+            voice.update()
         }
     }
 }
@@ -428,7 +418,7 @@ public class APU {
         self.mmu = mmu
         self.pulseA = PulseWithSweep()
         self.pulseB = Pulse()
-        self.master = Synthesizer(voices: [self.pulseA, self.pulseB])
+        self.master = Synthesizer(voices: [self.pulseA, self.pulseA])
         self.master.volume = 0.125
     }
     
@@ -484,14 +474,7 @@ public class APU {
         default: print("Duty pattern not handled for PulseA")
         }
         
-        let pulseAEnabledPrev = self.pulseA.enabled
-        let pulseAEnabledNext = nr14.bit(7)
-        
-        self.pulseA.enabled = pulseAEnabledNext
-        
-        if pulseAEnabledNext && !pulseAEnabledPrev {
-            playing = true
-        }
+        self.pulseA.triggered = nr14.bit(7)
         
         return playing
     }
@@ -527,14 +510,7 @@ public class APU {
         default: print("Duty pattern not handled for PulseB")
         }
         
-        let pulseBEnabledPrev = self.pulseB.enabled
-        let pulseBEnabledNext = nr24.bit(7)
-        
-        self.pulseB.enabled = pulseBEnabledNext
-        
-        if pulseBEnabledNext && !pulseBEnabledPrev {
-            playing = true
-        }
+        self.pulseB.triggered = nr24.bit(7)
         
         return playing
     }
@@ -599,7 +575,7 @@ public class APU {
         
         self.master.setLeftChannelVolume(leftChannelVolume)
         self.master.setRightChannelVolume(rightChannelVolume)
-        self.master.updateAmplitudes()
+        self.master.update()
         
         // Voice specific controls
         nr52[0] = playPulseA(seconds: seconds)
