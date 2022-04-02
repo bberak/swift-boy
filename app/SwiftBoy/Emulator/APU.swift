@@ -1,7 +1,7 @@
 // TODO: Figure out a good default for master volume 🤔
 // TODO: Get rid of unecessary 'self' references? Or at least be consistent..
 // TODO: Startup sound is still a bit off
-// TODO: Super Mario Land soundtrack sounds completely off..
+// TODO: Super Mario menu produces a high pitched sound.. I think this is somehow related to the sweepTime on the FrequencySweepEnvelop
 
 import Foundation
 import AudioKit
@@ -261,10 +261,6 @@ class LengthEnvelope: Envelope {
             return .notApplicable
         }
         
-        if duration == 0 {
-            return .notApplicable
-        }
-        
         if elapsedTime < duration {
             elapsedTime += seconds
             
@@ -327,19 +323,16 @@ class FrequencySweepEnvelope: Envelope {
         self.voice = voice
     }
     
-    @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
+    func advance(seconds: Float) -> EnvelopeStatus {
         if startFrequency == 0 {
-            reset()
             return .notApplicable
         }
         
         if sweepTime == 0 {
-            reset()
             return .notApplicable
         }
         
         if sweepShifts == 0 {
-            reset()
             return .notApplicable
         }
         
@@ -480,6 +473,8 @@ public class APU {
         
         self.pulseA.triggered = nr14.bit(7)
         self.pulseA.stopped = !playing
+        
+        print(playing, self.pulseA.frequencySweepEnvelope.startFrequency, pulseASweepStatus)
         
         return playing
     }
