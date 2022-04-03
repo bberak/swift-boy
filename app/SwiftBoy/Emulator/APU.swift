@@ -639,6 +639,7 @@ public class APU {
         // Left or right channel output for each voice
         self.pulseA.setChannels(left: nr51.bit(4), right: nr51.bit(0))
         self.pulseB.setChannels(left: nr51.bit(5), right: nr51.bit(1))
+        self.customWave.setChannels(left: nr51.bit(6), right: nr51.bit(2))
         
         // Lines below are just for debugging
         self.pulseA.amplitude = 1
