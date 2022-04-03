@@ -378,12 +378,12 @@ extension PWMOscillator: OscillatorNode {
 }
 
 class Pulse: Voice {
-    let wave = PWMOscillator()
+    let oscillator = PWMOscillator()
     let amplitudeEnvelope = AmplitudeEnvelope()
     let lengthEnvelope = LengthEnvelope()
         
     init() {
-        super.init(oscillator: wave)
+        super.init(oscillator: oscillator)
 
         amplitudeEnvelope.voice = self
         lengthEnvelope.voice = self
@@ -422,19 +422,19 @@ extension Oscillator: OscillatorNode {
 }
 
 class CustomWave: Voice {
-    let wave = Oscillator(waveform: Table(.sine))
+    let oscillator = Oscillator(waveform: Table(.sine))
     let lengthEnvelope = LengthEnvelope()
     
     var data = [Float]() {
         didSet {
             if data != oldValue {
-                wave.au.setWavetable(Table(data).content)
+                oscillator.au.setWavetable(Table(data).content)
             }
         }
     }
         
     init() {
-        super.init(oscillator: wave)
+        super.init(oscillator: oscillator)
 
         lengthEnvelope.voice = self
     }
@@ -491,7 +491,7 @@ public class APU {
         self.pulseA.frequencySweepEnvelope.sweepShifts = sweepShifts
         self.pulseA.frequencySweepEnvelope.sweepIncreasing = sweepIncreasing
         self.pulseA.frequencySweepEnvelope.sweepTime = sweepTime
-        self.pulseA.wave.pulseWidth = pulseWidth
+        self.pulseA.oscillator.pulseWidth = pulseWidth
         self.pulseA.amplitudeEnvelope.startStep = amplitudeEnvelopeStartStep
         self.pulseA.amplitudeEnvelope.stepDuration = amplitudeEnvelopeStepDuration
         self.pulseA.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
@@ -533,7 +533,7 @@ public class APU {
         
         self.pulseB.triggered = triggered
         self.pulseB.frequency = frequency
-        self.pulseB.wave.pulseWidth = pulseWidth
+        self.pulseB.oscillator.pulseWidth = pulseWidth
         self.pulseB.amplitudeEnvelope.startStep = amplitudeEnvelopeStartStep
         self.pulseB.amplitudeEnvelope.stepDuration = amplitudeEnvelopeStepDuration
         self.pulseB.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
