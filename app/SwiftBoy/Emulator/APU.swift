@@ -19,6 +19,30 @@ func frequencyToBits(frequency: Float) -> UInt16 {
     return UInt16(2048 - (131072 / frequency))
 }
 
+func convertToSweepTime(byte: UInt8) -> Float {
+    switch (byte) {
+    case 0b000: return 0
+    case 0b001: return 0.0078
+    case 0b010: return 0.0156
+    case 0b011: return 0.0234
+    case 0b100: return 0.0313
+    case 0b101: return 0.0391
+    case 0b110: return 0.0469
+    case 0b111: return 0.0547
+    default: return -1
+    }
+}
+
+func convertToPulseWidth(byte: UInt8) -> Float {
+    switch (byte) {
+    case 0b00000000: return 0.125
+    case 0b01000000: return 0.25
+    case 0b10000000: return 0.5
+    case 0b11000000: return 0.75
+    default: return -1
+    }
+}
+
 protocol OscillatorNode: Node {
     var frequency: Float { get set }
     var amplitude: Float { get set }
@@ -438,96 +462,88 @@ public class APU {
     }
     
     func playPulseA(seconds: Float) -> Bool {
+        let nr10 = self.mmu.nr10.read()
+        let nr11 = self.mmu.nr11.read()
+        let nr12 = self.mmu.nr12.read()
+        let nr13 = self.mmu.nr13.read()
+        let nr14 = self.mmu.nr14.read()
+        
         var playing = true
         
-        let nr14 = self.mmu.nr14.read()
-        let nr13 = self.mmu.nr13.read()
-        let nr12 = self.mmu.nr12.read()
-        let nr11 = self.mmu.nr11.read()
-        let nr10 = self.mmu.nr10.read()
-        
-        self.pulseA.frequencySweepEnvelope.startFrequency = bitsToFrequency(bits: UInt16(nr13) + (UInt16(nr14 & 0b00000111) << 8))
-        self.pulseA.frequencySweepEnvelope.sweepShifts = nr10 & 0b00000111
-        self.pulseA.frequencySweepEnvelope.sweepIncreasing = nr10.bit(3)
-        
-        switch ((nr10 & 0b01110000) >> 4) {
-        case 0b000: self.pulseA.frequencySweepEnvelope.sweepTime = 0
-        case 0b001: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0078
-        case 0b010: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0156
-        case 0b011: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0234
-        case 0b100: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0313
-        case 0b101: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0391
-        case 0b110: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0469
-        case 0b111: self.pulseA.frequencySweepEnvelope.sweepTime = 0.0547
-        default: print("Sweep time not handled for PulseA")
+        defer {
+            self.pulseA.stopped = !playing
         }
         
-        let pulseASweepStatus = self.pulseA.frequencySweepEnvelope.advance(seconds: seconds)
+        let sweepShifts = nr10 & 0b00000111
+        let sweepIncreasing = nr10.bit(3)
+        let sweepTime = convertToSweepTime(byte: (nr10 & 0b01110000) >> 4)
+        let pulseWidth = convertToPulseWidth(byte: nr11 & 0b11000000)
+        let lengthEnvelopDuration = (64 - Float(nr11 & 0b00111111)) * (1 / 256)
+        let amplitudeEnvelopeStartStep = Int((nr12 & 0b11110000) >> 4)
+        let amplitudeEnvelopeStepDuration = Float(nr12 & 0b00000111) * 1 / 64
+        let amplitudeEnvelopeIncreasing = nr12.bit(3)
+        let frequency = bitsToFrequency(bits: UInt16(nr13) + (UInt16(nr14 & 0b00000111) << 8))
+        let lengthEnvelopEnabled = nr14.bit(6)
+        let triggered = nr14.bit(7)
         
-        if pulseASweepStatus == .deactivated {
+        self.pulseA.triggered = triggered
+        self.pulseA.frequencySweepEnvelope.startFrequency = frequency
+        self.pulseA.frequencySweepEnvelope.sweepShifts = sweepShifts
+        self.pulseA.frequencySweepEnvelope.sweepIncreasing = sweepIncreasing
+        self.pulseA.frequencySweepEnvelope.sweepTime = sweepTime
+        self.pulseA.wave.pulseWidth = pulseWidth
+        self.pulseA.amplitudeEnvelope.startStep = amplitudeEnvelopeStartStep
+        self.pulseA.amplitudeEnvelope.stepDuration = amplitudeEnvelopeStepDuration
+        self.pulseA.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
+        self.pulseA.amplitudeEnvelope.advance(seconds: seconds)
+        self.pulseA.lengthEnvelope.enabled = lengthEnvelopEnabled
+        self.pulseA.lengthEnvelope.duration = lengthEnvelopDuration
+        
+        if self.pulseA.frequencySweepEnvelope.advance(seconds: seconds) == .deactivated {
             playing = false
         }
         
-        self.pulseA.amplitudeEnvelope.startStep = Int((nr12 & 0b11110000) >> 4)
-        self.pulseA.amplitudeEnvelope.stepDuration = Float(nr12 & 0b00000111) * 1 / 64
-        self.pulseA.amplitudeEnvelope.increasing = nr12.bit(3)
-        self.pulseA.amplitudeEnvelope.advance(seconds: seconds)
-        
-        self.pulseA.lengthEnvelope.enabled = nr14.bit(6)
-        self.pulseA.lengthEnvelope.duration = (64 - Float(nr11 & 0b00111111)) * (1 / 256)
-        let pulseALengthStatus = self.pulseA.lengthEnvelope.advance(seconds: seconds)
-        
-        if pulseALengthStatus == .deactivated {
+        if self.pulseA.lengthEnvelope.advance(seconds: seconds) == .deactivated {
            playing = false
         }
-        
-        switch (nr11 & 0b11000000) {
-        case 0b00000000: self.pulseA.wave.pulseWidth = 0.125;
-        case 0b01000000: self.pulseA.wave.pulseWidth = 0.25
-        case 0b10000000: self.pulseA.wave.pulseWidth = 0.5
-        case 0b11000000: self.pulseA.wave.pulseWidth = 0.75
-        default: print("Duty pattern not handled for PulseA")
-        }
-        
-        self.pulseA.triggered = nr14.bit(7)
-        self.pulseA.stopped = !playing
         
         return playing
     }
     
     func playPulseB(seconds: Float) -> Bool {
+        let nr21 = self.mmu.nr21.read()
+        let nr22 = self.mmu.nr22.read()
+        let nr23 = self.mmu.nr23.read()
+        let nr24 = self.mmu.nr24.read()
+        
         var playing = true
         
-        let nr24 = self.mmu.nr24.read()
-        let nr23 = self.mmu.nr23.read()
-        let nr22 = self.mmu.nr22.read()
-        let nr21 = self.mmu.nr21.read()
+        defer {
+            self.pulseB.stopped = !playing
+        }
         
-        self.pulseB.frequency = bitsToFrequency(bits: UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8))
+        let pulseWidth = convertToPulseWidth(byte: nr21 & 0b11000000)
+        let lengthEnvelopeDuration = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
+        let amplitudeEnvelopeStartStep = Int((nr22 & 0b11110000) >> 4)
+        let amplitudeEnvelopeStepDuration = Float(nr22 & 0b00000111) * 1 / 64
+        let amplitudeEnvelopeIncreasing = nr22.bit(3)
+        let frequency = bitsToFrequency(bits: UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8))
+        let lengthEnvelopeEnabled = nr24.bit(6)
+        let triggered = nr24.bit(7)
         
-        self.pulseB.amplitudeEnvelope.startStep = Int((nr22 & 0b11110000) >> 4)
-        self.pulseB.amplitudeEnvelope.stepDuration = Float(nr22 & 0b00000111) * 1 / 64
-        self.pulseB.amplitudeEnvelope.increasing = nr22.bit(3)
+        self.pulseB.triggered = triggered
+        self.pulseB.frequency = frequency
+        self.pulseB.wave.pulseWidth = pulseWidth
+        self.pulseB.amplitudeEnvelope.startStep = amplitudeEnvelopeStartStep
+        self.pulseB.amplitudeEnvelope.stepDuration = amplitudeEnvelopeStepDuration
+        self.pulseB.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
         self.pulseB.amplitudeEnvelope.advance(seconds: seconds)
+        self.pulseB.lengthEnvelope.enabled = lengthEnvelopeEnabled
+        self.pulseB.lengthEnvelope.duration = lengthEnvelopeDuration
         
-        self.pulseB.lengthEnvelope.enabled = nr24.bit(6)
-        self.pulseB.lengthEnvelope.duration = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
-        let pulseBLengthStatus = self.pulseB.lengthEnvelope.advance(seconds: seconds)
-        
-        if pulseBLengthStatus == .deactivated {
+        if self.pulseB.lengthEnvelope.advance(seconds: seconds) == .deactivated {
             playing = false
         }
-        
-        switch(nr21 & 0b11000000) {
-        case 0b00000000: self.pulseB.wave.pulseWidth = 0.125
-        case 0b01000000: self.pulseB.wave.pulseWidth = 0.25
-        case 0b10000000: self.pulseB.wave.pulseWidth = 0.5
-        case 0b11000000: self.pulseB.wave.pulseWidth = 0.75
-        default: print("Duty pattern not handled for PulseB")
-        }
-        
-        self.pulseB.triggered = nr24.bit(7)
-        self.pulseB.stopped = !playing
         
         return playing
     }
@@ -547,7 +563,7 @@ public class APU {
         
         let lengthEnvelopeDuration = (256 - Float(nr31)) * (1 / 256)
         let outputLevel = (nr32 & 0b01100000) >> 5
-        let frequencyInBits = UInt16(nr33) + (UInt16(nr34 & 0b00000111) << 8)
+        let frequency = bitsToFrequency(bits: UInt16(nr33) + (UInt16(nr34 & 0b00000111) << 8))
         let lengthEnvelopEnabled = nr34.bit(6)
         let triggered = nr34.bit(7)
         let waveformData = self.waveformDataMemo.get(deps: [self.mmu.waveformRam.version, outputLevel]) {
@@ -558,7 +574,7 @@ public class APU {
         self.customWave.triggered = triggered
         self.customWave.data = waveformData
         self.customWave.amplitude = 1
-        self.customWave.frequency = bitsToFrequency(bits: frequencyInBits)
+        self.customWave.frequency = frequency
         self.customWave.lengthEnvelope.enabled = lengthEnvelopEnabled
         self.customWave.lengthEnvelope.duration = lengthEnvelopeDuration
         
