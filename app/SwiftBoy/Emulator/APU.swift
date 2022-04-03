@@ -2,6 +2,10 @@
 // TODO: Get rid of unecessary 'self' references? Or at least be consistent..
 // TODO: Startup sound is still a bit off
 // TODO: Super Mario menu produces a high pitched sound.. I think this is somehow related to the sweepTime on the FrequencySweepEnvelop
+// TODO: Not sure if the custom waveform data needs to be remapped between -1 and 1
+// TODO: Remove debugging lines where all amplitudes are hardcoded to 1
+// TODO: Think there is something wrong with how amplitudes are set and or the amplitude envelope
+// TODO: Refactor other voice functions to match custom wave
 
 import Foundation
 import AudioKit
@@ -59,7 +63,7 @@ class Voice {
         }
     }
     
-    init(oscillator: PWMOscillator) {
+    init(oscillator: OscillatorNode) {
         self.oscillator = oscillator
         self.oscillator.start()
         self.oscillator.amplitude = 0
@@ -134,28 +138,6 @@ class Synthesizer {
         self.engine = AudioEngine()
         self.engine.output = mixer
         self.engine.mainMixerNode?.volume = volume
-    }
-    
-    func setLeftChannelVolume(_ val: Float) {
-        for voice in voices {
-            if voice.leftChannelOn {
-                voice.amplitude = val
-            }
-        }
-    }
-    
-    func setRightChannelVolume(_ val: Float) {
-        for voice in voices {
-            if voice.rightChannelOn {
-                voice.amplitude = val
-            }
-        }
-    }
-    
-    func update() {
-        for voice in voices {
-            voice.update()
-        }
     }
 }
 
@@ -405,17 +387,53 @@ class PulseWithSweep: Pulse {
     }
 }
 
+extension Oscillator: OscillatorNode {
+    func rampFrequency(to: Float, duration: Float) {
+        $frequency.ramp(to: to, duration: duration)
+    }
+    
+    func rampAmplitude(to: Float, duration: Float) {
+       $amplitude.ramp(to: to, duration: duration)
+    }
+}
+
+class CustomWave: Voice {
+    let wave = Oscillator(waveform: Table(.sine))
+    let lengthEnvelope = LengthEnvelope()
+    
+    var data = [Float]() {
+        didSet {
+            if data != oldValue {
+                wave.au.setWavetable(Table(data).content)
+            }
+        }
+    }
+        
+    init() {
+        super.init(oscillator: wave)
+
+        lengthEnvelope.voice = self
+    }
+    
+    override func onTriggered() {
+        lengthEnvelope.reset()
+    }
+}
+
 public class APU {
     private let mmu: MMU
     private let master: Synthesizer
     private let pulseA: PulseWithSweep
     private let pulseB: Pulse
+    private let customWave: CustomWave
+    private var waveformDataMemo = Memo<[Float]>()
     
     init(_ mmu: MMU) {
         self.mmu = mmu
         self.pulseA = PulseWithSweep()
         self.pulseB = Pulse()
-        self.master = Synthesizer(voices: [self.pulseA, self.pulseB])
+        self.customWave = CustomWave()
+        self.master = Synthesizer(voices: [self.pulseA, self.pulseB, self.customWave])
         self.master.volume = 0.125
     }
     
@@ -474,8 +492,6 @@ public class APU {
         self.pulseA.triggered = nr14.bit(7)
         self.pulseA.stopped = !playing
         
-        print(playing, self.pulseA.frequencySweepEnvelope.startFrequency, pulseASweepStatus)
-        
         return playing
     }
     
@@ -500,7 +516,7 @@ public class APU {
         
         if pulseBLengthStatus == .deactivated {
             playing = false
-       }
+        }
         
         switch(nr21 & 0b11000000) {
         case 0b00000000: self.pulseB.wave.pulseWidth = 0.125
@@ -517,7 +533,40 @@ public class APU {
     }
     
     func playWaveform(seconds: Float) -> Bool {
-        return false
+        let nr30 = self.mmu.nr30.read()
+        let nr31 = self.mmu.nr31.read()
+        let nr32 = self.mmu.nr32.read()
+        let nr33 = self.mmu.nr33.read()
+        let nr34 = self.mmu.nr34.read()
+        
+        var playing = nr30.bit(7)
+        
+        defer {
+            self.customWave.stopped = !playing
+        }
+        
+        let lengthEnvelopeDuration = (256 - Float(nr31)) * (1 / 256)
+        let outputLevel = (nr32 & 0b01100000) >> 5
+        let frequencyInBits = UInt16(nr33) + (UInt16(nr34 & 0b00000111) << 8)
+        let lengthEnvelopEnabled = nr34.bit(6)
+        let triggered = nr34.bit(7)
+        let waveformData = self.waveformDataMemo.get(deps: [self.mmu.waveformRam.version, outputLevel]) {
+            let buffer = self.mmu.waveformRam.buffer
+            return buffer.flatMap({ [Float($0.nibble(1) >> outputLevel) / 0b1111, Float($0.nibble(0) >> outputLevel) / 0b1111 ] }).map({ $0 * 2 - 1 })
+        }
+        
+        self.customWave.triggered = triggered
+        self.customWave.data = waveformData
+        self.customWave.amplitude = 1
+        self.customWave.frequency = bitsToFrequency(bits: frequencyInBits)
+        self.customWave.lengthEnvelope.enabled = lengthEnvelopEnabled
+        self.customWave.lengthEnvelope.duration = lengthEnvelopeDuration
+        
+        if self.customWave.lengthEnvelope.advance(seconds: seconds) == .deactivated {
+            playing = false
+        }
+        
+        return playing
     }
     
     func playNoise(seconds: Float) -> Bool {
@@ -528,9 +577,8 @@ public class APU {
         let seconds = Float(time) / 4000000
         
         // Master sound registers
-        var nr52 = self.mmu.nr52.read()
         let nr51 = self.mmu.nr51.read()
-        let nr50 = self.mmu.nr50.read()
+        var nr52 = self.mmu.nr52.read()
         
         // Master sound output
         let masterEnabledPrev = self.master.enabled
@@ -566,24 +614,27 @@ public class APU {
             return
         }
         
-        // Left or right channel output
-        self.pulseA.setChannels(left: nr51.bit(4), right: nr51.bit(0))
-        self.pulseB.setChannels(left: nr51.bit(5), right: nr51.bit(1))
-        
-        // Left and right channel master volume
-        let leftChannelVolume: Float = Float(nr50 & 0b00000111) / 7.0
-        let rightChannelVolume: Float = Float((nr50 & 0b01110000) >> 4) / 7.0
-        
-        self.master.setLeftChannelVolume(leftChannelVolume)
-        self.master.setRightChannelVolume(rightChannelVolume)
-        self.master.update()
-        
         // Voice specific controls
         nr52[0] = playPulseA(seconds: seconds)
         nr52[1] = playPulseB(seconds: seconds)
-        //nr52[2] = playWaveform(seconds: seconds)
+        nr52[2] = playWaveform(seconds: seconds)
         //nr52[3] = playNoise(seconds: seconds)
         
+        // Left or right channel output for each voice
+        self.pulseA.setChannels(left: nr51.bit(4), right: nr51.bit(0))
+        self.pulseB.setChannels(left: nr51.bit(5), right: nr51.bit(1))
+        
+        // Lines below are just for debugging
+        self.pulseA.amplitude = 1
+        self.pulseB.amplitude = 1
+        self.customWave.amplitude = 1
+        
+        // Update all voices
+        self.pulseA.update()
+        self.pulseB.update()
+        self.customWave.update()
+        
+        // Write nr52 back into RAM
         self.mmu.nr52.write(nr52)
     }
 }

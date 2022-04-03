@@ -259,7 +259,7 @@ public class MMU: MemoryAccessArray {
     var vramTileData: MemoryBlock
     var vramTileMaps: MemoryBlock
     var oam: MemoryBlock
-    var wfram: MemoryBlock
+    var waveformRam: MemoryBlock
     
     lazy var serialDataTransfer = Address(0xFF01, self)
     lazy var serialDataControl = Address(0xFF02, self)
@@ -310,7 +310,7 @@ public class MMU: MemoryAccessArray {
         self.vramTileData = MemoryBlock(range: 0x8000...0x97FF, readOnly: false, enabled: true)
         self.vramTileMaps = MemoryBlock(range: 0x9800...0x9FFF, readOnly: false, enabled: true)
         self.oam = MemoryBlock(range: 0xFE00...0xFE9F, readOnly: false, enabled: true)
-        self.wfram = MemoryBlock(range: 0xFF30...0xFF3F, readOnly: false, enabled: true)
+        self.waveformRam = MemoryBlock(range: 0xFF30...0xFF3F, readOnly: false, enabled: true)
         
         let bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
         let wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false, enabled: true)
@@ -326,7 +326,7 @@ public class MMU: MemoryAccessArray {
             wram,
             echo,
             oam,
-            wfram,
+            waveformRam,
             hram,
             rest
         ])
