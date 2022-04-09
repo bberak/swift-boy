@@ -2,10 +2,8 @@
 // TODO: Get rid of unecessary 'self' references? Or at least be consistent..
 // TODO: Startup sound is still a bit off
 // TODO: Super Mario menu produces a high pitched sound.. I think this is somehow related to the sweepTime on the FrequencySweepEnvelop
-// TODO: Not sure if the custom waveform data needs to be remapped between -1 and 1
-// TODO: Remove debugging lines where all amplitudes are hardcoded to 1
-// TODO: Think there is something wrong with how amplitudes are set and or the amplitude envelope
-// TODO: Refactor other voice functions to match custom wave
+// TODO: Think there is something wrong with how amplitudes are set and or the amplitude envelope. Pulse A and B sound so hollow now. If you hardcode their amplitudes to 1 you will see what I mean..
+// TODO: Don't forget to uncomment code that supresses the custom and noise waves
 
 import Foundation
 import AudioKit
@@ -476,7 +474,7 @@ public class APU {
         self.pulseB = Pulse()
         self.customWave = CustomWave()
         self.noise = Noise()
-        self.master = Synthesizer(voices: [self.pulseA, self.pulseB, self.customWave])
+        self.master = Synthesizer(voices: [self.pulseA, self.pulseB, /* self.customWave, self.noise */])
         self.master.volume = 0.125
     }
     
@@ -696,15 +694,13 @@ public class APU {
         self.customWave.setChannels(left: nr51.bit(6), right: nr51.bit(2))
         
         // Lines below are just for debugging
-        self.pulseA.amplitude = 1
-        self.pulseB.amplitude = 1
-        self.customWave.amplitude = 1
+        self.customWave.amplitude = 0
         self.noise.amplitude = 0
         
         // Update all voices
         self.pulseA.update()
         self.pulseB.update()
-        self.customWave.update()
+        //self.customWave.update()
         //self.noise.update()
         
         // Write nr52 back into RAM
