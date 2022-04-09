@@ -444,12 +444,30 @@ class CustomWave: Voice {
     }
 }
 
+class Noise: CustomWave {
+    let amplitudeEnvelope = AmplitudeEnvelope()
+    
+    override init() {
+        super.init()
+        
+        amplitudeEnvelope.voice = self
+        data = (0...128).map { _ in ((Float(arc4random_uniform(UINT32_MAX)) / Float(UINT32_MAX)) * 2 - 1) }
+    }
+    
+    override func onTriggered() {
+        super.onTriggered()
+        
+        amplitudeEnvelope.reset()
+    }
+}
+
 public class APU {
     private let mmu: MMU
     private let master: Synthesizer
     private let pulseA: PulseWithSweep
     private let pulseB: Pulse
     private let customWave: CustomWave
+    private let noise: Noise
     private var waveformDataMemo = Memo<[Float]>()
     
     init(_ mmu: MMU) {
@@ -457,6 +475,7 @@ public class APU {
         self.pulseA = PulseWithSweep()
         self.pulseB = Pulse()
         self.customWave = CustomWave()
+        self.noise = Noise()
         self.master = Synthesizer(voices: [self.pulseA, self.pulseB, self.customWave])
         self.master.volume = 0.125
     }
@@ -586,7 +605,42 @@ public class APU {
     }
     
     func playNoise(seconds: Float) -> Bool {
-        return false
+        let nr41 = self.mmu.nr41.read()
+        let nr42 = self.mmu.nr42.read()
+        let nr43 = self.mmu.nr43.read()
+        let nr44 = self.mmu.nr44.read()
+        
+        var playing = true
+        
+        defer {
+            self.noise.stopped = !playing
+        }
+        
+        let lengthEnvelopeDuration = (64 - Float(nr41 & 0b00111111)) * (1 / 256)
+        let amplitudeEnvelopeStartStep = Int((nr42 & 0b11110000) >> 4)
+        let amplitudeEnvelopeStepDuration = Float(nr42 & 0b00000111) * 1 / 64
+        let amplitudeEnvelopeIncreasing = nr42.bit(3)
+        let temp = nr43 & 0b00000111
+        let r = temp == 0 ? Float(0.5) : Float(temp)
+        let s = Float(nr43 & 0b11100000)
+        let frequency = Float(524288) / r / powf(2, s + 1.0)
+        let lengthEnvelopeEnabled = nr44.bit(6)
+        let triggered = nr44.bit(7)
+        
+        self.noise.triggered = triggered
+        self.noise.frequency = frequency
+        self.noise.amplitudeEnvelope.startStep = amplitudeEnvelopeStartStep
+        self.noise.amplitudeEnvelope.stepDuration = amplitudeEnvelopeStepDuration
+        self.noise.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
+        self.noise.amplitudeEnvelope.advance(seconds: seconds)
+        self.noise.lengthEnvelope.enabled = lengthEnvelopeEnabled
+        self.noise.lengthEnvelope.duration = lengthEnvelopeDuration
+        
+        if self.noise.lengthEnvelope.advance(seconds: seconds) == .deactivated {
+            playing = false
+        }
+        
+        return playing
     }
     
     public func run(for time: Int16) throws {
@@ -634,7 +688,7 @@ public class APU {
         nr52[0] = playPulseA(seconds: seconds)
         nr52[1] = playPulseB(seconds: seconds)
         nr52[2] = playWaveform(seconds: seconds)
-        //nr52[3] = playNoise(seconds: seconds)
+        nr52[3] = playNoise(seconds: seconds)
         
         // Left or right channel output for each voice
         self.pulseA.setChannels(left: nr51.bit(4), right: nr51.bit(0))
@@ -645,11 +699,13 @@ public class APU {
         self.pulseA.amplitude = 1
         self.pulseB.amplitude = 1
         self.customWave.amplitude = 1
+        self.noise.amplitude = 0
         
         // Update all voices
         self.pulseA.update()
         self.pulseB.update()
         self.customWave.update()
+        //self.noise.update()
         
         // Write nr52 back into RAM
         self.mmu.nr52.write(nr52)
