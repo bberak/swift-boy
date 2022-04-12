@@ -695,6 +695,8 @@ public class APU {
         self.noise.setChannels(left: nr51.bit(7), right: nr51.bit(3))
         
         // Lines below are just for debugging
+        self.pulseA.amplitude = 1
+        self.pulseB.amplitude = 1
         self.customWave.amplitude = 0
         self.noise.amplitude = 0
         

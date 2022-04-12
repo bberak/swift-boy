@@ -26,16 +26,9 @@ public class Clock {
         var next = current + frameTime
 
         DispatchQueue.global(qos: .userInteractive).async {
-            let start = DispatchTime.now()
-
             try! self.frame()
 
             let now = DispatchTime.now()
-
-            if self.printFrameDuration {
-                let ns = now.uptimeNanoseconds - start.uptimeNanoseconds
-                print("ms", ns / 1000 / 1000)
-            }
 
             if now > next {
                 next = now
@@ -81,9 +74,11 @@ public class Clock {
         }
         
         StopWatch.global.stop("frame")
+        
         maybe {
             StopWatch.global.printAll()
         }
+        
         StopWatch.global.resetAll()
     }
 }
