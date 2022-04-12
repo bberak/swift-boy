@@ -55,27 +55,10 @@ class Voice {
     private(set) var leftChannelOn = true
     private(set) var rightChannelOn = true
         
-    var muted: Bool = false
     var stopped: Bool = false
     var amplitude: Float = 0
-    
-    var frequency: Float {
-        get {
-            oscillator.frequency
-        }
-        set {
-            oscillator.rampFrequency(to: newValue, duration: 0.01)
-        }
-    }
-    
-    var pan: Float {
-        get {
-            panner.pan
-        }
-        set {
-            panner.$pan.ramp(to: newValue, duration: 0.01)
-        }
-    }
+    var frequency: Float = 0
+    var pan: Float = 0
     
     var triggered: Bool = false {
         didSet {
@@ -109,22 +92,16 @@ class Voice {
     }
     
     func update() {
+        panner.$pan.ramp(to: pan, duration: 0.01)
+        oscillator.rampFrequency(to: frequency, duration: 0.01)
+
         if !leftChannelOn && !rightChannelOn {
             oscillator.rampAmplitude(to: 0, duration: 0.01)
-            return
-        }
-        
-        if muted {
+        } else if stopped {
             oscillator.rampAmplitude(to: 0, duration: 0.01)
-            return
+        } else {
+            oscillator.rampAmplitude(to: amplitude, duration: 0.01)
         }
-        
-        if stopped {
-            oscillator.rampAmplitude(to: 0, duration: 0.01)
-            return
-        }
-        
-        oscillator.rampAmplitude(to: amplitude, duration: 0.01)
     }
 }
 
@@ -226,12 +203,6 @@ class AmplitudeEnvelope: Envelope {
     func reset() {
         elapsedTime = 0
         voice?.amplitude = Float(startStep) / 0x0F
-        
-        if stepDuration == 0 {
-            voice?.muted = true
-        } else {
-            voice?.muted = false
-        }
     }
 }
 
@@ -474,7 +445,7 @@ public class APU {
         self.pulseB = Pulse()
         self.customWave = CustomWave()
         self.noise = Noise()
-        self.master = Synthesizer(voices: [self.pulseA, self.pulseB, /* self.customWave, self.noise */])
+        self.master = Synthesizer(voices: [self.pulseA, self.pulseB, self.customWave /*, self.noise */])
         self.master.volume = 0.125
     }
     
@@ -497,7 +468,7 @@ public class APU {
         let pulseWidth = convertToPulseWidth(byte: nr11 & 0b11000000)
         let lengthEnvelopDuration = (64 - Float(nr11 & 0b00111111)) * (1 / 256)
         let amplitudeEnvelopeStartStep = Int((nr12 & 0b11110000) >> 4)
-        let amplitudeEnvelopeStepDuration = Float(nr12 & 0b00000111) * 1 / 64
+        let amplitudeEnvelopeStepDuration = Float(nr12 & 0b00000111) * (1 / 64)
         let amplitudeEnvelopeIncreasing = nr12.bit(3)
         let frequency = bitsToFrequency(bits: UInt16(nr13) + (UInt16(nr14 & 0b00000111) << 8))
         let lengthEnvelopEnabled = nr14.bit(6)
@@ -542,7 +513,7 @@ public class APU {
         let pulseWidth = convertToPulseWidth(byte: nr21 & 0b11000000)
         let lengthEnvelopeDuration = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
         let amplitudeEnvelopeStartStep = Int((nr22 & 0b11110000) >> 4)
-        let amplitudeEnvelopeStepDuration = Float(nr22 & 0b00000111) * 1 / 64
+        let amplitudeEnvelopeStepDuration = Float(nr22 & 0b00000111) * (1 / 64)
         let amplitudeEnvelopeIncreasing = nr22.bit(3)
         let frequency = bitsToFrequency(bits: UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8))
         let lengthEnvelopeEnabled = nr24.bit(6)
@@ -695,15 +666,15 @@ public class APU {
         self.noise.setChannels(left: nr51.bit(7), right: nr51.bit(3))
         
         // Lines below are just for debugging
-        self.pulseA.amplitude = 1
-        self.pulseB.amplitude = 1
-        self.customWave.amplitude = 0
+        //self.pulseA.amplitude = 1
+        //self.pulseB.amplitude = 1
+        //self.customWave.amplitude = 0
         self.noise.amplitude = 0
         
         // Update all voices
         self.pulseA.update()
         self.pulseB.update()
-        //self.customWave.update()
+        self.customWave.update()
         //self.noise.update()
         
         // Write nr52 back into RAM
