@@ -108,14 +108,16 @@ class Voice {
 class Synthesizer {
     let voices: [Voice]
     let engine: AudioEngine
-    let mixer: Mixer
+    let mixerLeft: Mixer
+    let mixerRight: Mixer
+    let mixerMain: Mixer
     
     public var volume: Float {
         get {
-            engine.mainMixerNode?.volume ?? 0
+            self.mixerMain.volume
         }
         set {
-            engine.mainMixerNode?.volume  = newValue
+            self.mixerMain.volume = newValue
         }
     }
     
@@ -133,10 +135,20 @@ class Synthesizer {
     
     init(volume: Float = 0.5, voices: [Voice]) {
         self.voices = voices
-        self.mixer = Mixer(voices.map({ $0.panner }))
+        self.mixerLeft = Mixer(voices.map({ $0.panner }))
+        self.mixerRight = Mixer(voices.map({ $0.panner }))
+        self.mixerMain = Mixer(self.mixerLeft, self.mixerRight)
+        self.mixerMain.volume = volume
         self.engine = AudioEngine()
-        self.engine.output = mixer
-        self.engine.mainMixerNode?.volume = volume
+        self.engine.output = self.mixerMain
+    }
+    
+    func setLeftChannelVolume(_ val: Float) {
+        self.mixerLeft.volume = val
+    }
+        
+    func setRightChannelVolume(_ val: Float) {
+        self.mixerRight.volume = val
     }
 }
 
@@ -380,7 +392,7 @@ class PulseWithSweep: Pulse {
     }
 }
 
-extension Oscillator: OscillatorNode {
+extension DynamicOscillator: OscillatorNode {
     func rampFrequency(to: Float, duration: Float) {
         $frequency.ramp(to: to, duration: duration)
     }
@@ -391,13 +403,13 @@ extension Oscillator: OscillatorNode {
 }
 
 class CustomWave: Voice {
-    let oscillator = Oscillator(waveform: Table(.sine))
+    let oscillator = DynamicOscillator(waveform: Table(.sine))
     let lengthEnvelope = LengthEnvelope()
     
     var data = [Float]() {
         didSet {
             if data != oldValue {
-                oscillator.au.setWavetable(Table(data).content)
+                oscillator.setWaveform(Table(data))
             }
         }
     }
@@ -616,6 +628,7 @@ public class APU {
         let seconds = Float(time) / 4000000
         
         // Master sound registers
+        let nr50 = self.mmu.nr50.read()
         let nr51 = self.mmu.nr51.read()
         var nr52 = self.mmu.nr52.read()
         
@@ -648,7 +661,7 @@ public class APU {
             self.mmu.nr50.write(0)
             self.mmu.nr51.write(0)
             self.mmu.nr52.write(0)
-        } else if !masterEnabledNext  {
+        } else if !masterEnabledNext && !masterEnabledPrev  {
             // Exit early
             return
         }
@@ -665,17 +678,15 @@ public class APU {
         self.customWave.setChannels(left: nr51.bit(6), right: nr51.bit(2))
         self.noise.setChannels(left: nr51.bit(7), right: nr51.bit(3))
         
-        // Lines below are just for debugging
-        //self.pulseA.amplitude = 1
-        //self.pulseB.amplitude = 1
-        //self.customWave.amplitude = 0
-        self.noise.amplitude = 0
-        
         // Update all voices
         self.pulseA.update()
         self.pulseB.update()
         self.customWave.update()
-        //self.noise.update()
+        self.noise.update()
+        
+        // Set left and right channel volumes
+        self.master.setLeftChannelVolume(Float(nr50 & 0b00000111) / 7.0)
+        self.master.setRightChannelVolume(Float((nr50 & 0b01110000) >> 4) / 7.0)
         
         // Write nr52 back into RAM
         self.mmu.nr52.write(nr52)
