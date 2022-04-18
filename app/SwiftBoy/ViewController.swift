@@ -17,6 +17,7 @@ class ViewController: UIViewController {
         // let cart = Cartridge(path: #fileLiteral(resourceName: "09-op r,r.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "10-bit ops.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "11-op a,(hl).gb"))
+        // let cart = Cartridge(path: #fileLiteral(resourceName: "dmg-sound.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "deadeus.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "super-mario-land.gb"))
         let cart = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))

@@ -21,6 +21,7 @@
 		A18B2B7826EDD32F00A148F5 /* 04-op r,imm.gb in Resources */ = {isa = PBXBuildFile; fileRef = A18B2B6F26EDD32F00A148F5 /* 04-op r,imm.gb */; };
 		A18B2B7926EDD32F00A148F5 /* 06-ld r,r.gb in Resources */ = {isa = PBXBuildFile; fileRef = A18B2B7026EDD32F00A148F5 /* 06-ld r,r.gb */; };
 		A18B2B7A26EDD32F00A148F5 /* 08-misc instrs.gb in Resources */ = {isa = PBXBuildFile; fileRef = A18B2B7126EDD32F00A148F5 /* 08-misc instrs.gb */; };
+		A19889FC280D26FA0049F47C /* dmg-sound.gb in Resources */ = {isa = PBXBuildFile; fileRef = A19889FB280D26FA0049F47C /* dmg-sound.gb */; };
 		A1B4011226EB5937002F4512 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4011126EB5937002F4512 /* AppDelegate.swift */; };
 		A1B4011426EB5937002F4512 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4011326EB5937002F4512 /* SceneDelegate.swift */; };
 		A1B4011626EB5937002F4512 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4011526EB5937002F4512 /* ViewController.swift */; };
@@ -55,6 +56,7 @@
 		A18B2B6F26EDD32F00A148F5 /* 04-op r,imm.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "04-op r,imm.gb"; sourceTree = "<group>"; };
 		A18B2B7026EDD32F00A148F5 /* 06-ld r,r.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "06-ld r,r.gb"; sourceTree = "<group>"; };
 		A18B2B7126EDD32F00A148F5 /* 08-misc instrs.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "08-misc instrs.gb"; sourceTree = "<group>"; };
+		A19889FB280D26FA0049F47C /* dmg-sound.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "dmg-sound.gb"; sourceTree = "<group>"; };
 		A1B4010E26EB5937002F4512 /* SwiftBoy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftBoy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1B4011126EB5937002F4512 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A1B4011326EB5937002F4512 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -143,6 +145,7 @@
 		A1B4014F26EB5DCE002F4512 /* ROMs */ = {
 			isa = PBXGroup;
 			children = (
+				A19889FB280D26FA0049F47C /* dmg-sound.gb */,
 				A18B2B6C26EDD32F00A148F5 /* 01-special.gb */,
 				A18B2B6A26EDD32E00A148F5 /* 02-interrupts.gb */,
 				A1FB19DB26ECA12A004CFE19 /* 03-op sp,hl.gb */,
@@ -246,6 +249,7 @@
 				A18B2B7726EDD32F00A148F5 /* 09-op r,r.gb in Resources */,
 				A18B2B7626EDD32F00A148F5 /* 11-op a,(hl).gb in Resources */,
 				A1FB19DC26ECA12A004CFE19 /* 03-op sp,hl.gb in Resources */,
+				A19889FC280D26FA0049F47C /* dmg-sound.gb in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
