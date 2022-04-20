@@ -492,9 +492,9 @@ public class PPU {
         }
     }
     
-    public func run(for time: Int16) throws {
+    public func run(ppuCycles: Int16) throws {
         if view.child.enabled {
-            cycles = cycles + time
+            cycles = cycles + ppuCycles
             
             while cycles > 0 {
                 let cmd = queue.count > 0 ? queue.removeFirst() : fetchNextCommand()

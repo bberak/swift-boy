@@ -58,11 +58,11 @@ public class Timer {
         }
     }
     
-    public func run(for time: Int16) throws {
+    public func run(timerCycles: Int16) throws {
         if enabled {
-            counterCycles = counterCycles &+ UInt(time)
+            counterCycles = counterCycles &+ UInt(timerCycles)
         }
         
-        divCycles = divCycles &+ UInt(time)
+        divCycles = divCycles &+ UInt(timerCycles)
     }
 }
