@@ -633,8 +633,8 @@ public class APU {
         self.noise.commit()
         
         // Set left and right channel volumes
-        self.master.setLeftChannelVolume(Float(nr50 & 0b00000111) / 7.0)
-        self.master.setRightChannelVolume(Float((nr50 & 0b01110000) >> 4) / 7.0)
+        self.master.setLeftChannelVolume(Float((nr50 & 0b01110000) >> 4) / 7.0)
+        self.master.setRightChannelVolume(Float(nr50 & 0b00000111) / 7.0)
         
         // Write nr52 back into RAM
         self.mmu.nr52.write(nr52)
