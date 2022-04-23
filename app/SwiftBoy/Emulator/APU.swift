@@ -9,6 +9,8 @@ import Foundation
 import AudioKit
 import SoundpipeAudioKit
 
+typealias AKAmplitudeEnvelope = SoundpipeAudioKit.AmplitudeEnvelope
+
 func bitsToFrequency(bits: UInt16) -> Float {
     return 131072 / (2048 - Float(bits))
 }
@@ -51,8 +53,6 @@ protocol OscillatorNode: Node {
 class Voice {
     let oscillator: OscillatorNode
     
-    var leftChannelOn: Bool = true
-    var rightChannelOn: Bool = true
     var dacEnabled: Bool = true
     var enabled: Bool = true
     var amplitude: Float = 0
@@ -79,28 +79,25 @@ class Voice {
         return dacEnabled && enabled
     }
     
-    func setChannels(left: Bool, right: Bool) {
-        leftChannelOn = left
-        rightChannelOn = right
-    }
-    
-    func commit() {
+    func update() -> Bool {
         oscillator.rampFrequency(to: frequency, duration: 0.01)
 
-        if !leftChannelOn && !rightChannelOn {
-            oscillator.rampAmplitude(to: 0, duration: 0.01)
-        } else if !dacEnabled {
+        if !dacEnabled {
             oscillator.rampAmplitude(to: 0, duration: 0.01)
         } else if !enabled {
             oscillator.rampAmplitude(to: 0, duration: 0.01)
         } else {
             oscillator.rampAmplitude(to: amplitude, duration: 0.01)
         }
+        
+        return isEnabled()
     }
 }
 
 class Synthesizer {
     let engine: AudioEngine
+    let channelsLeft: [AKAmplitudeEnvelope]
+    let channelsRight: [AKAmplitudeEnvelope]
     let mixerLeft: Mixer
     let mixerRight: Mixer
     let mixerMain: Mixer
@@ -121,15 +118,19 @@ class Synthesizer {
             }
             
             if !enabled && engine.avEngine.isRunning {
-                self.engine.stop()
+                self.engine.pause()
             }
         }
     }
     
     init(volume: Float = 0.5, voices: [Voice]) {
-        self.mixerLeft = Mixer(voices.map({ $0.oscillator }))
+        self.channelsLeft = voices.map { AKAmplitudeEnvelope($0.oscillator) }
+        self.channelsLeft.forEach { $0.openGate() }
+        self.channelsRight = voices.map { AKAmplitudeEnvelope($0.oscillator) }
+        self.channelsRight.forEach { $0.openGate() }
+        self.mixerLeft = Mixer(self.channelsLeft)
         self.mixerLeft.pan = -1
-        self.mixerRight = Mixer(voices.map({ $0.oscillator }))
+        self.mixerRight = Mixer(self.channelsRight)
         self.mixerRight.pan = 1
         self.mixerMain = Mixer(self.mixerLeft, self.mixerRight)
         self.mixerMain.volume = volume
@@ -143,6 +144,23 @@ class Synthesizer {
         
     func setRightChannelVolume(_ val: Float) {
         self.mixerRight.volume = val
+    }
+    
+    func enableChannels(index: Int, left: Bool, right: Bool) {
+        let channelLeft = self.channelsLeft[index]
+        let channelRight = self.channelsRight[index]
+        
+        if left {
+            channelLeft.openGate()
+        } else {
+            channelLeft.closeGate()
+        }
+        
+        if right {
+            channelRight.openGate()
+        } else {
+            channelRight.closeGate()
+        }
     }
 }
 
@@ -502,7 +520,7 @@ public class APU {
         self.pulseA.frequencySweepEnvelope.advance(seconds: seconds)
         self.pulseA.lengthEnvelope.advance(seconds: seconds)
         
-        return self.pulseA.isEnabled()
+        return self.pulseA.update()
     }
     
     func updatePulseB(seconds: Float) -> Bool {
@@ -534,7 +552,7 @@ public class APU {
         self.pulseB.amplitudeEnvelope.advance(seconds: seconds)
         self.pulseB.lengthEnvelope.advance(seconds: seconds)
         
-        return self.pulseB.isEnabled()
+        return self.pulseB.update()
     }
     
     func updateWaveform(seconds: Float) -> Bool {
@@ -565,7 +583,7 @@ public class APU {
         
         self.customWave.lengthEnvelope.advance(seconds: seconds)
         
-        return self.customWave.isEnabled()
+        return self.customWave.update()
     }
     
     func updateNoise(seconds: Float) -> Bool {
@@ -598,7 +616,7 @@ public class APU {
         self.noise.amplitudeEnvelope.advance(seconds: seconds)
         self.noise.lengthEnvelope.advance(seconds: seconds)
         
-        return self.noise.isEnabled()
+        return self.noise.update()
     }
     
     public func run(seconds: Float) throws {        
@@ -621,16 +639,10 @@ public class APU {
         nr52[3] = updateNoise(seconds: seconds)
         
         // Left or right channel output for each voice
-        self.pulseA.setChannels(left: nr51.bit(4), right: nr51.bit(0))
-        self.pulseB.setChannels(left: nr51.bit(5), right: nr51.bit(1))
-        self.customWave.setChannels(left: nr51.bit(6), right: nr51.bit(2))
-        self.noise.setChannels(left: nr51.bit(7), right: nr51.bit(3))
-        
-        // Update all voices
-        self.pulseA.commit()
-        self.pulseB.commit()
-        self.customWave.commit()
-        self.noise.commit()
+        self.master.enableChannels(index: 0, left: nr51.bit(4), right: nr51.bit(0))
+        self.master.enableChannels(index: 1, left: nr51.bit(5), right: nr51.bit(1))
+        self.master.enableChannels(index: 2, left: nr51.bit(6), right: nr51.bit(2))
+        //self.master.enableChannels(index: 3, left: nr51.bit(7), right: nr51.bit(3))
         
         // Set left and right channel volumes
         self.master.setLeftChannelVolume(Float((nr50 & 0b01110000) >> 4) / 7.0)
