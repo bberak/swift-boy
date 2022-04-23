@@ -52,6 +52,7 @@ protocol OscillatorNode: Node {
 
 class Voice {
     let oscillator: OscillatorNode
+    let lengthEnvelope: LengthEnvelope
     
     var dacEnabled: Bool = true
     var enabled: Bool = true
@@ -66,17 +67,18 @@ class Voice {
         }
     }
     
-    init(oscillator: OscillatorNode) {
+    init(oscillator: OscillatorNode, maxDuration: Float) {
         self.oscillator = oscillator
         self.oscillator.start()
         self.oscillator.amplitude = 0
         self.oscillator.frequency = 0
+        self.lengthEnvelope = LengthEnvelope(maxDuration: maxDuration)
+        self.lengthEnvelope.voice = self
     }
     
-    func onTriggered() { }
-    
-    func isEnabled() -> Bool {
-        return dacEnabled && enabled
+    func onTriggered() {
+        enabled = dacEnabled
+        lengthEnvelope.reset()
     }
     
     func update() -> Bool {
@@ -90,7 +92,7 @@ class Voice {
             oscillator.rampAmplitude(to: amplitude, duration: 0.01)
         }
         
-        return isEnabled()
+        return dacEnabled && enabled
     }
 }
 
@@ -150,30 +152,69 @@ class Synthesizer {
         let channelLeft = self.channelsLeft[index]
         let channelRight = self.channelsRight[index]
         
-        if left {
-            channelLeft.openGate()
-        } else {
-            channelLeft.closeGate()
-        }
-        
-        if right {
-            channelRight.openGate()
-        } else {
-            channelRight.closeGate()
-        }
+        left ? channelLeft.openGate() : channelLeft.closeGate()
+        right ? channelRight.openGate() : channelRight.closeGate()
     }
-}
-
-enum EnvelopeStatus {
-    case active
-    case deactivated
-    case notApplicable
 }
 
 protocol Envelope {
     var voice: Voice? { get set }
-    func advance(seconds: Float) -> EnvelopeStatus
+    func advance(seconds: Float) -> Void
     func reset() -> Void
+}
+
+class LengthEnvelope: Envelope {
+    private var maxDuration: Float = 0
+    private var elapsedTime: Float = 0
+    
+    var voice: Voice?
+    
+    var enabled = false {
+        didSet {
+            if enabled != oldValue {
+                reset()
+            }
+        }
+    }
+    
+    var duration: Float = 0 {
+        didSet {
+            if duration != oldValue {
+                reset()
+            }
+        }
+    }
+    
+    init(maxDuration: Float, voice: Voice? = nil) {
+        self.maxDuration = maxDuration
+        self.voice = voice
+    }
+    
+    func advance(seconds: Float) {
+        if !enabled {
+            return
+        }
+        
+        if duration == 0 {
+            return
+        }
+        
+        if elapsedTime < duration {
+            elapsedTime += seconds
+            
+            if elapsedTime > duration {
+                voice?.enabled = false
+            }
+        }
+    }
+    
+    func reset() {
+        elapsedTime = 0
+        
+        if duration == 0 {
+            duration = maxDuration
+        }
+    }
 }
 
 class AmplitudeEnvelope: Envelope {
@@ -209,9 +250,9 @@ class AmplitudeEnvelope: Envelope {
         self.voice = voice
     }
     
-    @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
+    func advance(seconds: Float) {
         if stepDuration == 0 {
-            return .notApplicable
+            return
         }
         
         elapsedTime += seconds
@@ -220,57 +261,11 @@ class AmplitudeEnvelope: Envelope {
         let currentStep = (startStep + deltaSteps).clamp(min: 0, max: 0x0F)
         
         voice?.amplitude = Float(currentStep) / 0x0F
-        
-        return .notApplicable
     }
     
     func reset() {
         elapsedTime = 0
         voice?.amplitude = Float(startStep) / 0x0F
-    }
-}
-
-class LengthEnvelope: Envelope {
-    private var elapsedTime: Float = 0
-    
-    var voice: Voice?
-    
-    var enabled = false {
-        didSet {
-            if enabled != oldValue {
-                reset()
-            }
-        }
-    }
-    
-    var duration: Float = 0 {
-        didSet {
-            if duration != oldValue {
-                reset()
-            }
-        }
-    }
-    
-    init(_ voice: Voice? = nil) {
-        self.voice = voice
-    }
-    
-    @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
-        if !enabled {
-            return .notApplicable
-        }
-        
-        if elapsedTime < duration {
-            elapsedTime += seconds
-            
-            return .active
-        }
-        
-        return .deactivated
-    }
-    
-    func reset() {
-        elapsedTime = 0
     }
 }
 
@@ -322,17 +317,17 @@ class FrequencySweepEnvelope: Envelope {
         self.voice = voice
     }
     
-    @discardableResult func advance(seconds: Float) -> EnvelopeStatus {
+    func advance(seconds: Float) {
         if startFrequency == 0 {
-            return .notApplicable
+            return
         }
         
         if sweepTime == 0 {
-            return .notApplicable
+            return
         }
         
         if sweepShifts == 0 {
-            return .notApplicable
+            return
         }
         
         elapsedTime += seconds
@@ -342,16 +337,14 @@ class FrequencySweepEnvelope: Envelope {
         let shiftedValue = sweepIncreasing ? frequencyToBits(frequency: startFrequency) << totalShifts : frequencyToBits(frequency: startFrequency) >> totalShifts
         
         if shiftedValue == 0 {
-            return .deactivated
+            return
         }
         
         if shiftedValue > 2047 {
-            return .deactivated
+            return
         }
         
         adjustedFrequency = bitsToFrequency(bits: shiftedValue)
-        
-        return .active
     }
     
     func reset() {
@@ -372,7 +365,6 @@ extension PWMOscillator: OscillatorNode {
 
 class Pulse: Voice {
     let amplitudeEnvelope = AmplitudeEnvelope()
-    let lengthEnvelope = LengthEnvelope()
     
     var pulseWidth: Float = 0 {
         didSet {
@@ -384,24 +376,24 @@ class Pulse: Voice {
         }
     }
         
-    init() {
-        super.init(oscillator: PWMOscillator())
-
+    init(maxDuration: Float) {
+        super.init(oscillator: PWMOscillator(), maxDuration: maxDuration)
+        
         amplitudeEnvelope.voice = self
-        lengthEnvelope.voice = self
     }
     
     override func onTriggered() {
+        super.onTriggered()
+        
         amplitudeEnvelope.reset()
-        lengthEnvelope.reset()
     }
 }
 
 class PulseWithSweep: Pulse {
     let frequencySweepEnvelope = FrequencySweepEnvelope()
         
-    override init() {
-        super.init()
+    override init(maxDuration: Float) {
+        super.init(maxDuration: maxDuration)
         
         frequencySweepEnvelope.voice = self
     }
@@ -424,8 +416,6 @@ extension DynamicOscillator: OscillatorNode {
 }
 
 class CustomWave: Voice {
-    let lengthEnvelope = LengthEnvelope()
-    
     var data = [Float]() {
         didSet {
             if data != oldValue {
@@ -436,25 +426,31 @@ class CustomWave: Voice {
         }
     }
         
-    init() {
-        super.init(oscillator: DynamicOscillator(waveform: Table(.sine)))
-
-        lengthEnvelope.voice = self
-    }
-    
-    override func onTriggered() {
-        lengthEnvelope.reset()
+    init(maxDuration: Float) {
+        super.init(oscillator: DynamicOscillator(waveform: Table(.sine)), maxDuration: maxDuration)
     }
 }
 
-class Noise: CustomWave {
+extension WhiteNoise: OscillatorNode {
+    var frequency: Float {
+        get { 0 }
+        set { }
+    }
+    
+    func rampFrequency(to: Float, duration: Float) { }
+    
+    func rampAmplitude(to: Float, duration: Float) {
+       $amplitude.ramp(to: to, duration: duration)
+    }
+}
+
+class Noise: Voice {
     let amplitudeEnvelope = AmplitudeEnvelope()
     
-    override init() {
-        super.init()
+    init(maxDuration: Float) {
+        super.init(oscillator: WhiteNoise(), maxDuration: maxDuration)
         
         amplitudeEnvelope.voice = self
-        data = (0...128).map { _ in ((Float(arc4random_uniform(UINT32_MAX)) / Float(UINT32_MAX)) * 2 - 1) }
     }
     
     override func onTriggered() {
@@ -475,10 +471,10 @@ public class APU {
     
     init(_ mmu: MMU) {
         self.mmu = mmu
-        self.pulseA = PulseWithSweep()
-        self.pulseB = Pulse()
-        self.customWave = CustomWave()
-        self.noise = Noise()
+        self.pulseA = PulseWithSweep(maxDuration: 0.25)
+        self.pulseB = Pulse(maxDuration: 0.25)
+        self.customWave = CustomWave(maxDuration: 1.0)
+        self.noise = Noise(maxDuration: 0.25)
         self.master = Synthesizer(voices: [self.pulseA, self.pulseB, self.customWave /*, self.noise */])
         self.master.volume = 0.125
     }
