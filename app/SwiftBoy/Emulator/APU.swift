@@ -52,7 +52,6 @@ protocol OscillatorNode: Node {
 
 class Voice {
     let oscillator: OscillatorNode
-    let lengthEnvelope: LengthEnvelope
     
     var dacEnabled: Bool = true
     var enabled: Bool = true
@@ -67,18 +66,15 @@ class Voice {
         }
     }
     
-    init(oscillator: OscillatorNode, maxDuration: Float) {
+    init(oscillator: OscillatorNode) {
         self.oscillator = oscillator
         self.oscillator.start()
         self.oscillator.amplitude = 0
         self.oscillator.frequency = 0
-        self.lengthEnvelope = LengthEnvelope(maxDuration: maxDuration)
-        self.lengthEnvelope.voice = self
     }
     
     func onTriggered() {
         enabled = dacEnabled
-        lengthEnvelope.reset()
     }
     
     func update() -> Bool {
@@ -164,10 +160,10 @@ protocol Envelope {
 }
 
 class LengthEnvelope: Envelope {
-    private var maxDuration: Float = 0
     private var elapsedTime: Float = 0
     
     var voice: Voice?
+    var maxDuration: Float = 0
     
     var enabled = false {
         didSet {
@@ -185,8 +181,7 @@ class LengthEnvelope: Envelope {
         }
     }
     
-    init(maxDuration: Float, voice: Voice? = nil) {
-        self.maxDuration = maxDuration
+    init(voice: Voice? = nil) {
         self.voice = voice
     }
     
@@ -364,6 +359,7 @@ extension PWMOscillator: OscillatorNode {
 }
 
 class Pulse: Voice {
+    let lengthEnvelope = LengthEnvelope()
     let amplitudeEnvelope = AmplitudeEnvelope()
     
     var pulseWidth: Float = 0 {
@@ -377,31 +373,51 @@ class Pulse: Voice {
     }
         
     init(maxDuration: Float) {
-        super.init(oscillator: PWMOscillator(), maxDuration: maxDuration)
+        super.init(oscillator: PWMOscillator())
         
-        amplitudeEnvelope.voice = self
+        self.lengthEnvelope.maxDuration = maxDuration
+        self.lengthEnvelope.voice = self
+        self.amplitudeEnvelope.voice = self
     }
     
     override func onTriggered() {
         super.onTriggered()
         
-        amplitudeEnvelope.reset()
+        self.lengthEnvelope.reset()
+        self.amplitudeEnvelope.reset()
     }
 }
 
-class PulseWithSweep: Pulse {
+class PulseWithSweep: Voice {
+    let lengthEnvelope = LengthEnvelope()
+    let amplitudeEnvelope = AmplitudeEnvelope()
     let frequencySweepEnvelope = FrequencySweepEnvelope()
+    
+    var pulseWidth: Float = 0 {
+        didSet {
+            if pulseWidth != oldValue {
+                if let pwm = oscillator as? PWMOscillator {
+                    pwm.pulseWidth = pulseWidth
+                }
+            }
+        }
+    }
         
-    override init(maxDuration: Float) {
-        super.init(maxDuration: maxDuration)
+    init(maxDuration: Float) {
+        super.init(oscillator: PWMOscillator())
         
-        frequencySweepEnvelope.voice = self
+        self.lengthEnvelope.maxDuration = maxDuration
+        self.lengthEnvelope.voice = self
+        self.amplitudeEnvelope.voice = self
+        self.frequencySweepEnvelope.voice = self
     }
     
     override func onTriggered() {
         super.onTriggered()
         
-        frequencySweepEnvelope.reset()
+        self.lengthEnvelope.reset()
+        self.amplitudeEnvelope.reset()
+        self.frequencySweepEnvelope.reset()
     }
 }
 
@@ -416,6 +432,8 @@ extension DynamicOscillator: OscillatorNode {
 }
 
 class CustomWave: Voice {
+    let lengthEnvelope = LengthEnvelope()
+    
     var data = [Float]() {
         didSet {
             if data != oldValue {
@@ -427,7 +445,16 @@ class CustomWave: Voice {
     }
         
     init(maxDuration: Float) {
-        super.init(oscillator: DynamicOscillator(waveform: Table(.sine)), maxDuration: maxDuration)
+        super.init(oscillator: DynamicOscillator(waveform: Table(.sine)))
+        
+        self.lengthEnvelope.maxDuration = maxDuration
+        self.lengthEnvelope.voice = self
+    }
+    
+    override func onTriggered() {
+        super.onTriggered()
+        
+        self.lengthEnvelope.reset()
     }
 }
 
@@ -445,18 +472,22 @@ extension WhiteNoise: OscillatorNode {
 }
 
 class Noise: Voice {
+    let lengthEnvelope = LengthEnvelope()
     let amplitudeEnvelope = AmplitudeEnvelope()
     
     init(maxDuration: Float) {
-        super.init(oscillator: WhiteNoise(), maxDuration: maxDuration)
+        super.init(oscillator: WhiteNoise())
         
-        amplitudeEnvelope.voice = self
+        self.lengthEnvelope.maxDuration = maxDuration
+        self.lengthEnvelope.voice = self
+        self.amplitudeEnvelope.voice = self
     }
     
     override func onTriggered() {
         super.onTriggered()
         
-        amplitudeEnvelope.reset()
+        self.lengthEnvelope.reset()
+        self.amplitudeEnvelope.reset()
     }
 }
 
@@ -511,7 +542,6 @@ public class APU {
         self.pulseA.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
         self.pulseA.lengthEnvelope.enabled = lengthEnvelopEnabled
         self.pulseA.lengthEnvelope.duration = lengthEnvelopDuration
-        
         self.pulseA.amplitudeEnvelope.advance(seconds: seconds)
         self.pulseA.frequencySweepEnvelope.advance(seconds: seconds)
         self.pulseA.lengthEnvelope.advance(seconds: seconds)
@@ -544,7 +574,6 @@ public class APU {
         self.pulseB.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
         self.pulseB.lengthEnvelope.enabled = lengthEnvelopeEnabled
         self.pulseB.lengthEnvelope.duration = lengthEnvelopeDuration
-        
         self.pulseB.amplitudeEnvelope.advance(seconds: seconds)
         self.pulseB.lengthEnvelope.advance(seconds: seconds)
         
@@ -576,7 +605,6 @@ public class APU {
         self.customWave.frequency = frequency
         self.customWave.lengthEnvelope.enabled = lengthEnvelopEnabled
         self.customWave.lengthEnvelope.duration = lengthEnvelopeDuration
-        
         self.customWave.lengthEnvelope.advance(seconds: seconds)
         
         return self.customWave.update()
@@ -608,7 +636,6 @@ public class APU {
         self.noise.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
         self.noise.lengthEnvelope.enabled = lengthEnvelopeEnabled
         self.noise.lengthEnvelope.duration = lengthEnvelopeDuration
-        
         self.noise.amplitudeEnvelope.advance(seconds: seconds)
         self.noise.lengthEnvelope.advance(seconds: seconds)
         
@@ -646,5 +673,7 @@ public class APU {
         
         // Write nr52 back into RAM
         self.mmu.nr52.write(nr52)
+        
+        print(self.pulseA.lengthEnvelope.maxDuration, self.pulseB.lengthEnvelope.maxDuration, self.customWave.lengthEnvelope.maxDuration, self.noise.lengthEnvelope.maxDuration)
     }
 }
