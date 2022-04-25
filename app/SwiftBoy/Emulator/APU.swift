@@ -209,6 +209,8 @@ class LengthEnvelope: Envelope {
         if duration == 0 {
             duration = maxDuration
         }
+        
+        voice?.enabled = true
     }
 }
 
