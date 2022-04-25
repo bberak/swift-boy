@@ -168,7 +168,8 @@ class LengthEnvelope: Envelope {
     var enabled = false {
         didSet {
             if enabled != oldValue {
-                reset()
+                elapsedTime = 0
+                voice?.enabled = true
             }
         }
     }
@@ -176,7 +177,9 @@ class LengthEnvelope: Envelope {
     var duration: Float = 0 {
         didSet {
             if duration != oldValue {
-                reset()
+                if duration == 0 {
+                    duration = maxDuration
+                }
             }
         }
     }
@@ -203,15 +206,7 @@ class LengthEnvelope: Envelope {
         }
     }
     
-    func reset() {
-        elapsedTime = 0
-        
-        if duration == 0 {
-            duration = maxDuration
-        }
-        
-        voice?.enabled = true
-    }
+    func reset() { }
 }
 
 class AmplitudeEnvelope: Envelope {
