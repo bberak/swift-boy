@@ -673,7 +673,5 @@ public class APU {
         
         // Write nr52 back into RAM
         self.mmu.nr52.write(nr52)
-        
-        print(self.pulseA.lengthEnvelope.maxDuration, self.pulseB.lengthEnvelope.maxDuration, self.customWave.lengthEnvelope.maxDuration, self.noise.lengthEnvelope.maxDuration)
     }
 }
