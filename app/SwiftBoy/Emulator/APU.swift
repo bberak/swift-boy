@@ -74,7 +74,7 @@ class Voice {
     }
     
     func onTriggered() {
-        enabled = dacEnabled
+        enabled = true
     }
     
     func update() -> Bool {
@@ -156,7 +156,7 @@ class Synthesizer {
 protocol Envelope {
     var voice: Voice? { get set }
     func advance(seconds: Float) -> Void
-    func reset() -> Void
+    func onTriggered() -> Void
 }
 
 class LengthEnvelope: Envelope {
@@ -168,7 +168,6 @@ class LengthEnvelope: Envelope {
     var enabled = false {
         didSet {
             if enabled != oldValue {
-                elapsedTime = 0
                 voice?.enabled = true
             }
         }
@@ -176,10 +175,8 @@ class LengthEnvelope: Envelope {
     
     var duration: Float = 0 {
         didSet {
-            if duration != oldValue {
-                if duration == 0 {
-                    duration = maxDuration
-                }
+            if duration != oldValue && duration == 0 {
+                duration = maxDuration
             }
         }
     }
@@ -193,10 +190,6 @@ class LengthEnvelope: Envelope {
             return
         }
         
-        if duration == 0 {
-            return
-        }
-        
         if elapsedTime < duration {
             elapsedTime += seconds
             
@@ -206,7 +199,10 @@ class LengthEnvelope: Envelope {
         }
     }
     
-    func reset() { }
+    func onTriggered() {
+        elapsedTime = 0
+        voice?.enabled = true
+    }
 }
 
 class AmplitudeEnvelope: Envelope {
@@ -217,7 +213,7 @@ class AmplitudeEnvelope: Envelope {
     var startStep: Int = 0 {
         didSet {
             if startStep != oldValue {
-                reset()
+                onTriggered()
             }
         }
     }
@@ -225,7 +221,7 @@ class AmplitudeEnvelope: Envelope {
     var increasing = false {
         didSet {
             if increasing != oldValue {
-                reset()
+                onTriggered()
             }
         }
     }
@@ -233,7 +229,7 @@ class AmplitudeEnvelope: Envelope {
     var stepDuration: Float = 0 {
         didSet {
             if stepDuration != oldValue {
-                reset()
+                onTriggered()
             }
         }
     }
@@ -255,7 +251,7 @@ class AmplitudeEnvelope: Envelope {
         voice?.amplitude = Float(currentStep) / 0x0F
     }
     
-    func reset() {
+    func onTriggered() {
         elapsedTime = 0
         voice?.amplitude = Float(startStep) / 0x0F
     }
@@ -276,7 +272,7 @@ class FrequencySweepEnvelope: Envelope {
     var startFrequency: Float = 0 {
         didSet {
             if startFrequency != oldValue {
-                reset()
+                onTriggered()
             }
         }
     }
@@ -284,7 +280,7 @@ class FrequencySweepEnvelope: Envelope {
     var sweepIncreasing = false {
         didSet {
             if sweepIncreasing != oldValue {
-                reset()
+                onTriggered()
             }
         }
     }
@@ -292,7 +288,7 @@ class FrequencySweepEnvelope: Envelope {
     var sweepShifts: UInt8 = 0 {
         didSet {
             if sweepShifts != oldValue {
-                reset()
+                onTriggered()
             }
         }
     }
@@ -300,7 +296,7 @@ class FrequencySweepEnvelope: Envelope {
     var sweepTime: Float = 0 {
         didSet {
             if  sweepTime != oldValue {
-                reset()
+                onTriggered()
             }
         }
     }
@@ -310,10 +306,6 @@ class FrequencySweepEnvelope: Envelope {
     }
     
     func advance(seconds: Float) {
-        if startFrequency == 0 {
-            return
-        }
-        
         if sweepTime == 0 {
             return
         }
@@ -339,7 +331,7 @@ class FrequencySweepEnvelope: Envelope {
         adjustedFrequency = bitsToFrequency(bits: shiftedValue)
     }
     
-    func reset() {
+    func onTriggered() {
         elapsedTime = 0
         adjustedFrequency = startFrequency
     }
@@ -380,8 +372,8 @@ class Pulse: Voice {
     override func onTriggered() {
         super.onTriggered()
         
-        self.lengthEnvelope.reset()
-        self.amplitudeEnvelope.reset()
+        self.lengthEnvelope.onTriggered()
+        self.amplitudeEnvelope.onTriggered()
     }
 }
 
@@ -412,9 +404,9 @@ class PulseWithSweep: Voice {
     override func onTriggered() {
         super.onTriggered()
         
-        self.lengthEnvelope.reset()
-        self.amplitudeEnvelope.reset()
-        self.frequencySweepEnvelope.reset()
+        self.lengthEnvelope.onTriggered()
+        self.amplitudeEnvelope.onTriggered()
+        self.frequencySweepEnvelope.onTriggered()
     }
 }
 
@@ -451,7 +443,7 @@ class CustomWave: Voice {
     override func onTriggered() {
         super.onTriggered()
         
-        self.lengthEnvelope.reset()
+        self.lengthEnvelope.onTriggered()
     }
 }
 
@@ -483,8 +475,8 @@ class Noise: Voice {
     override func onTriggered() {
         super.onTriggered()
         
-        self.lengthEnvelope.reset()
-        self.amplitudeEnvelope.reset()
+        self.lengthEnvelope.onTriggered()
+        self.amplitudeEnvelope.onTriggered()
     }
 }
 
@@ -503,7 +495,7 @@ public class APU {
         self.pulseB = Pulse(maxDuration: 0.25)
         self.customWave = CustomWave(maxDuration: 1.0)
         self.noise = Noise(maxDuration: 0.25)
-        self.master = Synthesizer(voices: [self.pulseA, self.pulseB, self.customWave /*, self.noise */])
+        self.master = Synthesizer(voices: [self.pulseA, self.pulseB, self.customWave, self.noise])
         self.master.volume = 0.125
     }
     
@@ -639,7 +631,7 @@ public class APU {
         return self.noise.update()
     }
     
-    public func run(seconds: Float) throws {        
+    public func run(seconds: Float) throws {
         // Master sound registers
         let nr50 = self.mmu.nr50.read()
         let nr51 = self.mmu.nr51.read()
@@ -662,7 +654,7 @@ public class APU {
         self.master.enableChannels(index: 0, left: nr51.bit(4), right: nr51.bit(0))
         self.master.enableChannels(index: 1, left: nr51.bit(5), right: nr51.bit(1))
         self.master.enableChannels(index: 2, left: nr51.bit(6), right: nr51.bit(2))
-        //self.master.enableChannels(index: 3, left: nr51.bit(7), right: nr51.bit(3))
+        self.master.enableChannels(index: 3, left: nr51.bit(7), right: nr51.bit(3))
         
         // Set left and right channel volumes
         self.master.setLeftChannelVolume(Float((nr50 & 0b01110000) >> 4) / 7.0)

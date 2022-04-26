@@ -286,7 +286,7 @@ class Memo<T> {
     private var value: T?
     private var deps: [AnyHashable] = []
     
-    func get (deps: [AnyHashable], _ getter: @escaping () -> T) -> T {
+    func get(deps: [AnyHashable], _ getter: @escaping () -> T) -> T {
         if value == nil || self.deps != deps {
             value = getter()
             self.deps = deps
