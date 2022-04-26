@@ -294,4 +294,8 @@ class Memo<T> {
         
         return value!
     }
+    
+    func invalidate() -> Void {
+        self.deps = [Int32.random(in: 0...1000000000)]
+    }
 }
