@@ -1,9 +1,7 @@
 // TODO: Figure out a good default for master volume 🤔
-// TODO: Get rid of unecessary 'self' references? Or at least be consistent..
-// TODO: Startup sound is still a bit off
-// TODO: Super Mario menu produces a high pitched sound.. I think this is somehow related to the sweepTime on the FrequencySweepEnvelop
-// TODO: Think there is something wrong with how amplitudes are set and or the amplitude envelope. Pulse A and B sound so hollow now. If you hardcode their amplitudes to 1 you will see what I mean..
-// TODO: Don't forget to uncomment code that supresses the custom and noise waves
+// TODO: Startup sound is not working
+// TODO: Super Mario sounds/music is not working
+// TODO: Tetris music Type-B is not working
 
 import Foundation
 import AudioKit
@@ -50,8 +48,15 @@ protocol OscillatorNode: Node {
     func rampAmplitude(to: Float, duration: Float)
 }
 
+protocol Envelope: AnyObject  {
+    var voice: Voice? { get set }
+    func update(seconds: Float) -> Void
+    func onTriggered() -> Void
+}
+
 class Voice {
     let oscillator: OscillatorNode
+    let envelopes: [Envelope]
     
     var dacEnabled: Bool = true
     var enabled: Bool = true
@@ -66,20 +71,25 @@ class Voice {
         }
     }
     
-    init(oscillator: OscillatorNode) {
+    init(oscillator: OscillatorNode, envelopes: [Envelope]) {
         self.oscillator = oscillator
         self.oscillator.start()
         self.oscillator.amplitude = 0
         self.oscillator.frequency = 0
+        self.envelopes = envelopes
+        self.envelopes.forEach { $0.voice = self }
     }
     
     func onTriggered() {
         enabled = true
+        envelopes.forEach { $0.onTriggered() }
     }
     
-    func update() -> Bool {
+    func update(seconds: Float) -> Bool {
+        envelopes.forEach { $0.update(seconds: seconds) }
+        
         oscillator.rampFrequency(to: frequency, duration: 0.01)
-
+        
         if !dacEnabled {
             oscillator.rampAmplitude(to: 0, duration: 0.01)
         } else if !enabled {
@@ -139,7 +149,7 @@ class Synthesizer {
     func setLeftChannelVolume(_ val: Float) {
         self.mixerLeft.volume = val
     }
-        
+    
     func setRightChannelVolume(_ val: Float) {
         self.mixerRight.volume = val
     }
@@ -151,12 +161,6 @@ class Synthesizer {
         left ? channelLeft.openGate() : channelLeft.closeGate()
         right ? channelRight.openGate() : channelRight.closeGate()
     }
-}
-
-protocol Envelope {
-    var voice: Voice? { get set }
-    func advance(seconds: Float) -> Void
-    func onTriggered() -> Void
 }
 
 class LengthEnvelope: Envelope {
@@ -185,7 +189,7 @@ class LengthEnvelope: Envelope {
         self.voice = voice
     }
     
-    func advance(seconds: Float) {
+    func update(seconds: Float) {
         if !enabled {
             return
         }
@@ -238,13 +242,13 @@ class AmplitudeEnvelope: Envelope {
         self.voice = voice
     }
     
-    func advance(seconds: Float) {
+    func update(seconds: Float) {
         if stepDuration == 0 {
             return
         }
         
         elapsedTime += seconds
-          
+        
         let deltaSteps = Int(elapsedTime / stepDuration) * (increasing ? 1 : -1)
         let currentStep = (startStep + deltaSteps).clamp(min: 0, max: 0x0F)
         
@@ -305,7 +309,7 @@ class FrequencySweepEnvelope: Envelope {
         self.voice = voice
     }
     
-    func advance(seconds: Float) {
+    func update(seconds: Float) {
         if sweepTime == 0 {
             return
         }
@@ -343,7 +347,7 @@ extension PWMOscillator: OscillatorNode {
     }
     
     func rampAmplitude(to: Float, duration: Float) {
-       $amplitude.ramp(to: to, duration: duration)
+        $amplitude.ramp(to: to, duration: duration)
     }
 }
 
@@ -360,20 +364,11 @@ class Pulse: Voice {
             }
         }
     }
-        
+    
     init(maxDuration: Float) {
-        super.init(oscillator: PWMOscillator())
+        super.init(oscillator: PWMOscillator(), envelopes: [self.lengthEnvelope, self.amplitudeEnvelope])
         
         self.lengthEnvelope.maxDuration = maxDuration
-        self.lengthEnvelope.voice = self
-        self.amplitudeEnvelope.voice = self
-    }
-    
-    override func onTriggered() {
-        super.onTriggered()
-        
-        self.lengthEnvelope.onTriggered()
-        self.amplitudeEnvelope.onTriggered()
     }
 }
 
@@ -391,22 +386,11 @@ class PulseWithSweep: Voice {
             }
         }
     }
-        
+    
     init(maxDuration: Float) {
-        super.init(oscillator: PWMOscillator())
+        super.init(oscillator: PWMOscillator(), envelopes: [self.lengthEnvelope, self.amplitudeEnvelope, self.frequencySweepEnvelope])
         
         self.lengthEnvelope.maxDuration = maxDuration
-        self.lengthEnvelope.voice = self
-        self.amplitudeEnvelope.voice = self
-        self.frequencySweepEnvelope.voice = self
-    }
-    
-    override func onTriggered() {
-        super.onTriggered()
-        
-        self.lengthEnvelope.onTriggered()
-        self.amplitudeEnvelope.onTriggered()
-        self.frequencySweepEnvelope.onTriggered()
     }
 }
 
@@ -416,7 +400,7 @@ extension DynamicOscillator: OscillatorNode {
     }
     
     func rampAmplitude(to: Float, duration: Float) {
-       $amplitude.ramp(to: to, duration: duration)
+        $amplitude.ramp(to: to, duration: duration)
     }
 }
 
@@ -432,18 +416,11 @@ class CustomWave: Voice {
             }
         }
     }
-        
+    
     init(maxDuration: Float) {
-        super.init(oscillator: DynamicOscillator(waveform: Table(.sine)))
+        super.init(oscillator: DynamicOscillator(waveform: Table(.sine)), envelopes: [self.lengthEnvelope])
         
         self.lengthEnvelope.maxDuration = maxDuration
-        self.lengthEnvelope.voice = self
-    }
-    
-    override func onTriggered() {
-        super.onTriggered()
-        
-        self.lengthEnvelope.onTriggered()
     }
 }
 
@@ -456,7 +433,7 @@ extension WhiteNoise: OscillatorNode {
     func rampFrequency(to: Float, duration: Float) { }
     
     func rampAmplitude(to: Float, duration: Float) {
-       $amplitude.ramp(to: to, duration: duration)
+        $amplitude.ramp(to: to, duration: duration)
     }
 }
 
@@ -465,18 +442,9 @@ class Noise: Voice {
     let amplitudeEnvelope = AmplitudeEnvelope()
     
     init(maxDuration: Float) {
-        super.init(oscillator: WhiteNoise())
+        super.init(oscillator: WhiteNoise(), envelopes: [self.lengthEnvelope, self.amplitudeEnvelope])
         
         self.lengthEnvelope.maxDuration = maxDuration
-        self.lengthEnvelope.voice = self
-        self.amplitudeEnvelope.voice = self
-    }
-    
-    override func onTriggered() {
-        super.onTriggered()
-        
-        self.lengthEnvelope.onTriggered()
-        self.amplitudeEnvelope.onTriggered()
     }
 }
 
@@ -531,11 +499,8 @@ public class APU {
         self.pulseA.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
         self.pulseA.lengthEnvelope.enabled = lengthEnvelopEnabled
         self.pulseA.lengthEnvelope.duration = lengthEnvelopDuration
-        self.pulseA.amplitudeEnvelope.advance(seconds: seconds)
-        self.pulseA.frequencySweepEnvelope.advance(seconds: seconds)
-        self.pulseA.lengthEnvelope.advance(seconds: seconds)
         
-        return self.pulseA.update()
+        return self.pulseA.update(seconds: seconds)
     }
     
     func updatePulseB(seconds: Float) -> Bool {
@@ -563,10 +528,8 @@ public class APU {
         self.pulseB.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
         self.pulseB.lengthEnvelope.enabled = lengthEnvelopeEnabled
         self.pulseB.lengthEnvelope.duration = lengthEnvelopeDuration
-        self.pulseB.amplitudeEnvelope.advance(seconds: seconds)
-        self.pulseB.lengthEnvelope.advance(seconds: seconds)
         
-        return self.pulseB.update()
+        return self.pulseB.update(seconds: seconds)
     }
     
     func updateWaveform(seconds: Float) -> Bool {
@@ -594,9 +557,8 @@ public class APU {
         self.customWave.frequency = frequency
         self.customWave.lengthEnvelope.enabled = lengthEnvelopEnabled
         self.customWave.lengthEnvelope.duration = lengthEnvelopeDuration
-        self.customWave.lengthEnvelope.advance(seconds: seconds)
         
-        return self.customWave.update()
+        return self.customWave.update(seconds: seconds)
     }
     
     func updateNoise(seconds: Float) -> Bool {
@@ -625,10 +587,8 @@ public class APU {
         self.noise.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
         self.noise.lengthEnvelope.enabled = lengthEnvelopeEnabled
         self.noise.lengthEnvelope.duration = lengthEnvelopeDuration
-        self.noise.amplitudeEnvelope.advance(seconds: seconds)
-        self.noise.lengthEnvelope.advance(seconds: seconds)
         
-        return self.noise.update()
+        return self.noise.update(seconds: seconds)
     }
     
     public func run(seconds: Float) throws {
