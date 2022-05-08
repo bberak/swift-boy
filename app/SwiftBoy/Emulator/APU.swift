@@ -14,6 +14,10 @@ func bitsToFrequency(bits: UInt16) -> Float {
 }
 
 func frequencyToBits(frequency: Float) -> UInt16 {
+    if frequency == 0 {
+        return 0
+    }
+        
     return UInt16(2048 - (131072 / frequency))
 }
 
@@ -465,162 +469,236 @@ public class APU {
         self.noise = Noise(maxDuration: 0.25)
         self.master = Synthesizer(voices: [self.pulseA, self.pulseB, self.customWave, self.noise])
         self.master.volume = 0.125
+        
+        self.wireUpPulseA()
+        self.wireUpPulseB()
+        self.wireUpCustomWave()
+        self.wireUpNoise()
+        self.wireUpMaster()
     }
     
-    func updatePulseA(seconds: Float) -> Bool {
-        let nr10 = self.mmu.nr10.read()
-        let nr11 = self.mmu.nr11.read()
-        let nr12 = self.mmu.nr12.read()
-        let nr13 = self.mmu.nr13.read()
-        let nr14 = self.mmu.nr14.read()
+    func wireUpPulseA() {
+        self.mmu.nr10.subscribe { nr10 in
+            let sweepShifts = nr10 & 0b00000111
+            let sweepIncreasing = nr10.bit(3)
+            let sweepTime = convertToSweepTime(byte: (nr10 & 0b01110000) >> 4)
+            
+            self.pulseA.frequencySweepEnvelope.sweepShifts = sweepShifts
+            self.pulseA.frequencySweepEnvelope.sweepIncreasing = sweepIncreasing
+            self.pulseA.frequencySweepEnvelope.sweepTime = sweepTime
+        }
         
-        let sweepShifts = nr10 & 0b00000111
-        let sweepIncreasing = nr10.bit(3)
-        let sweepTime = convertToSweepTime(byte: (nr10 & 0b01110000) >> 4)
-        let pulseWidth = convertToPulseWidth(byte: nr11 & 0b11000000)
-        let lengthEnvelopDuration = (64 - Float(nr11 & 0b00111111)) * (1 / 256)
-        let amplitudeEnvelopeStartStep = Int((nr12 & 0b11110000) >> 4)
-        let amplitudeEnvelopeStepDuration = Float(nr12 & 0b00000111) * (1 / 64)
-        let amplitudeEnvelopeIncreasing = nr12.bit(3)
-        let dacEnabled = (nr12 & 0b11111000) != 0
-        let frequency = bitsToFrequency(bits: UInt16(nr13) + (UInt16(nr14 & 0b00000111) << 8))
-        let lengthEnvelopEnabled = nr14.bit(6)
-        let triggered = nr14.bit(7)
+        self.mmu.nr11.subscribe { nr11 in
+            let pulseWidth = convertToPulseWidth(byte: nr11 & 0b11000000)
+            let lengthEnvelopDuration = (64 - Float(nr11 & 0b00111111)) * (1 / 256)
+            
+            self.pulseA.pulseWidth = pulseWidth
+            self.pulseA.lengthEnvelope.duration = lengthEnvelopDuration
+        }
         
-        self.pulseA.dacEnabled = dacEnabled
-        self.pulseA.triggered = triggered
-        self.pulseA.frequencySweepEnvelope.startFrequency = frequency
-        self.pulseA.frequencySweepEnvelope.sweepShifts = sweepShifts
-        self.pulseA.frequencySweepEnvelope.sweepIncreasing = sweepIncreasing
-        self.pulseA.frequencySweepEnvelope.sweepTime = sweepTime
-        self.pulseA.pulseWidth = pulseWidth
-        self.pulseA.amplitudeEnvelope.startStep = amplitudeEnvelopeStartStep
-        self.pulseA.amplitudeEnvelope.stepDuration = amplitudeEnvelopeStepDuration
-        self.pulseA.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
-        self.pulseA.lengthEnvelope.enabled = lengthEnvelopEnabled
-        self.pulseA.lengthEnvelope.duration = lengthEnvelopDuration
+        self.mmu.nr12.subscribe { nr12 in
+            let amplitudeEnvelopeStartStep = Int((nr12 & 0b11110000) >> 4)
+            let amplitudeEnvelopeStepDuration = Float(nr12 & 0b00000111) * (1 / 64)
+            let amplitudeEnvelopeIncreasing = nr12.bit(3)
+            let dacEnabled = (nr12 & 0b11111000) != 0
+            
+            self.pulseA.dacEnabled = dacEnabled
+            self.pulseA.amplitudeEnvelope.startStep = amplitudeEnvelopeStartStep
+            self.pulseA.amplitudeEnvelope.stepDuration = amplitudeEnvelopeStepDuration
+            self.pulseA.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
+        }
         
-        return self.pulseA.update(seconds: seconds)
+        self.mmu.nr13.subscribe { nr13 in
+            let bits = frequencyToBits(frequency: self.pulseA.frequencySweepEnvelope.startFrequency)
+            let lsb = UInt16(nr13)
+            let msb = bits & 0xFF00
+            let frequency = bitsToFrequency(bits: lsb + msb)
+            
+            self.pulseA.frequencySweepEnvelope.startFrequency = frequency
+        }
+    
+        self.mmu.nr14.subscribe { nr14 in
+            let bits = frequencyToBits(frequency: self.pulseA.frequencySweepEnvelope.startFrequency)
+            let lsb = bits & 0x00FF
+            let msb = UInt16(nr14 & 0b00000111) << 8
+            let frequency = bitsToFrequency(bits: lsb + msb)
+            let lengthEnvelopEnabled = nr14.bit(6)
+            let triggered = nr14.bit(7)
+            
+            self.pulseA.frequencySweepEnvelope.startFrequency = frequency
+            self.pulseA.triggered = triggered
+            self.pulseA.lengthEnvelope.enabled = lengthEnvelopEnabled
+        }
     }
     
-    func updatePulseB(seconds: Float) -> Bool {
-        let nr21 = self.mmu.nr21.read()
-        let nr22 = self.mmu.nr22.read()
-        let nr23 = self.mmu.nr23.read()
-        let nr24 = self.mmu.nr24.read()
+    func wireUpPulseB() {
+        self.mmu.nr21.subscribe { nr21 in
+            let pulseWidth = convertToPulseWidth(byte: nr21 & 0b11000000)
+            let lengthEnvelopeDuration = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
+            
+            self.pulseB.pulseWidth = pulseWidth
+            self.pulseB.lengthEnvelope.duration = lengthEnvelopeDuration
+        }
         
-        let pulseWidth = convertToPulseWidth(byte: nr21 & 0b11000000)
-        let lengthEnvelopeDuration = (64 - Float(nr21 & 0b00111111)) * (1 / 256)
-        let amplitudeEnvelopeStartStep = Int((nr22 & 0b11110000) >> 4)
-        let amplitudeEnvelopeStepDuration = Float(nr22 & 0b00000111) * (1 / 64)
-        let amplitudeEnvelopeIncreasing = nr22.bit(3)
-        let dacEnabled = (nr22 & 0b11111000) != 0
-        let frequency = bitsToFrequency(bits: UInt16(nr23) + (UInt16(nr24 & 0b00000111) << 8))
-        let lengthEnvelopeEnabled = nr24.bit(6)
-        let triggered = nr24.bit(7)
+        self.mmu.nr22.subscribe { nr22 in
+            let amplitudeEnvelopeStartStep = Int((nr22 & 0b11110000) >> 4)
+            let amplitudeEnvelopeStepDuration = Float(nr22 & 0b00000111) * (1 / 64)
+            let amplitudeEnvelopeIncreasing = nr22.bit(3)
+            let dacEnabled = (nr22 & 0b11111000) != 0
+            
+            self.pulseB.dacEnabled = dacEnabled
+            self.pulseB.amplitudeEnvelope.startStep = amplitudeEnvelopeStartStep
+            self.pulseB.amplitudeEnvelope.stepDuration = amplitudeEnvelopeStepDuration
+            self.pulseB.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
+        }
         
-        self.pulseB.dacEnabled = dacEnabled
-        self.pulseB.triggered = triggered
-        self.pulseB.frequency = frequency
-        self.pulseB.pulseWidth = pulseWidth
-        self.pulseB.amplitudeEnvelope.startStep = amplitudeEnvelopeStartStep
-        self.pulseB.amplitudeEnvelope.stepDuration = amplitudeEnvelopeStepDuration
-        self.pulseB.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
-        self.pulseB.lengthEnvelope.enabled = lengthEnvelopeEnabled
-        self.pulseB.lengthEnvelope.duration = lengthEnvelopeDuration
+        self.mmu.nr23.subscribe { nr23 in
+            let bits = frequencyToBits(frequency: self.pulseB.frequency)
+            let lsb = UInt16(nr23)
+            let msb = bits & 0xFF00
+            let frequency = bitsToFrequency(bits: lsb + msb)
+            
+            self.pulseB.frequency = frequency
+        }
         
-        return self.pulseB.update(seconds: seconds)
+        self.mmu.nr24.subscribe { nr24 in
+            let bits = frequencyToBits(frequency: self.pulseB.frequency)
+            let lsb = bits & 0x00FF
+            let msb = UInt16(nr24 & 0b00000111) << 8
+            let frequency = bitsToFrequency(bits: lsb + msb)
+            let lengthEnvelopeEnabled = nr24.bit(6)
+            let triggered = nr24.bit(7)
+            
+            self.pulseB.triggered = triggered
+            self.pulseB.frequency = frequency
+            self.pulseB.lengthEnvelope.enabled = lengthEnvelopeEnabled
+        }
     }
     
-    func updateWaveform(seconds: Float) -> Bool {
-        let nr30 = self.mmu.nr30.read()
-        let nr31 = self.mmu.nr31.read()
+    func wireUpCustomWave() {
+        self.mmu.nr30.subscribe { nr30 in
+            let dacEnabled = nr30.bit(7)
+            
+            self.customWave.dacEnabled = dacEnabled
+        }
+        
+        self.mmu.nr31.subscribe { nr31 in
+            let lengthEnvelopeDuration = (256 - Float(nr31)) * (1 / 256)
+            
+            self.customWave.lengthEnvelope.duration = lengthEnvelopeDuration
+        }
+        
+        self.mmu.nr33.subscribe { nr33 in
+            let bits = frequencyToBits(frequency: self.pulseB.frequency)
+            let lsb = UInt16(nr33)
+            let msb = bits & 0xFF00
+            let frequency = bitsToFrequency(bits: lsb + msb)
+            
+            self.customWave.frequency = frequency
+        }
+        
+        self.mmu.nr34.subscribe { nr34 in
+            let bits = frequencyToBits(frequency: self.pulseB.frequency)
+            let lsb = bits & 0x00FF
+            let msb = UInt16(nr34 & 0b00000111) << 8
+            let frequency = bitsToFrequency(bits: lsb + msb)
+            let lengthEnvelopEnabled = nr34.bit(6)
+            let triggered = nr34.bit(7)
+            
+            self.customWave.triggered = triggered
+            self.customWave.frequency = frequency
+            self.customWave.lengthEnvelope.enabled = lengthEnvelopEnabled
+        }
+    }
+    
+    func wireUpNoise() {
+        self.mmu.nr41.subscribe { nr41 in
+            let lengthEnvelopeDuration = (64 - Float(nr41 & 0b00111111)) * (1 / 256)
+            
+            self.noise.lengthEnvelope.duration = lengthEnvelopeDuration
+        }
+        
+        self.mmu.nr42.subscribe { nr42 in
+            let amplitudeEnvelopeStartStep = Int((nr42 & 0b11110000) >> 4)
+            let amplitudeEnvelopeStepDuration = Float(nr42 & 0b00000111) * 1 / 64
+            let amplitudeEnvelopeIncreasing = nr42.bit(3)
+            let dacEnabled = (nr42 & 0b11111000) != 0
+            
+            self.noise.dacEnabled = dacEnabled
+            self.noise.amplitudeEnvelope.startStep = amplitudeEnvelopeStartStep
+            self.noise.amplitudeEnvelope.stepDuration = amplitudeEnvelopeStepDuration
+            self.noise.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
+        }
+        
+        self.mmu.nr43.subscribe { nr43 in
+            let temp = nr43 & 0b00000111
+            let r = temp == 0 ? Float(0.5) : Float(temp)
+            let s = Float(nr43 & 0b11100000)
+            let frequency = Float(524288) / r / powf(2, s + 1.0)
+            
+            self.noise.frequency = frequency
+        }
+        
+        self.mmu.nr44.subscribe { nr44 in
+            let lengthEnvelopeEnabled = nr44.bit(6)
+            let triggered = nr44.bit(7)
+            
+            self.noise.triggered = triggered
+            self.noise.lengthEnvelope.enabled = lengthEnvelopeEnabled
+        }
+    }
+    
+    func wireUpMaster() {
+        // Set left and right channel volumes
+        self.mmu.nr50.subscribe { nr50 in
+            self.master.setLeftChannelVolume(Float((nr50 & 0b01110000) >> 4) / 7.0)
+            self.master.setRightChannelVolume(Float(nr50 & 0b00000111) / 7.0)
+        }
+        
+        // Enabled left or right channel output for each voice
+        self.mmu.nr51.subscribe { nr51 in
+            self.master.enableChannels(index: 0, left: nr51.bit(4), right: nr51.bit(0))
+            self.master.enableChannels(index: 1, left: nr51.bit(5), right: nr51.bit(1))
+            self.master.enableChannels(index: 2, left: nr51.bit(6), right: nr51.bit(2))
+            self.master.enableChannels(index: 3, left: nr51.bit(7), right: nr51.bit(3))
+        }
+        
+        // Master sound output
+        self.mmu.nr52.subscribe { nr52 in
+            self.master.enabled = nr52.bit(7)
+        }
+    }
+    
+    func updateWaveform() {
         let nr32 = self.mmu.nr32.read()
-        let nr33 = self.mmu.nr33.read()
-        let nr34 = self.mmu.nr34.read()
-        
-        let dacEnabled = nr30.bit(7)
-        let lengthEnvelopeDuration = (256 - Float(nr31)) * (1 / 256)
         let outputLevel = (nr32 & 0b01100000) >> 5
-        let frequency = bitsToFrequency(bits: UInt16(nr33) + (UInt16(nr34 & 0b00000111) << 8))
-        let lengthEnvelopEnabled = nr34.bit(6)
-        let triggered = nr34.bit(7)
         let waveformData = self.waveformDataMemo.get(deps: [self.mmu.waveformRam.version, outputLevel]) {
             let buffer = self.mmu.waveformRam.buffer
             return buffer.flatMap({ [Float($0.nibble(1) >> outputLevel) / 0b1111, Float($0.nibble(0) >> outputLevel) / 0b1111 ] }).map({ $0 * 2 - 1 })
         }
         
-        self.customWave.dacEnabled = dacEnabled
-        self.customWave.triggered = triggered
         self.customWave.data = waveformData
         self.customWave.amplitude = 1
-        self.customWave.frequency = frequency
-        self.customWave.lengthEnvelope.enabled = lengthEnvelopEnabled
-        self.customWave.lengthEnvelope.duration = lengthEnvelopeDuration
-        
-        return self.customWave.update(seconds: seconds)
     }
-    
-    func updateNoise(seconds: Float) -> Bool {
-        let nr41 = self.mmu.nr41.read()
-        let nr42 = self.mmu.nr42.read()
-        let nr43 = self.mmu.nr43.read()
-        let nr44 = self.mmu.nr44.read()
-        
-        let lengthEnvelopeDuration = (64 - Float(nr41 & 0b00111111)) * (1 / 256)
-        let amplitudeEnvelopeStartStep = Int((nr42 & 0b11110000) >> 4)
-        let amplitudeEnvelopeStepDuration = Float(nr42 & 0b00000111) * 1 / 64
-        let amplitudeEnvelopeIncreasing = nr42.bit(3)
-        let dacEnabled = (nr42 & 0b11111000) != 0
-        let temp = nr43 & 0b00000111
-        let r = temp == 0 ? Float(0.5) : Float(temp)
-        let s = Float(nr43 & 0b11100000)
-        let frequency = Float(524288) / r / powf(2, s + 1.0)
-        let lengthEnvelopeEnabled = nr44.bit(6)
-        let triggered = nr44.bit(7)
-        
-        self.noise.dacEnabled = dacEnabled
-        self.noise.triggered = triggered
-        self.noise.frequency = frequency
-        self.noise.amplitudeEnvelope.startStep = amplitudeEnvelopeStartStep
-        self.noise.amplitudeEnvelope.stepDuration = amplitudeEnvelopeStepDuration
-        self.noise.amplitudeEnvelope.increasing = amplitudeEnvelopeIncreasing
-        self.noise.lengthEnvelope.enabled = lengthEnvelopeEnabled
-        self.noise.lengthEnvelope.duration = lengthEnvelopeDuration
-        
-        return self.noise.update(seconds: seconds)
-    }
+
     
     public func run(seconds: Float) throws {
-        // Master sound registers
-        let nr50 = self.mmu.nr50.read()
-        let nr51 = self.mmu.nr51.read()
-        var nr52 = self.mmu.nr52.read()
-        
-        // Master sound output
-        self.master.enabled = nr52.bit(7)
-        
         if !self.master.enabled {
             return
         }
         
-        // Voice specific controls
-        nr52[0] = updatePulseA(seconds: seconds)
-        nr52[1] = updatePulseB(seconds: seconds)
-        nr52[2] = updateWaveform(seconds: seconds)
-        nr52[3] = updateNoise(seconds: seconds)
+        // Custom waveform update
+        self.updateWaveform()
         
-        // Left or right channel output for each voice
-        self.master.enableChannels(index: 0, left: nr51.bit(4), right: nr51.bit(0))
-        self.master.enableChannels(index: 1, left: nr51.bit(5), right: nr51.bit(1))
-        self.master.enableChannels(index: 2, left: nr51.bit(6), right: nr51.bit(2))
-        self.master.enableChannels(index: 3, left: nr51.bit(7), right: nr51.bit(3))
+        // Update all voices
+        var nr52 = self.mmu.nr52.read()
         
-        // Set left and right channel volumes
-        self.master.setLeftChannelVolume(Float((nr50 & 0b01110000) >> 4) / 7.0)
-        self.master.setRightChannelVolume(Float(nr50 & 0b00000111) / 7.0)
+        nr52[0] = self.pulseA.update(seconds: seconds)
+        nr52[1] = self.pulseB.update(seconds: seconds)
+        nr52[2] = self.customWave.update(seconds: seconds)
+        nr52[3] = self.noise.update(seconds: seconds)
         
         // Write nr52 back into RAM
-        self.mmu.nr52.write(nr52)
+        self.mmu.nr52.write(nr52, publish: false)
     }
 }
