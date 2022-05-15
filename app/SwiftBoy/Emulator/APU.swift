@@ -2,7 +2,6 @@
 // TODO: Startup sound is not working
 // TODO: Super Mario sounds/music is not working
 // TODO: Tetris main menu and Type-B music is not sounding correct
-// TODO: Now that I've moved to a subscription-based model, I can remove some of the value != oldValue checks..
 
 import Foundation
 import AudioKit
