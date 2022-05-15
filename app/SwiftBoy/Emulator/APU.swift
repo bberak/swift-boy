@@ -1,6 +1,6 @@
 // TODO: Figure out a good default for master volume 🤔
-// TODO: Startup sound is not working
-// TODO: Super Mario sounds/music is not working
+// TODO: A weird noise can be heard as soon as the GB is turned on
+// TODO: Super Mario sounds and music are completely off
 // TODO: Tetris main menu and Type-B music is not sounding correct
 
 import Foundation
