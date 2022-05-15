@@ -232,45 +232,15 @@ class FrequencySweepEnvelope: Envelope {
     private var elapsedTime: Float = 0
     private var adjustedFrequency: Float = 0 {
         didSet {
-            if adjustedFrequency != oldValue {
-                voice?.frequency = adjustedFrequency
-            }
+            voice?.frequency = adjustedFrequency
         }
     }
     
     var voice: Voice?
-    
-    var startFrequency: Float = 0 {
-        didSet {
-            if startFrequency != oldValue {
-                onTriggered()
-            }
-        }
-    }
-    
-    var sweepIncreasing = false {
-        didSet {
-            if sweepIncreasing != oldValue {
-                onTriggered()
-            }
-        }
-    }
-    
-    var sweepShifts: UInt8 = 0 {
-        didSet {
-            if sweepShifts != oldValue {
-                onTriggered()
-            }
-        }
-    }
-    
-    var sweepTime: Float = 0 {
-        didSet {
-            if  sweepTime != oldValue {
-                onTriggered()
-            }
-        }
-    }
+    var startFrequency: Float = 0
+    var sweepIncreasing = false
+    var sweepShifts: UInt8 = 0
+    var sweepTime: Float = 0
     
     init(_ voice: Voice? = nil) {
         self.voice = voice
