@@ -70,9 +70,7 @@ class Voice {
     
     var triggered: Bool = false {
         didSet {
-            if triggered && triggered != oldValue {
-                onTriggered()
-            }
+            onTriggered()
         }
     }
     
@@ -203,30 +201,9 @@ class AmplitudeEnvelope: Envelope {
     private var elapsedTime: Float = 0
     
     var voice: Voice?
-    
-    var startStep: Int = 0 {
-        didSet {
-            if startStep != oldValue {
-                onTriggered()
-            }
-        }
-    }
-    
-    var increasing = false {
-        didSet {
-            if increasing != oldValue {
-                onTriggered()
-            }
-        }
-    }
-    
-    var stepDuration: Float = 0 {
-        didSet {
-            if stepDuration != oldValue {
-                onTriggered()
-            }
-        }
-    }
+    var startStep: Int = 0
+    var increasing = false
+    var stepDuration: Float = 0
     
     init(_ voice: Voice? = nil) {
         self.voice = voice
