@@ -2,6 +2,7 @@
 // TODO: Startup sound is not working
 // TODO: Super Mario sounds/music is not working
 // TODO: Tetris main menu and Type-B music is not sounding correct
+// TODO: Now that I've moved to a subscription-based model, I can remove some of the value != oldValue checks..
 
 import Foundation
 import AudioKit
@@ -168,26 +169,10 @@ class Synthesizer {
 }
 
 class LengthEnvelope: Envelope {
-    private var elapsedTime: Float = 0
-    
     var voice: Voice?
     var maxDuration: Float = 0
-    
-    var enabled = false {
-        didSet {
-            if enabled != oldValue {
-                voice?.enabled = true
-            }
-        }
-    }
-    
-    var duration: Float = 0 {
-        didSet {
-            if duration != oldValue && duration == 0 {
-                duration = maxDuration
-            }
-        }
-    }
+    var enabled = false
+    var duration: Float = 0
     
     init(voice: Voice? = nil) {
         self.voice = voice
@@ -198,18 +183,19 @@ class LengthEnvelope: Envelope {
             return
         }
         
-        if elapsedTime < duration {
-            elapsedTime += seconds
+        if duration > 0 {
+            duration -= seconds
             
-            if elapsedTime > duration {
+            if duration <= 0 {
                 voice?.enabled = false
             }
         }
     }
     
     func onTriggered() {
-        elapsedTime = 0
-        voice?.enabled = true
+        if duration <= 0 {
+            duration = maxDuration
+        }
     }
 }
 
