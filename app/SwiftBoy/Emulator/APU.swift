@@ -2,6 +2,7 @@
 // TODO: A weird noise can be heard as soon as the GB is turned on
 // TODO: Super Mario sounds and music are completely off
 // TODO: Tetris main menu and Type-B music is not sounding correct
+// TODO: Still need to implement the noise voice properly
 
 import Foundation
 import AudioKit
