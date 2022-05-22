@@ -54,36 +54,14 @@ struct TitleView: View {
         let shearValue = CGFloat(-0.3)
         let shearTransform = CGAffineTransform(a: 1, b: 0, c: shearValue, d: 1, tx: 0, ty: 0)
         
-        HStack {
-            Text("←")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(.black)
-                .padding(EdgeInsets(top: 5, leading: 10, bottom: 5, trailing: 15))
-                .background(Rectangle()
-                    .fill(.white)
-                    .transformEffect(shearTransform))
-                .offset(x: 5, y: 0)
-            
-            Text("\(title)")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(.black)
-                .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 25))
-                .background(Rectangle()
-                    .fill(.white)
-                    .transformEffect(shearTransform))
-            
-            Text("→")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(.black)
-                .padding(EdgeInsets(top: 5, leading: 10, bottom: 5, trailing: 15))
-                .background(Rectangle()
-                    .fill(.white)
-                    .transformEffect(shearTransform))
-                .offset(x: -5, y: 0)
-        }
+        Text("\(title)  →")
+            .font(.caption)
+            .fontWeight(.bold)
+            .foregroundColor(.black)
+            .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
+            .background(Rectangle()
+                .fill(.white)
+                .transformEffect(shearTransform))
     }
         
 }
