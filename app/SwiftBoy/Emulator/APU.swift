@@ -631,6 +631,9 @@ public class APU {
         nr52[2] = self.customWave.update(seconds: seconds)
         nr52[3] = self.noise.update(seconds: seconds)
         
+        // Snippet to determine which voice is making sound
+        // print(nr52[0] && self.pulseA.amplitude > 0, nr52[1] && self.pulseB.amplitude > 0, nr52[2] && self.customWave.amplitude > 0, nr52[3] && self.noise.amplitude > 0)
+        
         // Write nr52 back into RAM
         self.mmu.nr52.write(nr52, publish: false)
     }
