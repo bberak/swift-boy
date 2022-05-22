@@ -22,7 +22,7 @@ class ViewController: UIViewController {
         // let cart = Cartridge(path: #fileLiteral(resourceName: "super-mario-land.gb"))
         let cart = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
-        let title = TitleView(onPress: { print("title pressed") }, onRelease: { print("title released") }, title: cart.title)
+        let title = TitleView(title: cart.title, touchable: Touchable(onPress: { print("title pressed") }, onRelease: { print("title released") }))
         let mmu = MMU(cart)
         let ppu = PPU(mmu)
         let cpu = CPU(mmu)
@@ -48,30 +48,8 @@ class ViewController: UIViewController {
 }
 
 struct TitleView: View {
-    var onPress: () -> Void
-    var onRelease: () -> Void
-    var haptics = UIImpactFeedbackGenerator(style: .medium)
-    
     @State var title = ""
-    @State var pressed = false
-    
-    var pressInOut: some Gesture {
-        DragGesture( minimumDistance: 0, coordinateSpace: .local)
-            .onChanged { _ in
-                if !pressed {
-                    pressed = true
-                    onPress();
-                    haptics.impactOccurred(intensity: 1.0);
-                }
-            }
-            .onEnded { _ in
-                if pressed {
-                    pressed = false
-                    onRelease();
-                    haptics.impactOccurred(intensity: 0.5);
-                }
-            }
-    }
+    @StateObject var touchable: Touchable
     
     var body: some View {
         let shearValue = CGFloat(-0.3)
@@ -83,13 +61,12 @@ struct TitleView: View {
             .foregroundColor(.black)
             .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
             .background(Rectangle()
-                .fill(pressed ? .cyan : .white)
+                .fill(touchable.pressed ? .cyan : .white)
                 .transformEffect(shearTransform))
-            .gesture(pressInOut)
-            .scaleEffect(pressed ? 1.2 : 1)
-            .animation(.spring().speed(4), value: pressed)
+            .gesture(touchable.gesture)
+            .scaleEffect(touchable.pressed ? 1.2 : 1)
+            .animation(.spring().speed(4), value: touchable.pressed)
     }
-        
 }
 
 struct UI: View {
