@@ -75,7 +75,7 @@ public struct Interrupts {
     static let timer = (bit: UInt8(2), address: UInt16(0x0050))
     static let serial = (bit: UInt8(3), address: UInt16(0x0058))
     static let joypad = (bit: UInt8(4), address: UInt16(0x0060))
-    static let priority = [Interrupts.vBlank, Interrupts.lcdStat, Interrupts.timer, Interrupts.serial, Interrupts.joypad]
+    static let prioritized = [Interrupts.vBlank, Interrupts.lcdStat, Interrupts.timer, Interrupts.serial, Interrupts.joypad]
 }
 
 public class CPU {
@@ -231,7 +231,7 @@ public class CPU {
             return
         }
         
-        for interrupt in Interrupts.priority {
+        for interrupt in Interrupts.prioritized {
             if enabled.bit(interrupt.bit) && flags.bit(interrupt.bit) {
                 try pushWordOnStack(word: pc)
                 mmu.interruptFlags.write(flags.reset(interrupt.bit))

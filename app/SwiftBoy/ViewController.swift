@@ -5,7 +5,12 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // let cart = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"))
+        let cart = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"))
+        // let cart = Cartridge(path: #fileLiteral(resourceName: "instr_timing.gb"))
+        // let cart = Cartridge(path: #fileLiteral(resourceName: "interrupt_time.gb"))
+        // let cart = Cartridge(path: #fileLiteral(resourceName: "mem_timing.gb"))
+        // let cart = Cartridge(path: #fileLiteral(resourceName: "mem_timing-2.gb"))
+        // let cart = Cartridge(path: #fileLiteral(resourceName: "dmg_sound.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "01-special.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "02-interrupts.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "03-op sp,hl.gb"))
@@ -17,10 +22,9 @@ class ViewController: UIViewController {
         // let cart = Cartridge(path: #fileLiteral(resourceName: "09-op r,r.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "10-bit ops.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "11-op a,(hl).gb"))
-        // let cart = Cartridge(path: #fileLiteral(resourceName: "dmg-sound.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "deadeus.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "super-mario-land.gb"))
-        let cart = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
+        // let cart = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
         let title = TitleView(title: cart.title, touchable: Touchable(onPress: { print("title pressed") }, onRelease: { print("title released") }))
         let mmu = MMU(cart)
