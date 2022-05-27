@@ -8,28 +8,34 @@ public class Timer {
         
     private var counterCycles: UInt = 0 {
         didSet {
-            if counterCycles >= counterThreshold {
-                let delta = counterThreshold == 1 ? UInt8(counterCycles) : UInt8(1)
-                let prev = mmu.timerCounter.read()
-                let next = prev &+ delta
-                if next < prev {
+            let result = counterCycles.quotientAndRemainder(dividingBy: divTreshold)
+            
+            if result.quotient > 0 {
+                let previousValue = mmu.timerCounter.read()
+                let nextValue = previousValue &+ UInt8(result.quotient)
+                
+                if nextValue < previousValue {
                     // Overflowed
                     mmu.timerCounter.write(mmu.timerModulo.read())
                     mmu.interruptFlags.writeBit(Interrupts.timer.bit, as: true)
                 } else {
-                    mmu.timerCounter.write(next)
+                    mmu.timerCounter.write(nextValue)
                 }
-                counterCycles = counterCycles - UInt(delta)
+                
+                counterCycles = result.remainder
             }
         }
     }
     
     private var divCycles: UInt = 0 {
         didSet {
-            if divCycles >= divTreshold {
-                let divider = mmu.dividerRegister
-                divider.write(divider.read() &+ 1, publish: false)
-                divCycles = divCycles - divTreshold
+            let result = divCycles.quotientAndRemainder(dividingBy: divTreshold)
+            
+            if result.quotient > 0 {
+                let previousValue = mmu.dividerRegister.read()
+                let nextValue = previousValue &+ UInt8(result.quotient)
+                mmu.dividerRegister.write(nextValue, publish: false)
+                divCycles = result.remainder
             }
         }
     }
@@ -62,7 +68,7 @@ public class Timer {
         if enabled {
             counterCycles = counterCycles &+ UInt(timerCycles)
         }
-        
+                
         divCycles = divCycles &+ UInt(timerCycles)
     }
 }
