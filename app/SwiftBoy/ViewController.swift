@@ -5,6 +5,9 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let roms = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: "tetris.gb")
+        let cart = Cartridge(path: URL(string: roms[0])!)
+                
         // let cart = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "instr_timing.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "interrupt_time.gb"))
@@ -23,7 +26,7 @@ class ViewController: UIViewController {
         // let cart = Cartridge(path: #fileLiteral(resourceName: "10-bit ops.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "11-op a,(hl).gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "deadeus.gb"))
-        let cart = Cartridge(path: #fileLiteral(resourceName: "super-mario-land.gb"))
+        // let cart = Cartridge(path: #fileLiteral(resourceName: "super-mario-land.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
         let title = TitleView(title: cart.title, touchable: Touchable(onPress: { print("title pressed") }, onRelease: { print("title released") }))
@@ -37,7 +40,7 @@ class ViewController: UIViewController {
         
         clock.start()
         
-        let ui = UIHostingController(rootView: UI(lcd: ppu.view, dPad: joypad.dPad, ab: joypad.ab, startSelect: joypad.startSelect, titleView: title))
+        let ui = UIHostingController(rootView: GameBoyView(lcd: ppu.view, dPad: joypad.dPad, ab: joypad.ab, startSelect: joypad.startSelect, titleView: title))
         
         view.backgroundColor = .black
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -51,68 +54,4 @@ class ViewController: UIViewController {
     }
 }
 
-struct TitleView: View {
-    @State var title = ""
-    @StateObject var touchable: Touchable
-    
-    var body: some View {
-        let shearValue = CGFloat(-0.3)
-        let shearTransform = CGAffineTransform(a: 1, b: 0, c: shearValue, d: 1, tx: 0, ty: 0)
-        
-        Text("\(title)  →")
-            .font(.caption)
-            .fontWeight(.bold)
-            .foregroundColor(.black)
-            .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
-            .background(Rectangle()
-                .fill(touchable.pressed ? .cyan : .white)
-                .transformEffect(shearTransform))
-            .gesture(touchable.gesture)
-            .scaleEffect(touchable.pressed ? 1.2 : 1)
-            .animation(.spring().speed(4), value: touchable.pressed)
-    }
-}
 
-struct UI: View {
-    var lcd: LCDBitmapView
-    var dPad: DPadView
-    var ab: ABView
-    var startSelect: StartSelectView
-    var titleView: TitleView
-    
-    var body: some View {
-        GeometryReader{ geometry in
-            if geometry.size.width > geometry.size.height {
-                HStack {
-                    dPad
-                    VStack {
-                        titleView
-                        lcd
-                    }
-                    VStack {
-                        Spacer()
-                        ab
-                        Spacer()
-                        startSelect
-                    }
-                }
-            } else {
-                VStack{
-                    titleView
-                    lcd.frame(height: geometry.size.height * 0.5)
-                    VStack{
-                        HStack {
-                            dPad
-                            Spacer()
-                            ab
-                        }
-                        startSelect.offset(x: 0, y: 30)
-                    }
-                    .padding()
-                    .frame(height: geometry.size.height * 0.5)
-                }
-            }
-        }
-        .background(.black)
-    }
-}
