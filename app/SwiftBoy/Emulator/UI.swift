@@ -2,38 +2,48 @@ import Foundation
 import SwiftUI
 
 struct PressableView<C: View> : View {
-    @State private var pressed = false
+    @Binding var pressedBinding: Bool
+    @State var pressed = false {
+        didSet {
+            pressedBinding = pressed
+            haptics.impactOccurred(intensity: 0.5);
+            if let cb = pressed ? onPressedCallback : onReleasedCallback {
+                cb()
+            }
+        }
+    }
     
     private let getChildView: (Bool) -> C
     private var haptics: UIImpactFeedbackGenerator  = UIImpactFeedbackGenerator(style: .medium)
     private var onPressedCallback: (() -> Void)?
     private var onReleasedCallback: (() -> Void)?
     
-    init (_ getChildView: @escaping (Bool) -> C) {
-        self.getChildView = getChildView
-    }
-    
     var body: some View {
         self.getChildView(self.pressed)
             .gesture(DragGesture( minimumDistance: 0, coordinateSpace: .local)
-            .onChanged { _ in
-                if !self.pressed {
-                    self.pressed = true
-                    self.haptics.impactOccurred(intensity: 1.0);
-                    if let cb = self.onPressedCallback {
-                        cb()
+                .onChanged { _ in
+                    if !self.pressed {
+                        self.pressed = true
                     }
                 }
-            }
-            .onEnded { _ in
-                if self.pressed {
-                    self.pressed = false
-                    self.haptics.impactOccurred(intensity: 0.5);
-                    if let cb = self.onReleasedCallback {
-                        cb()
+                .onEnded { _ in
+                    if self.pressed {
+                        self.pressed = false
                     }
                 }
-            })
+            )
+    }
+}
+
+extension PressableView {
+    init (_ getChildView: @escaping (Bool) -> C) {
+        self._pressedBinding = Binding.constant(false)
+        self.getChildView = getChildView
+    }
+    
+    init (_ pressed: Binding<Bool>, _ getChildView: @escaping (Bool) -> C) {
+        self._pressedBinding = pressed
+        self.getChildView = getChildView
     }
     
     func impact(_ strength: UIImpactFeedbackGenerator.FeedbackStyle) -> Self {
@@ -156,6 +166,78 @@ struct TitleView: View {
     }
 }
 
+struct GameListModalView: View {
+    @Binding var visible: Bool
+    @State var minOffset: CGFloat = 200
+    @State var maxDragOffset: CGFloat = 300
+    @State private var dragOffset: CGFloat = 0
+    @State private var prevDragTranslation = CGSize.zero
+    
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            if visible {
+                Color.black
+                    .opacity(0.3)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        visible = false
+                    }
+                
+                listView
+                    .transition(.move(edge: .bottom))
+                    .onAppear {
+                        dragOffset = 0
+                    }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .ignoresSafeArea()
+        .animation(.easeInOut, value: visible)
+    }
+    
+    var listView: some View {
+        VStack {
+            VStack {
+                ZStack {
+                    Capsule()
+                        .frame(width: 40, height: 6)
+                }
+                .frame(height: 40)
+                .frame(maxWidth: .infinity)
+                .background(Color.white.opacity(0.00001))
+                .gesture(dragGesture)
+                
+                VStack {
+                    Text("Hello")
+                }
+                .frame(maxHeight: .infinity)
+            }
+            .frame(maxHeight: .infinity)
+            .frame(maxWidth: .infinity)
+            .background(.white)
+        }
+        .padding(.top, minOffset + dragOffset)
+    }
+    
+    var dragGesture: some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .global)
+            .onChanged { val in
+                let dragAmount = val.translation.height - prevDragTranslation.height
+                dragOffset += dragAmount
+                dragOffset = dragOffset.clamp(min: 0, max: .infinity)
+                prevDragTranslation = val.translation
+            }
+            .onEnded { val in
+                prevDragTranslation = .zero
+                if dragOffset > maxDragOffset {
+                    visible = false
+                } else {
+                    dragOffset = 0
+                }
+            }
+    }
+}
+
 struct GameBoyView: View {
     var lcd: LCDBitmapView
     @State var title: String
@@ -163,42 +245,48 @@ struct GameBoyView: View {
     @EnvironmentObject var buttons: Buttons
     
     var body: some View {
-        GeometryReader{ geometry in
-            if geometry.size.width > geometry.size.height {
-                HStack {
-                    DPadView(buttons: buttons)
-                    VStack {
+        ZStack {
+            GeometryReader { geometry in
+                if geometry.size.width > geometry.size.height {
+                    HStack {
+                        DPadView(buttons: buttons)
+                        VStack {
+                            TitleView(title: title) {
+                                showGames = true
+                            }
+                            lcd
+                        }
+                        VStack {
+                            Spacer()
+                            ABView(buttons: buttons)
+                            Spacer()
+                            StartSelectView(buttons: buttons)
+                        }
+                    }
+                    GameListModalView(visible: $showGames, minOffset: 80, maxDragOffset: geometry.size.height - 80 * 2)
+                } else {
+                    VStack{
                         TitleView(title: title) {
                             showGames = true
                         }
-                        lcd
-                    }
-                    VStack {
-                        Spacer()
-                        ABView(buttons: buttons)
-                        Spacer()
-                        StartSelectView(buttons: buttons)
-                    }
-                }
-            } else {
-                VStack{
-                    TitleView(title: title) {
-                        showGames = true
-                    }
-                    lcd.frame(height: geometry.size.height * 0.5)
-                    VStack{
-                        HStack {
-                            DPadView(buttons: buttons)
-                            Spacer()
-                            ABView(buttons: buttons)
+                        lcd.frame(height: geometry.size.height * 0.5)
+                        VStack{
+                            HStack {
+                                DPadView(buttons: buttons)
+                                Spacer()
+                                ABView(buttons: buttons)
+                            }
+                            StartSelectView(buttons: buttons).offset(x: 0, y: 30)
                         }
-                        StartSelectView(buttons: buttons).offset(x: 0, y: 30)
+                        .padding()
+                        .frame(height: geometry.size.height * 0.5)
                     }
-                    .padding()
-                    .frame(height: geometry.size.height * 0.5)
+                    GameListModalView(visible: $showGames)
                 }
             }
+            .background(.black)
+            
         }
-        .background(.black)
+        .frame(width: .infinity, height: .infinity)
     }
 }

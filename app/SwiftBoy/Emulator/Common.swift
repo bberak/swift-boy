@@ -1,6 +1,7 @@
 // TODO: Rename UInt8.swap() function to swapNibbles()
 
 import Foundation
+import SwiftUI
 
 public func readPath(path: URL) -> Data {
     do {
@@ -164,6 +165,15 @@ public extension Float {
         let value = normalized * scale
         
         return value.clamp(min: targetMin, max: targetMax)
+    }
+}
+
+public extension CGFloat {
+    func clamp(min: CGFloat, max: CGFloat) -> CGFloat {
+        if (self > max) { return max }
+        if (self < min) { return min }
+            
+        return self
     }
 }
 
