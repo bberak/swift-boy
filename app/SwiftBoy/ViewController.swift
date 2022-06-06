@@ -29,7 +29,6 @@ class ViewController: UIViewController {
         // let cart = Cartridge(path: #fileLiteral(resourceName: "super-mario-land.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
-        let title = TitleView(title: cart.title, touchable: Touchable(onPress: { print("title pressed") }, onRelease: { print("title released") }))
         let mmu = MMU(cart)
         let ppu = PPU(mmu)
         let cpu = CPU(mmu)
@@ -40,7 +39,7 @@ class ViewController: UIViewController {
         
         clock.start()
         
-        let ui = UIHostingController(rootView: GameBoyView(lcd: ppu.view, dPad: joypad.dPad, ab: joypad.ab, startSelect: joypad.startSelect, titleView: title))
+        let ui = UIHostingController(rootView: GameBoyView(lcd: ppu.view, title: cart.title).environmentObject(joypad.buttons))
         
         view.backgroundColor = .black
         view.translatesAutoresizingMaskIntoConstraints = false

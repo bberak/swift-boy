@@ -1,56 +1,82 @@
 import Foundation
 import SwiftUI
 
-class Touchable: ObservableObject {
-    var onPress: () -> Void
-    var onRelease: () -> Void
-    var haptics: UIImpactFeedbackGenerator
+struct PressableView<C: View> : View {
+    @State private var pressed = false
     
-    @Published var pressed = false
+    private let getChildView: (Bool) -> C
+    private var haptics: UIImpactFeedbackGenerator  = UIImpactFeedbackGenerator(style: .medium)
+    private var onPressedCallback: (() -> Void)?
+    private var onReleasedCallback: (() -> Void)?
     
-    init(onPress: @escaping () -> Void, onRelease: @escaping () -> Void, impact: UIImpactFeedbackGenerator.FeedbackStyle = .medium ) {
-        self.onPress = onPress
-        self.onRelease = onRelease
-        self.haptics = UIImpactFeedbackGenerator(style: impact)
+    init (_ getChildView: @escaping (Bool) -> C) {
+        self.getChildView = getChildView
     }
     
-    var gesture: some Gesture {
-        DragGesture( minimumDistance: 0, coordinateSpace: .local)
+    var body: some View {
+        self.getChildView(self.pressed)
+            .gesture(DragGesture( minimumDistance: 0, coordinateSpace: .local)
             .onChanged { _ in
                 if !self.pressed {
                     self.pressed = true
                     self.haptics.impactOccurred(intensity: 1.0);
-                    self.onPress();
+                    if let cb = self.onPressedCallback {
+                        cb()
+                    }
                 }
             }
             .onEnded { _ in
                 if self.pressed {
                     self.pressed = false
                     self.haptics.impactOccurred(intensity: 0.5);
-                    self.onRelease();
+                    if let cb = self.onReleasedCallback {
+                        cb()
+                    }
                 }
-            }
+            })
+    }
+    
+    func impact(_ strength: UIImpactFeedbackGenerator.FeedbackStyle) -> Self {
+        var next = self;
+        next.haptics = UIImpactFeedbackGenerator(style: strength);
+        
+        return next;
+    }
+    
+    func onPressed(_ onPressedCallback: @escaping () -> Void) -> Self {
+        var next = self
+        next.onPressedCallback = onPressedCallback
+        
+        return next;
+    }
+    
+    func onReleased(_ onReleasedCallback: @escaping () -> Void) -> Self {
+        var next = self
+        next.onReleasedCallback = onReleasedCallback
+        
+        return next;
     }
 }
-
-
 
 struct GameButtonView<S>: View where S : Shape {
     var shape: S
     var label: String?
     var width: CGFloat = 50
     var height: CGFloat = 50
-    
-    @StateObject var touchable: Touchable
+    var onPressed: () -> Void
+    var onReleased: () -> Void
     
     var body: some View {
         VStack {
-            shape
-                .fill(touchable.pressed ? .cyan : .white)
-                .frame(width: width, height: height)
-                .gesture(touchable.gesture)
-                .scaleEffect(touchable.pressed ? 1.2 : 1)
-                .animation(.spring().speed(4), value: touchable.pressed)
+            PressableView { pressed in
+                shape
+                    .fill(pressed ? .cyan : .white)
+                    .frame(width: width, height: height)
+                    .scaleEffect(pressed ? 1.2 : 1)
+                    .animation(.spring().speed(4), value: pressed)
+            }
+            .onPressed(onPressed)
+            .onReleased(onReleased)
             
             if label != nil {
                 Text(label!)
@@ -68,17 +94,17 @@ struct DPadView: View {
         VStack {
             HStack {
                 Spacer()
-                GameButtonView(shape: Circle(), touchable: Touchable(onPress: { buttons.up = true  }, onRelease: { buttons.up = false }))
+                GameButtonView(shape: Circle(), onPressed: { buttons.up = true  }, onReleased: { buttons.up = false })
                 Spacer()
             }.offset(x: 0, y: 10)
             HStack {
-                GameButtonView(shape: Circle(), touchable: Touchable(onPress: { buttons.left = true }, onRelease: { buttons.left = false }))
+                GameButtonView(shape: Circle(), onPressed: { buttons.left = true }, onReleased: { buttons.left = false })
                 Spacer()
-                GameButtonView(shape: Circle(), touchable: Touchable(onPress: { buttons.right = true }, onRelease: { buttons.right = false }))
+                GameButtonView(shape: Circle(), onPressed: { buttons.right = true }, onReleased: { buttons.right = false })
             }
             HStack {
                 Spacer()
-                GameButtonView(shape: Circle(), touchable: Touchable(onPress: { buttons.down = true }, onRelease: { buttons.down = false }))
+                GameButtonView(shape: Circle(), onPressed: { buttons.down = true }, onReleased: { buttons.down = false })
                 Spacer()
             }.offset(x: 0, y: -10)
         }.frame(width: 150)
@@ -90,8 +116,8 @@ struct ABView: View {
     
     var body: some View {
         HStack {
-            GameButtonView(shape: Circle(), label: "B", touchable: Touchable(onPress: { buttons.b = true }, onRelease: { buttons.b = false })).offset(x: 0, y: 30)
-            GameButtonView(shape: Circle(), label: "A", touchable: Touchable(onPress: { buttons.a = true }, onRelease: { buttons.a = false }))
+            GameButtonView(shape: Circle(), label: "B", onPressed: { buttons.b = true }, onReleased: { buttons.b = false }).offset(x: 0, y: 30)
+            GameButtonView(shape: Circle(), label: "A", onPressed: { buttons.a = true }, onReleased: { buttons.a = false })
         }
     }
 }
@@ -101,68 +127,72 @@ struct StartSelectView: View {
     
     var body: some View {
         HStack {
-            GameButtonView(shape: RoundedRectangle(cornerRadius: 5), label: "START", width: 45, height: 10, touchable: Touchable(onPress: { buttons.start = true }, onRelease: { buttons.start = false })).padding(EdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5))
-            GameButtonView(shape: RoundedRectangle(cornerRadius: 5), label: "SELECT", width: 45, height: 10, touchable: Touchable(onPress: { buttons.select = true }, onRelease: { buttons.select = false })).padding(EdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5))
+            GameButtonView(shape: RoundedRectangle(cornerRadius: 5), label: "START", width: 45, height: 10, onPressed: { buttons.start = true }, onReleased: { buttons.start = false }).padding(EdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5))
+            GameButtonView(shape: RoundedRectangle(cornerRadius: 5), label: "SELECT", width: 45, height: 10, onPressed: { buttons.select = true }, onReleased: { buttons.select = false }).padding(EdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5))
         }
     }
 }
 
 struct TitleView: View {
-    @State var title = ""
-    @StateObject var touchable: Touchable
+    @State var title: String
+    var onPressed: () -> Void
     
     var body: some View {
         let shearValue = CGFloat(-0.3)
         let shearTransform = CGAffineTransform(a: 1, b: 0, c: shearValue, d: 1, tx: 0, ty: 0)
         
-        Text("\(title)  →")
-            .font(.caption)
-            .fontWeight(.bold)
-            .foregroundColor(.black)
-            .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
-            .background(Rectangle()
-                .fill(touchable.pressed ? .cyan : .white)
-                .transformEffect(shearTransform))
-            .gesture(touchable.gesture)
-            .scaleEffect(touchable.pressed ? 1.2 : 1)
-            .animation(.spring().speed(4), value: touchable.pressed)
+        PressableView { pressed in
+            Text("\(title)  →")
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundColor(.black)
+                .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
+                .background(Rectangle()
+                    .fill(pressed ? .cyan : .white)
+                    .transformEffect(shearTransform))
+                .scaleEffect(pressed ? 1.2 : 1)
+                .animation(.spring().speed(4), value: pressed)
+        }.onPressed(onPressed)
     }
 }
 
 struct GameBoyView: View {
     var lcd: LCDBitmapView
-    var dPad: DPadView
-    var ab: ABView
-    var startSelect: StartSelectView
-    var titleView: TitleView
+    @State var title: String
+    @State var showGames: Bool = false
+    @EnvironmentObject var buttons: Buttons
     
     var body: some View {
         GeometryReader{ geometry in
             if geometry.size.width > geometry.size.height {
                 HStack {
-                    dPad
+                    DPadView(buttons: buttons)
                     VStack {
-                        titleView
+                        TitleView(title: title) {
+                            showGames = true
+                        }
                         lcd
                     }
                     VStack {
                         Spacer()
-                        ab
+                        ABView(buttons: buttons)
                         Spacer()
-                        startSelect
+                        StartSelectView(buttons: buttons)
                     }
                 }
             } else {
                 VStack{
-                    titleView
+                    TitleView(title: title) {
+                        showGames = true
+                    }
                     lcd.frame(height: geometry.size.height * 0.5)
                     VStack{
                         HStack {
-                            dPad
+                            DPadView(buttons: buttons)
                             Spacer()
-                            ab
+                            ABView(buttons: buttons)
                         }
-                        startSelect.offset(x: 0, y: 30)
+                        StartSelectView(buttons: buttons).offset(x: 0, y: 30)
                     }
                     .padding()
                     .frame(height: geometry.size.height * 0.5)

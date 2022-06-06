@@ -14,18 +14,12 @@ class Buttons: ObservableObject {
 
 public class Joypad {
     private let mmu: MMU
-    private let buttons: Buttons
     
-    let dPad: DPadView
-    let ab: ABView
-    let startSelect: StartSelectView
+    let buttons: Buttons
     
     init(_ mmu: MMU) {
         self.mmu = mmu
         self.buttons = Buttons()
-        self.dPad = DPadView(buttons: self.buttons)
-        self.ab = ABView(buttons: self.buttons)
-        self.startSelect = StartSelectView(buttons: self.buttons)
         
         self.mmu.joypad.subscribe { input in
             var result = input
