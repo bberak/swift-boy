@@ -5,7 +5,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let roms = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: "tetris.gb")
+        let roms = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: ".gb")
         let cart = Cartridge(path: URL(string: roms[0])!)
                 
         // let cart = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"))

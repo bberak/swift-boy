@@ -28,6 +28,13 @@ func getRamSize(rom: Data) -> Int {
     }
 }
 
+func mbcFallback(_ rom: Data) -> MemoryAccessArray {
+    let titleBuffer = (0x0134...0x0143).map { rom[$0] }
+    let romWithTitleOnly = MemoryBlock(range: 0x0134...0x0143, buffer: titleBuffer, readOnly: true, enabled: true)
+
+    return MemoryAccessArray([romWithTitleOnly])
+}
+
 func mbcZero(_ rom: Data) -> MemoryAccessArray {
     let rom = MemoryBlock(range: 0x0000...0x7FFF, buffer: rom.map { $0 }, readOnly: true, enabled: true)
     let ram = MemoryBlock(range: 0xA000...0xBFFF, readOnly: false, enabled: true)
@@ -103,6 +110,7 @@ public class Cartridge: MemoryAccessArray {
         
         guard let type = MBCType(rawValue: rom[0x0147]) else {
             print("MBC \(rom[0x0147]) is not currently supported")
+            super.copy(other: mbcFallback(rom))
             return
         }
         

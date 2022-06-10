@@ -236,7 +236,7 @@ struct TitleView: View {
 
 struct GameListModalView: View {
     @Binding var visible: Bool
-    @State var paddingTop: CGFloat = 200
+    @State var paddingTop: CGFloat = 140
     @State var maxDragOffset: CGFloat = 300
     @State private var dragOffset: CGFloat = 0
     
@@ -252,13 +252,9 @@ struct GameListModalView: View {
                 
                 listView
                     .transition(.move(edge: .bottom))
-                    .onAppear {
-                        dragOffset = 0
-                    }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-        .ignoresSafeArea()
         .animation(.easeInOut, value: visible)
     }
     
@@ -279,8 +275,16 @@ struct GameListModalView: View {
                     }
                 }
                 
-                VStack {
-                    Text("Hello")
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        ForEach(0..<20) {
+                            Text("Item \($0)")
+                                .foregroundColor(.white)
+                                .font(.largeTitle)
+                                .frame(maxWidth: .infinity)
+                                .background(.red)
+                        }
+                    }
                 }
                 .frame(maxHeight: .infinity)
             }
