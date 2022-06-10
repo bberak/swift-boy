@@ -20,18 +20,21 @@ struct PressableView<C: View> : View {
     
     var body: some View {
         self.getChildView(self.pressed)
-            .gesture(DragGesture( minimumDistance: 0, coordinateSpace: .local)
-                .onChanged { _ in
-                    if !self.pressed {
-                        self.pressed = true
-                    }
+            .gesture(dragGesture)
+    }
+    
+    private var dragGesture: some Gesture {
+        DragGesture( minimumDistance: 0, coordinateSpace: .local)
+            .onChanged { _ in
+                if !self.pressed {
+                    self.pressed = true
                 }
-                .onEnded { _ in
-                    if self.pressed {
-                        self.pressed = false
-                    }
+            }
+            .onEnded { _ in
+                if self.pressed {
+                    self.pressed = false
                 }
-            )
+            }
     }
 }
 
@@ -67,6 +70,71 @@ extension PressableView {
         return next;
     }
 }
+
+struct DraggableView<C: View> : View {
+    @State private var prevDragTranslation = CGSize.zero
+    @Binding var dragOffsetBinding: CGFloat
+    @State var dragOffset = CGFloat(0) {
+        didSet {
+            dragOffsetBinding = dragOffset
+            if let cb = onDraggedCallback {
+                cb(dragOffset)
+            }
+        }
+    }
+    
+    private let getChildView: (CGFloat) -> C
+    private var onDraggedCallback: ((CGFloat) -> Void)?
+    private var onReleasedCallback: ((CGFloat) -> Void)?
+    
+    var body: some View {
+        self.getChildView(self.dragOffset)
+            .gesture(dragGesture)
+    }
+    
+    private var dragGesture: some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .global)
+            .onChanged { val in
+                let dragAmount = val.translation.height - prevDragTranslation.height
+                dragOffset += dragAmount
+                prevDragTranslation = val.translation
+            }
+            .onEnded { val in
+                prevDragTranslation = .zero
+                if let cb = onReleasedCallback {
+                    cb(dragOffset)
+                }
+                dragOffset = 0
+            }
+    }
+}
+
+extension DraggableView {
+    init (_ getChildView: @escaping (CGFloat) -> C) {
+        self._dragOffsetBinding = Binding.constant(CGFloat(0))
+        self.getChildView = getChildView
+    }
+    
+    init (_ dragOffsetBinding: Binding<CGFloat>, _ getChildView: @escaping (CGFloat) -> C) {
+        self._dragOffsetBinding = dragOffsetBinding
+        self.getChildView = getChildView
+    }
+    
+    func onDragged(_ onDraggedCallback: @escaping (CGFloat) -> Void) -> Self {
+        var next = self
+        next.onDraggedCallback = onDraggedCallback
+        
+        return next;
+    }
+    
+    func onReleased(_ onReleasedCallback: @escaping (CGFloat) -> Void) -> Self {
+        var next = self
+        next.onReleasedCallback = onReleasedCallback
+        
+        return next;
+    }
+}
+
 
 struct GameButtonView<S>: View where S : Shape {
     var shape: S
@@ -168,10 +236,9 @@ struct TitleView: View {
 
 struct GameListModalView: View {
     @Binding var visible: Bool
-    @State var minOffset: CGFloat = 200
+    @State var paddingTop: CGFloat = 200
     @State var maxDragOffset: CGFloat = 300
     @State private var dragOffset: CGFloat = 0
-    @State private var prevDragTranslation = CGSize.zero
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -198,14 +265,19 @@ struct GameListModalView: View {
     var listView: some View {
         VStack {
             VStack {
-                ZStack {
-                    Capsule()
-                        .frame(width: 40, height: 6)
+                DraggableView($dragOffset) { _ in
+                    ZStack {
+                        Capsule()
+                            .frame(width: 40, height: 6)
+                    }
+                    .frame(height: 40)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white.opacity(0.00001))
+                }.onReleased { _ in
+                    if dragOffset > maxDragOffset {
+                        visible = false
+                    }
                 }
-                .frame(height: 40)
-                .frame(maxWidth: .infinity)
-                .background(Color.white.opacity(0.00001))
-                .gesture(dragGesture)
                 
                 VStack {
                     Text("Hello")
@@ -216,25 +288,7 @@ struct GameListModalView: View {
             .frame(maxWidth: .infinity)
             .background(.white)
         }
-        .padding(.top, minOffset + dragOffset)
-    }
-    
-    var dragGesture: some Gesture {
-        DragGesture(minimumDistance: 0, coordinateSpace: .global)
-            .onChanged { val in
-                let dragAmount = val.translation.height - prevDragTranslation.height
-                dragOffset += dragAmount
-                dragOffset = dragOffset.clamp(min: 0, max: .infinity)
-                prevDragTranslation = val.translation
-            }
-            .onEnded { val in
-                prevDragTranslation = .zero
-                if dragOffset > maxDragOffset {
-                    visible = false
-                } else {
-                    dragOffset = 0
-                }
-            }
+        .padding(.top, paddingTop + dragOffset.clamp(min: 0, max: .infinity))
     }
 }
 
@@ -263,7 +317,7 @@ struct GameBoyView: View {
                             StartSelectView(buttons: buttons)
                         }
                     }
-                    GameListModalView(visible: $showGames, minOffset: 80, maxDragOffset: geometry.size.height - 80 * 2)
+                    GameListModalView(visible: $showGames, paddingTop: 80, maxDragOffset: geometry.size.height - 80 * 2)
                 } else {
                     VStack{
                         TitleView(title: title) {
