@@ -234,11 +234,12 @@ struct TitleView: View {
     }
 }
 
-struct GameListModalView: View {
+struct GameLibraryModalView: View {
     @Binding var visible: Bool
     @State var paddingTop: CGFloat = 140
     @State var maxDragOffset: CGFloat = 300
-    @State private var dragOffset: CGFloat = 0
+    @State var dragOffset: CGFloat = 0
+    @EnvironmentObject var gameState: GameState
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -277,12 +278,24 @@ struct GameListModalView: View {
                 
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 20) {
-                        ForEach(0..<20) {
-                            Text("Item \($0)")
-                                .foregroundColor(.white)
-                                .font(.largeTitle)
-                                .frame(maxWidth: .infinity)
-                                .background(.red)
+                        ForEach(gameState.gameLibrary.sorted(by: { x, y in x.title < y.title })) { game in
+                            VStack {
+                                Text(game.title.isNotEmpty ? game.title : "Untitled")
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .textCase(.uppercase)
+                                    .foregroundColor(.black)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                Text(game.type == nil ? "Unsupported" : "Supported")
+                                    .font(.caption)
+                                    .fontWeight(.bold)
+                                    .textCase(.uppercase)
+                                    .foregroundColor(.black.opacity(0.4))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                            }
+                            .padding([.leading, .trailing])
                         }
                     }
                 }
@@ -298,9 +311,9 @@ struct GameListModalView: View {
 
 struct GameBoyView: View {
     var lcd: LCDBitmapView
-    @State var title: String
     @State var showGames: Bool = false
     @EnvironmentObject var buttons: Buttons
+    @EnvironmentObject var gameState: GameState
     
     var body: some View {
         ZStack {
@@ -309,7 +322,7 @@ struct GameBoyView: View {
                     HStack {
                         DPadView(buttons: buttons)
                         VStack {
-                            TitleView(title: title) {
+                            TitleView(title: gameState.currentlyPlaying.title) {
                                 showGames = true
                             }
                             lcd
@@ -321,10 +334,10 @@ struct GameBoyView: View {
                             StartSelectView(buttons: buttons)
                         }
                     }
-                    GameListModalView(visible: $showGames, paddingTop: 80, maxDragOffset: geometry.size.height - 80 * 2)
+                    GameLibraryModalView(visible: $showGames, paddingTop: 80, maxDragOffset: geometry.size.height - 80 * 2)
                 } else {
                     VStack{
-                        TitleView(title: title) {
+                        TitleView(title: gameState.currentlyPlaying.title) {
                             showGames = true
                         }
                         lcd.frame(height: geometry.size.height * 0.5)
@@ -339,7 +352,7 @@ struct GameBoyView: View {
                         .padding()
                         .frame(height: geometry.size.height * 0.5)
                     }
-                    GameListModalView(visible: $showGames)
+                    GameLibraryModalView(visible: $showGames)
                 }
             }
             .background(.black)

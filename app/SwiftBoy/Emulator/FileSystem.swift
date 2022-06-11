@@ -44,7 +44,10 @@ struct FileSystem {
     
     static func listPaths(inDirectory: String, suffix: String = "") -> [String] {
         if let files = try? FileManager.default.contentsOfDirectory(atPath: inDirectory) {
-            return files.filter { $0.hasSuffix(suffix) }
+            return files
+                .filter { $0.hasSuffix(suffix) }
+                .map { $0.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "" }
+                .filter { $0.isNotEmpty }
         }
         
         return []

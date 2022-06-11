@@ -6,7 +6,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         let roms = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: ".gb")
-        let cart = Cartridge(path: URL(string: roms[0])!)
+        let carts = roms.map { Cartridge(path: URL(string: $0)!) }
                 
         // let cart = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "instr_timing.gb"))
@@ -29,7 +29,8 @@ class ViewController: UIViewController {
         // let cart = Cartridge(path: #fileLiteral(resourceName: "super-mario-land.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
-        let mmu = MMU(cart)
+        let gameState = GameState(gameLibrary: carts, currentlyPlaying: carts[0])
+        let mmu = MMU(gameState.currentlyPlaying)
         let ppu = PPU(mmu)
         let cpu = CPU(mmu)
         let apu = APU(mmu)
@@ -39,7 +40,7 @@ class ViewController: UIViewController {
         
         clock.start()
         
-        let ui = UIHostingController(rootView: GameBoyView(lcd: ppu.view, title: cart.title).environmentObject(joypad.buttons))
+        let ui = UIHostingController(rootView: GameBoyView(lcd: ppu.view).environmentObject(joypad.buttons).environmentObject(gameState))
         
         view.backgroundColor = .black
         view.translatesAutoresizingMaskIntoConstraints = false

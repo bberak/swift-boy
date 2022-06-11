@@ -8,6 +8,16 @@
 
 import Foundation
 
+class GameState: ObservableObject {
+    @Published var gameLibrary: [Cartridge]
+    @Published var currentlyPlaying: Cartridge
+    
+    init(gameLibrary: [Cartridge], currentlyPlaying: Cartridge) {
+        self.gameLibrary = gameLibrary
+        self.currentlyPlaying = currentlyPlaying
+    }
+}
+
 enum MBCType: UInt8 {
     case zero = 0x00
     case one = 0x01
@@ -28,7 +38,7 @@ func getRamSize(rom: Data) -> Int {
     }
 }
 
-func mbcFallback(_ rom: Data) -> MemoryAccessArray {
+func mbcUnsupported(_ rom: Data) -> MemoryAccessArray {
     let titleBuffer = (0x0134...0x0143).map { rom[$0] }
     let romWithTitleOnly = MemoryBlock(range: 0x0134...0x0143, buffer: titleBuffer, readOnly: true, enabled: true)
 
@@ -97,7 +107,9 @@ func mbcOne(_ rom: Data) -> MemoryAccessArray {
     return mbc
 }
 
-public class Cartridge: MemoryAccessArray {
+public class Cartridge: MemoryAccessArray, Identifiable {
+    let type: MBCType?
+    
     public var title: String {
         get {
             let bytes = (0x0134...0x0143).map { try! self.readByte(address: $0) }
@@ -106,19 +118,17 @@ public class Cartridge: MemoryAccessArray {
     }
     
     public init(rom: Data) {
-        super.init()
+        self.type = MBCType(rawValue: rom[0x0147])
         
-        guard let type = MBCType(rawValue: rom[0x0147]) else {
-            print("MBC \(rom[0x0147]) is not currently supported")
-            super.copy(other: mbcFallback(rom))
-            return
-        }
+        super.init()
         
         switch type {
         case .zero:
             super.copy(other: mbcZero(rom))
         case .one, .one_ram, .one_ram_battery:
             super.copy(other: mbcOne(rom))
+        default:
+            super.copy(other: mbcUnsupported(rom))
         }
     }
     
