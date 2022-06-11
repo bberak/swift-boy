@@ -287,7 +287,7 @@ struct GameLibraryModalView: View {
                                     .foregroundColor(gameState.currentlyPlaying === game ? .cyan : .black)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 
-                                Text(game.type == nil ? "Unsupported" : "Supported")
+                                Text(game.type == .unsupported ? "Unsupported" : "Supported")
                                     .font(.caption)
                                     .fontWeight(.bold)
                                     .textCase(.uppercase)

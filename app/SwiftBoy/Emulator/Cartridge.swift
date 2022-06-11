@@ -18,11 +18,22 @@ class GameState: ObservableObject {
     }
 }
 
-enum MBCType: UInt8 {
-    case zero = 0x00
-    case one = 0x01
-    case one_ram = 0x02
-    case one_ram_battery = 0x03
+enum MBCType {
+    case zero
+    case one
+    case one_ram
+    case one_ram_battery
+    case unsupported
+    
+    init(rawValue: UInt8) {
+        switch rawValue {
+        case 0x00: self = .zero
+        case 0x01: self = .one
+        case 0x02: self = .one_ram
+        case 0x03: self = .one_ram_battery
+        default: self = .unsupported
+        }
+    }
 }
 
 func getRamSize(rom: Data) -> Int {
@@ -36,13 +47,6 @@ func getRamSize(rom: Data) -> Int {
     default:
         return 2048
     }
-}
-
-func mbcUnsupported(_ rom: Data) -> MemoryAccessArray {
-    let titleBuffer = (0x0134...0x0143).map { rom[$0] }
-    let romWithTitleOnly = MemoryBlock(range: 0x0134...0x0143, buffer: titleBuffer, readOnly: true, enabled: true)
-
-    return MemoryAccessArray([romWithTitleOnly])
 }
 
 func mbcZero(_ rom: Data) -> MemoryAccessArray {
@@ -107,8 +111,15 @@ func mbcOne(_ rom: Data) -> MemoryAccessArray {
     return mbc
 }
 
+func mbcUnsupported(_ rom: Data) -> MemoryAccessArray {
+    let titleBuffer = (0x0134...0x0143).map { rom[$0] }
+    let romWithTitleOnly = MemoryBlock(range: 0x0134...0x0143, buffer: titleBuffer, readOnly: true, enabled: true)
+
+    return MemoryAccessArray([romWithTitleOnly])
+}
+
 public class Cartridge: MemoryAccessArray, Identifiable {
-    let type: MBCType?
+    let type: MBCType
     
     public var title: String {
         get {
@@ -127,7 +138,7 @@ public class Cartridge: MemoryAccessArray, Identifiable {
             super.copy(other: mbcZero(rom))
         case .one, .one_ram, .one_ram_battery:
             super.copy(other: mbcOne(rom))
-        default:
+        case .unsupported:
             super.copy(other: mbcUnsupported(rom))
         }
     }
