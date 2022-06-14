@@ -228,18 +228,12 @@ struct TitleView: View {
     var onPressed: () -> Void
     
     var body: some View {
-        let shearValue = CGFloat(-0.3)
-        let shearTransform = CGAffineTransform(a: 1, b: 0, c: shearValue, d: 1, tx: 0, ty: 0)
-        
         PressableView { pressed in
             Text("\(title)  →")
                 .font(.caption)
                 .fontWeight(.bold)
-                .foregroundColor(.black)
-                .padding(EdgeInsets(top: 5, leading: 20, bottom: 5, trailing: 20))
-                .background(Rectangle()
-                    .fill(pressed ? .cyan : .white)
-                    .transformEffect(shearTransform))
+                .foregroundColor(pressed ? .cyan : .white)
+                .padding(.vertical, 5)
                 .scaleEffect(pressed ? 1.2 : 1)
                 .animation(.spring().speed(4), value: pressed)
         }.onPressed(onPressed)
