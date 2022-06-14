@@ -120,6 +120,7 @@ func mbcUnsupported(_ rom: Data) -> MemoryAccessArray {
 
 public class Cartridge: MemoryAccessArray, Identifiable {
     let type: MBCType
+    let path: URL
     
     public var title: String {
         get {
@@ -128,8 +129,11 @@ public class Cartridge: MemoryAccessArray, Identifiable {
         }
     }
     
-    public init(rom: Data) {
+    public init(path: URL) {
+        let rom = readPath(path: path)
+        
         self.type = MBCType(rawValue: rom[0x0147])
+        self.path = path
         
         super.init()
         
@@ -141,9 +145,5 @@ public class Cartridge: MemoryAccessArray, Identifiable {
         case .unsupported:
             super.copy(other: mbcUnsupported(rom))
         }
-    }
-    
-    public convenience init(path: URL) {
-        self.init(rom: readPath(path: path))
     }
 }

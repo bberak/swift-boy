@@ -19,20 +19,20 @@ struct PressableView<C: View> : View {
     private var onReleasedCallback: (() -> Void)?
     
     var body: some View {
-        self.getChildView(self.pressed)
+        getChildView(pressed)
             .gesture(dragGesture)
     }
     
     private var dragGesture: some Gesture {
         DragGesture( minimumDistance: 0, coordinateSpace: .local)
             .onChanged { _ in
-                if !self.pressed {
-                    self.pressed = true
+                if !pressed {
+                    pressed = true
                 }
             }
             .onEnded { _ in
-                if self.pressed {
-                    self.pressed = false
+                if pressed {
+                    pressed = false
                 }
             }
     }
@@ -82,13 +82,15 @@ struct DraggableView<C: View> : View {
             }
         }
     }
+    @Binding var draggingBinding: Bool
+    @State var dragging = false
     
-    private let getChildView: (CGFloat) -> C
+    private let getChildView: (CGFloat, Bool) -> C
     private var onDraggedCallback: ((CGFloat) -> Void)?
     private var onReleasedCallback: ((CGFloat) -> Void)?
     
     var body: some View {
-        self.getChildView(self.dragOffset)
+        getChildView(dragOffset, dragging)
             .gesture(dragGesture)
     }
     
@@ -98,6 +100,9 @@ struct DraggableView<C: View> : View {
                 let dragAmount = val.translation.height - prevDragTranslation.height
                 dragOffset += dragAmount
                 prevDragTranslation = val.translation
+                if !dragging {
+                    dragging = true
+                }
             }
             .onEnded { val in
                 prevDragTranslation = .zero
@@ -105,19 +110,26 @@ struct DraggableView<C: View> : View {
                     cb(dragOffset)
                 }
                 dragOffset = 0
+                if dragging {
+                    dragging = false
+                }
             }
     }
 }
 
 extension DraggableView {
-    init (_ getChildView: @escaping (CGFloat) -> C) {
-        self._dragOffsetBinding = Binding.constant(CGFloat(0))
+    init (_ dragOffsetBinding: Binding<CGFloat>, _ draggingBinding: Binding<Bool>, _ getChildView: @escaping (CGFloat, Bool) -> C) {
+        self._dragOffsetBinding = dragOffsetBinding
+        self._draggingBinding = draggingBinding
         self.getChildView = getChildView
     }
     
-    init (_ dragOffsetBinding: Binding<CGFloat>, _ getChildView: @escaping (CGFloat) -> C) {
-        self._dragOffsetBinding = dragOffsetBinding
-        self.getChildView = getChildView
+    init (_ dragOffsetBinding: Binding<CGFloat>,  _ getChildView: @escaping (CGFloat, Bool) -> C) {
+        self.init(dragOffsetBinding, Binding.constant(false), getChildView)
+    }
+    
+    init (_ getChildView: @escaping (CGFloat, Bool) -> C) {
+        self.init(Binding.constant(CGFloat(0)), getChildView)
     }
     
     func onDragged(_ onDraggedCallback: @escaping (CGFloat) -> Void) -> Self {
@@ -262,10 +274,11 @@ struct GameLibraryModalView: View {
     var listView: some View {
         VStack {
             VStack {
-                DraggableView($dragOffset) { _ in
+                DraggableView($dragOffset) { _, isDragging in
                     ZStack {
                         Capsule()
                             .frame(width: 40, height: 6)
+                            .foregroundColor(isDragging ? .cyan : .black)
                     }
                     .frame(height: 40)
                     .frame(maxWidth: .infinity)
@@ -287,7 +300,7 @@ struct GameLibraryModalView: View {
                                     .foregroundColor(gameState.currentlyPlaying === game ? .cyan : .black)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 
-                                Text(game.type == .unsupported ? "Unsupported" : "Supported")
+                                Text(game.type == .unsupported ? "Not Supported ❌" : "Supported")
                                     .font(.caption)
                                     .fontWeight(.bold)
                                     .textCase(.uppercase)
