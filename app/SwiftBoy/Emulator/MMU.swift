@@ -390,4 +390,9 @@ public class MMU: MemoryAccessArray {
             }
         }
     }
+    
+    func reset() {
+        cycles = 0
+        queue.removeAll()
+    }
 }

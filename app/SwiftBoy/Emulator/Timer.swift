@@ -71,4 +71,11 @@ public class Timer {
                 
         divCycles = divCycles &+ UInt(timerCycles)
     }
+    
+    func reset() {
+        //counterThreshold = 0
+        //enabled = false
+        divCycles = 0
+        counterCycles = 0
+    }
 }

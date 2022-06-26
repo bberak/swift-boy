@@ -5,7 +5,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let roms = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: ".gb")
+        let roms = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: "tetris.gb")
         let carts = roms.map { Cartridge(path: URL(string: $0)!) }
                 
         // let cart = Cartridge(path: #fileLiteral(resourceName: "cpu_instrs.gb"))
@@ -35,7 +35,7 @@ class ViewController: UIViewController {
         let apu = APU(mmu)
         let timer = Timer(mmu)
         let joypad = Joypad(mmu)
-        let glm = GameLibraryManager(carts, mmu, ppu, cpu)
+        let glm = GameLibraryManager(carts, mmu, ppu, cpu, timer)
         let clock = Clock(mmu, ppu, cpu, apu, timer)
         
         glm.insertCartridge()

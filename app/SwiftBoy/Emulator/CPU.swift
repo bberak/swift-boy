@@ -263,4 +263,11 @@ public class CPU {
             }
         }
     }
+    
+    func reset() {
+        cycles = 0
+        pc = 0
+        //flags.clear()
+        queue.removeAll()
+    }
 }

@@ -315,7 +315,7 @@ struct GameLibraryModalView: View {
                                 .padding([.leading, .trailing])
                                 
                             }.onPressed {
-                                gameLibraryManager.inserted = game
+                                gameLibraryManager.insertCartridge(game)
                             }
                         }
                     }

@@ -508,4 +508,10 @@ public class PPU {
             }
         }
     }
+    
+    func reset() {
+        //view.child.enabled = false
+        cycles = 0
+        queue.removeAll()
+    }
 }
