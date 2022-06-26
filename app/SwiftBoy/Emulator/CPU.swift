@@ -264,10 +264,19 @@ public class CPU {
         }
     }
     
-    func reset() {
+    public func reset() {
         cycles = 0
-        pc = 0
-        //flags.clear()
         queue.removeAll()
+        flags.clear()
+        a = 0
+        b = 0
+        c = 0
+        d = 0
+        e = 0
+        h = 0
+        l = 0
+        sp = 0
+        pc = 0
+        ime = false
     }
 }

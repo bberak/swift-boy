@@ -115,7 +115,7 @@ public class Cartridge: MemoryAccessArray, Identifiable {
     public var title: String {
         get {
             let bytes = (0x0134...0x0143).map { try! self.readByte(address: $0) }
-            return String(bytes: bytes, encoding: .utf8) ?? "Untitled"
+            return String(bytes: bytes, encoding: .utf8) ?? path.lastPathComponent.replacingOccurrences(of: ".gb", with: "")
         }
     }
     

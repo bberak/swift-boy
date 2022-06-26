@@ -51,7 +51,7 @@ class MemoryBlock: MemoryAccess {
     private(set) var version: UInt64 = 0
     var buffer: [UInt8]
     var enabled: Bool
-    
+   
     init(range: ClosedRange<UInt16>, buffer: [UInt8], readOnly: Bool, enabled: Bool) {
         self.range = range
         self.buffer = buffer
@@ -65,6 +65,10 @@ class MemoryBlock: MemoryAccess {
     
     convenience init(range: ClosedRange<UInt16>, block: MemoryBlock) {
         self.init(range: range, buffer: block.buffer, readOnly: block.readOnly, enabled: block.enabled)
+    }
+    
+    func reset() {
+        self.buffer = [UInt8](repeating: 0xFF, count: range.count)
     }
     
     func contains(address: UInt16)-> Bool {
@@ -154,6 +158,10 @@ public class MemoryAccessArray: MemoryAccess {
     private var subscribers: [Subscriber] = []
     private(set) var version: UInt64 = 0
     
+    var count: Int {
+        get { arr.count }
+    }
+    
     init(_ arr: [MemoryAccess] = []) {
         self.arr = arr
     }
@@ -167,8 +175,8 @@ public class MemoryAccessArray: MemoryAccess {
         return arr.first { $0.contains(address: address) }
     }
     
-    func find(typeOf: AnyClass) -> MemoryAccess? {
-        return arr.first { type(of: $0) == typeOf }
+    func find<T>(type: T.Type) -> MemoryAccess? {
+        return arr.first { $0 is T }
     }
     
     func remove(item: MemoryAccess) {
@@ -264,10 +272,15 @@ public class MMU: MemoryAccessArray {
     private var queue: [Command] = []
     private var cycles: Int16 = 0
     
+    var bios: MemoryBlock
     var vramTileData: MemoryBlock
     var vramTileMaps: MemoryBlock
     var oam: MemoryBlock
     var waveformRam: MemoryBlock
+    var wram: MemoryBlock
+    var echo: MemoryBlock
+    var hram: MemoryBlock
+    var rest: MemoryBlock
     
     lazy var serialDataTransfer = Address(0xFF01, self)
     lazy var serialDataControl = Address(0xFF02, self)
@@ -315,20 +328,18 @@ public class MMU: MemoryAccessArray {
     lazy var nr52 = Address(0xFF26, self)
         
     public init() {
+        self.bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
         self.vramTileData = MemoryBlock(range: 0x8000...0x97FF, readOnly: false, enabled: true)
         self.vramTileMaps = MemoryBlock(range: 0x9800...0x9FFF, readOnly: false, enabled: true)
         self.oam = MemoryBlock(range: 0xFE00...0xFE9F, readOnly: false, enabled: true)
         self.waveformRam = MemoryBlock(range: 0xFF30...0xFF3F, readOnly: false, enabled: true)
-        
-        let bios = MemoryBlock(range: 0x0000...0x00FF, buffer: biosProgram, readOnly: true, enabled: true)
-        let wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false, enabled: true)
-        let echo = MemoryBlock(range: 0xE000...0xFDFF, block: wram)
-        let hram = MemoryBlock(range: 0xFF80...0xFFFE, readOnly: false, enabled: true)
-        let rest = MemoryBlock(range: 0x0000...0xFFFF, readOnly: false, enabled: true)
+        self.wram = MemoryBlock(range: 0xC000...0xCFFF, readOnly: false, enabled: true)
+        self.echo = MemoryBlock(range: 0xE000...0xFDFF, block: wram)
+        self.hram = MemoryBlock(range: 0xFF80...0xFFFE, readOnly: false, enabled: true)
+        self.rest = MemoryBlock(range: 0x0000...0xFFFF, readOnly: false, enabled: true)
         
         super.init([
             bios,
-            //cartridge,
             vramTileData,
             vramTileMaps,
             wram,
@@ -341,7 +352,7 @@ public class MMU: MemoryAccessArray {
         
         self.biosRegister.subscribe { byte in
             if byte == 1 {
-                self.remove(item: bios)
+                self.remove(item: self.bios)
             }
         }
         
@@ -351,10 +362,13 @@ public class MMU: MemoryAccessArray {
     }
     
     func insertCartridge(_ cart: Cartridge) {
-        if let found = self.find(typeOf: Cartridge.self) {
+        self.remove(item: bios)
+        
+        if let found = self.find(type: Cartridge.self){
             self.remove(item: found)
         }
         
+        self.insert(item: bios, index: 0)
         self.insert(item: cart, index: 1) // Always insert cartridge after bios
     }
     
@@ -391,8 +405,16 @@ public class MMU: MemoryAccessArray {
         }
     }
     
-    func reset() {
+    public func reset() {
         cycles = 0
         queue.removeAll()
+        vramTileData.reset()
+        vramTileMaps.reset()
+        oam.reset()
+        waveformRam.reset()
+        wram.reset()
+        echo.reset()
+        hram.reset()
+        rest.reset()
     }
 }

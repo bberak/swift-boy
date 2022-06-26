@@ -300,10 +300,12 @@ struct GameLibraryModalView: View {
                                         .font(.title)
                                         .fontWeight(.bold)
                                         .textCase(.uppercase)
+                                        .lineLimit(1)
                                         .foregroundColor(gameLibraryManager.inserted === game || pressed ? .cyan : .black)
                                         .scaleEffect(pressed ? 1.2 : 1)
                                         .animation(.spring().speed(4), value: pressed)
                                         .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(.trailing, 20)
                                         
                                     Text(game.type == .unsupported ? "Not Supported ❌" : "Supported")
                                         .font(.caption)

@@ -10,8 +10,9 @@ public class Clock {
     private let timer: Timer
     private let fps: Double
     private let frameTime: Double
+    private var insertCartridgeTask: (() -> Void)?
     public var printFrameDuration = false
-    
+   
     public init(_ mmu: MMU, _ ppu: PPU, _ cpu: CPU, _ apu: APU, _ timer: Timer) {
         self.mmu = mmu
         self.ppu = ppu
@@ -21,11 +22,43 @@ public class Clock {
         self.fps = 60
         self.frameTime = 1 / fps
     }
+    
+    public func insertCartridgeSynced(_ cart: Cartridge, onComplete: (() -> Void)? = nil) {
+        insertCartridgeTask = {
+            // Save cartridge state (RAM)
+            // Swap cartridge in MMU
+            // Reset MMU + clear queue
+            // Reset CPU + clear queue
+            // Reset PPU + clear queue
+            // Wouldn't I also need to stop the clock? And/or do some locking? Because this code will run on a separate thread to the game loop?
+            // I can probably just dispatch the code below on the global queue
+            // Oops, need to re-add the bios..
+            // Maybe bios can be inserted during reset ??
+            // Or maybe just enable/disable the bios instead of removing it..
+            // Do I need to lock the insertCartridgeTask variable everytime I access it?? Make it an "actor" or something?
+            
+            self.mmu.insertCartridge(cart)
+            self.mmu.reset()
+            self.cpu.reset()
+            self.ppu.reset()
+            self.apu.reset()
+            self.timer.reset()
+            
+            if let cb = onComplete {
+                cb()
+            }
+        }
+    }
 
     public func start(_ current: DispatchTime = .now()) {
         var next = current + frameTime
 
         DispatchQueue.global(qos: .userInteractive).async {
+            if let task = self.insertCartridgeTask {
+                task()
+                self.insertCartridgeTask = nil
+            }
+            
             try! self.frame()
 
             let now = DispatchTime.now()

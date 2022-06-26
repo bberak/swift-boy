@@ -4,38 +4,25 @@ class GameLibraryManager: ObservableObject {
     @Published private(set) var library: [Cartridge]
     @Published private(set) var inserted: Cartridge
     
-    let mmu: MMU
-    let cpu: CPU
-    let ppu: PPU
-    let timer: Timer
+    let clock: Clock
     
-    init(_ gameLibrary: [Cartridge], _ mmu: MMU, _ ppu: PPU, _ cpu: CPU, _ timer: Timer) {
-        self.library = gameLibrary
-        self.inserted = gameLibrary[0]
-        self.mmu = mmu
-        self.cpu = cpu
-        self.ppu = ppu
-        self.timer = timer
+    init(_ clock: Clock) {
+        let roms = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: ".gb")
+        let carts = roms.map { Cartridge(path: URL(string: $0)!) }
+        
+        self.library = carts
+        self.inserted = carts.first!
+        self.clock = clock
+        self.insertCartridge()
     }
     
     func insertCartridge(_ nextCartridge: Cartridge? = nil) {
-        // Save cartridge state (RAM)
-        // Swap cartridge in MMU
-        // Reset MMU + clear queue
-        // Reset CPU + clear queue
-        // Reset PPU + clear queue
-        // Wouldn't I also need to stop the clock? And/or do some locking? Because this code will run on a separate thread to the game loop?
-        // I can probably just dispatch the code below on the global queue
-        
         if let cart = nextCartridge ?? self.library.first {
+            // Save current cartridge's RAM
             self.inserted = cart
-            self.mmu.insertCartridge(cart)
-//            self.mmu.reset()
-//            self.cpu.reset()
-//            self.ppu.reset()
-//            self.timer.reset()
+            self.clock.insertCartridgeSynced(cart)
         }
     }
     
-    // Write some code to save cartridge state (RAM) when app is about to close
+    // Write some code to save current cartridge's RAM when app is about to close
 }

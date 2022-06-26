@@ -509,9 +509,10 @@ public class PPU {
         }
     }
     
-    func reset() {
-        //view.child.enabled = false
+    public func reset() {
         cycles = 0
         queue.removeAll()
+        objectsMemo.invalidate()
+        objectsTileDataMemo.invalidate()
     }
 }

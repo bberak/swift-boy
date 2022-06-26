@@ -601,7 +601,7 @@ public class APU {
         }
     }
     
-    func updateWaveform() {
+    func updateWaveformSamples() {
         let nr32 = self.mmu.nr32.read()
         let outputLevel = (nr32 & 0b01100000) >> 5
         let waveformData = self.waveformDataMemo.get(deps: [self.mmu.waveformRam.version, outputLevel]) {
@@ -612,15 +612,14 @@ public class APU {
         self.customWave.data = waveformData
         self.customWave.amplitude = 1
     }
-
     
     public func run(seconds: Float) throws {
         if !self.master.enabled {
             return
         }
         
-        // Custom waveform update
-        self.updateWaveform()
+        // Update custom waveform samples
+        self.updateWaveformSamples()
         
         // Update all voices
         var nr52 = self.mmu.nr52.read()
@@ -630,10 +629,14 @@ public class APU {
         nr52[2] = self.customWave.update(seconds: seconds)
         nr52[3] = self.noise.update(seconds: seconds)
         
-        // Snippet to determine which voice is making sound
+        // Snippet to determine which voices are producing sound
         // print(nr52[0] && self.pulseA.amplitude > 0, nr52[1] && self.pulseB.amplitude > 0, nr52[2] && self.customWave.amplitude > 0, nr52[3] && self.noise.amplitude > 0)
         
         // Write nr52 back into RAM
         self.mmu.nr52.write(nr52, publish: false)
+    }
+    
+    public func reset() {
+        waveformDataMemo.invalidate()
     }
 }
