@@ -3,7 +3,7 @@ import SwiftUI
 
 struct PressableView<C: View> : View {
     @Binding var pressedBinding: Bool
-    @State var pressed = false {
+    @State private var pressed = false {
         didSet {
             pressedBinding = pressed
             haptics.impactOccurred(intensity: 0.5);
@@ -72,9 +72,12 @@ extension PressableView {
 }
 
 struct DraggableView<C: View> : View {
-    @State private var prevDragTranslation = CGSize.zero
     @Binding var dragOffsetBinding: CGFloat
-    @State var dragOffset = CGFloat(0) {
+    @Binding var draggingBinding: Bool
+    
+    @State private var dragging = false
+    @State private var prevDragTranslation = CGSize.zero
+    @State private var dragOffset = CGFloat(0) {
         didSet {
             dragOffsetBinding = dragOffset
             if let cb = onDraggedCallback {
@@ -82,8 +85,6 @@ struct DraggableView<C: View> : View {
             }
         }
     }
-    @Binding var draggingBinding: Bool
-    @State var dragging = false
     
     private let getChildView: (CGFloat, Bool) -> C
     private var onDraggedCallback: ((CGFloat) -> Void)?
@@ -178,7 +179,7 @@ struct GameButtonView<S>: View where S : Shape {
 }
 
 struct DPadView: View {
-    @StateObject var buttons: Buttons
+    @EnvironmentObject private var buttons: Buttons
     
     var body: some View {
         VStack {
@@ -202,7 +203,7 @@ struct DPadView: View {
 }
 
 struct ABView: View {
-    @StateObject var buttons: Buttons
+    @EnvironmentObject private var buttons: Buttons
     
     var body: some View {
         HStack {
@@ -213,7 +214,7 @@ struct ABView: View {
 }
 
 struct StartSelectView: View {
-    @StateObject var buttons: Buttons
+    @EnvironmentObject private var buttons: Buttons
     
     var body: some View {
         HStack {
@@ -224,7 +225,7 @@ struct StartSelectView: View {
 }
 
 struct TitleView: View {
-    @State var title: String
+    var title: String
     var onPressed: () -> Void
     
     var body: some View {
@@ -232,6 +233,7 @@ struct TitleView: View {
             Text("\(title)  →")
                 .font(.caption)
                 .fontWeight(.bold)
+                .textCase(.uppercase)
                 .foregroundColor(pressed ? .cyan : .white)
                 .padding(.vertical, 5)
                 .scaleEffect(pressed ? 1.2 : 1)
@@ -242,10 +244,16 @@ struct TitleView: View {
 
 struct GameLibraryModalView: View {
     @Binding var visible: Bool
-    @State var paddingTop: CGFloat = 140
-    @State var maxDragOffset: CGFloat = 300
-    @State var dragOffset: CGFloat = 0
-    @EnvironmentObject var gameState: GameState
+    @State private var paddingTop: CGFloat
+    @State private var maxDragOffset: CGFloat
+    @State private var dragOffset: CGFloat = 0
+    @EnvironmentObject private var gameLibraryManager: GameLibraryManager
+    
+    init(visible: Binding<Bool>, paddingTop: CGFloat = 140, maxDragOffset: CGFloat = 300) {
+        self._visible = visible
+        self.paddingTop = paddingTop
+        self.maxDragOffset = maxDragOffset
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -285,24 +293,30 @@ struct GameLibraryModalView: View {
                 
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 20) {
-                        ForEach(gameState.gameLibrary.sorted(by: { x, y in x.title < y.title })) { game in
-                            VStack {
-                                Text(game.title.isNotEmpty ? game.title : "Untitled")
-                                    .font(.title)
-                                    .fontWeight(.bold)
-                                    .textCase(.uppercase)
-                                    .foregroundColor(gameState.currentlyPlaying === game ? .cyan : .black)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                        ForEach(gameLibraryManager.library.sorted(by: { x, y in x.title < y.title })) { game in
+                            PressableView { pressed in
+                                VStack {
+                                    Text(game.title)
+                                        .font(.title)
+                                        .fontWeight(.bold)
+                                        .textCase(.uppercase)
+                                        .foregroundColor(gameLibraryManager.inserted === game || pressed ? .cyan : .black)
+                                        .scaleEffect(pressed ? 1.2 : 1)
+                                        .animation(.spring().speed(4), value: pressed)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        
+                                    Text(game.type == .unsupported ? "Not Supported ❌" : "Supported")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .textCase(.uppercase)
+                                        .foregroundColor(.black.opacity(0.4))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .padding([.leading, .trailing])
                                 
-                                Text(game.type == .unsupported ? "Not Supported ❌" : "Supported")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .textCase(.uppercase)
-                                    .foregroundColor(.black.opacity(0.4))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    
+                            }.onPressed {
+                                gameLibraryManager.inserted = game
                             }
-                            .padding([.leading, .trailing])
                         }
                     }
                 }
@@ -317,44 +331,47 @@ struct GameLibraryModalView: View {
 }
 
 struct GameBoyView: View {
-    var lcd: LCDBitmapView
-    @State var showGames: Bool = false
-    @EnvironmentObject var buttons: Buttons
-    @EnvironmentObject var gameState: GameState
+    private var lcd: LCDBitmapView
+    @State private var showGames: Bool = false
+    @EnvironmentObject private var gameLibraryManager: GameLibraryManager
+    
+    init(lcd: LCDBitmapView) {
+        self.lcd = lcd
+    }
     
     var body: some View {
         ZStack {
             GeometryReader { geometry in
                 if geometry.size.width > geometry.size.height {
                     HStack {
-                        DPadView(buttons: buttons)
+                        DPadView()
                         VStack {
-                            TitleView(title: gameState.currentlyPlaying.title) {
+                            TitleView(title: gameLibraryManager.inserted.title) {
                                 showGames = true
                             }
                             lcd
                         }
                         VStack {
                             Spacer()
-                            ABView(buttons: buttons)
+                            ABView()
                             Spacer()
-                            StartSelectView(buttons: buttons)
+                            StartSelectView()
                         }
                     }
                     GameLibraryModalView(visible: $showGames, paddingTop: 80, maxDragOffset: geometry.size.height - 80 * 2)
                 } else {
                     VStack{
-                        TitleView(title: gameState.currentlyPlaying.title) {
+                        TitleView(title: gameLibraryManager.inserted.title) {
                             showGames = true
                         }
                         lcd.frame(height: geometry.size.height * 0.5)
                         VStack{
                             HStack {
-                                DPadView(buttons: buttons)
+                                DPadView()
                                 Spacer()
-                                ABView(buttons: buttons)
+                                ABView()
                             }
-                            StartSelectView(buttons: buttons).offset(x: 0, y: 30)
+                            StartSelectView().offset(x: 0, y: 30)
                         }
                         .padding()
                         .frame(height: geometry.size.height * 0.5)

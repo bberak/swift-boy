@@ -8,16 +8,6 @@
 
 import Foundation
 
-class GameState: ObservableObject {
-    @Published var gameLibrary: [Cartridge]
-    @Published var currentlyPlaying: Cartridge
-    
-    init(gameLibrary: [Cartridge], currentlyPlaying: Cartridge) {
-        self.gameLibrary = gameLibrary
-        self.currentlyPlaying = currentlyPlaying
-    }
-}
-
 enum MBCType {
     case zero
     case one
@@ -125,7 +115,7 @@ public class Cartridge: MemoryAccessArray, Identifiable {
     public var title: String {
         get {
             let bytes = (0x0134...0x0143).map { try! self.readByte(address: $0) }
-            return String(bytes: bytes, encoding: .utf8) ?? ""
+            return String(bytes: bytes, encoding: .utf8) ?? "Untitled"
         }
     }
     

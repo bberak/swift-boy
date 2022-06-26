@@ -14,6 +14,7 @@
 		A13BADBA284613F7001B9FF6 /* FileSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13BADB9284613F7001B9FF6 /* FileSystem.swift */; };
 		A13BADBC284636EE001B9FF6 /* UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13BADBB284636EE001B9FF6 /* UI.swift */; };
 		A1514E37277EADA0005A50B5 /* deadeus.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1514E36277EABD8005A50B5 /* deadeus.gb */; };
+		A1779F0728669826005E6C8C /* GameLibraryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1779F0628669826005E6C8C /* GameLibraryManager.swift */; };
 		A1785E6F283BA1D3006CD7AC /* instr_timing.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1785E69283BA1D3006CD7AC /* instr_timing.gb */; };
 		A1785E70283BA1D3006CD7AC /* cpu_instrs.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1785E6A283BA1D3006CD7AC /* cpu_instrs.gb */; };
 		A1785E71283BA1D3006CD7AC /* interrupt_time.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1785E6B283BA1D3006CD7AC /* interrupt_time.gb */; };
@@ -55,6 +56,7 @@
 		A13BADB9284613F7001B9FF6 /* FileSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSystem.swift; sourceTree = "<group>"; };
 		A13BADBB284636EE001B9FF6 /* UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI.swift; sourceTree = "<group>"; };
 		A1514E36277EABD8005A50B5 /* deadeus.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = deadeus.gb; sourceTree = "<group>"; };
+		A1779F0628669826005E6C8C /* GameLibraryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameLibraryManager.swift; sourceTree = "<group>"; };
 		A1785E69283BA1D3006CD7AC /* instr_timing.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = instr_timing.gb; sourceTree = "<group>"; };
 		A1785E6A283BA1D3006CD7AC /* cpu_instrs.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = cpu_instrs.gb; sourceTree = "<group>"; };
 		A1785E6B283BA1D3006CD7AC /* interrupt_time.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = interrupt_time.gb; sourceTree = "<group>"; };
@@ -152,6 +154,7 @@
 				A1F3754C2789881C00EDEC23 /* APU.swift */,
 				A13BADB9284613F7001B9FF6 /* FileSystem.swift */,
 				A13BADBB284636EE001B9FF6 /* UI.swift */,
+				A1779F0628669826005E6C8C /* GameLibraryManager.swift */,
 			);
 			path = Emulator;
 			sourceTree = "<group>";
@@ -289,6 +292,7 @@
 				A1B4014E26EB5DB3002F4512 /* CPU.swift in Sources */,
 				A13BADBA284613F7001B9FF6 /* FileSystem.swift in Sources */,
 				A1B4014726EB5DB3002F4512 /* Clock.swift in Sources */,
+				A1779F0728669826005E6C8C /* GameLibraryManager.swift in Sources */,
 				A1B4014D26EB5DB3002F4512 /* Common.swift in Sources */,
 				A13BADBC284636EE001B9FF6 /* UI.swift in Sources */,
 				A1F3754D2789881C00EDEC23 /* APU.swift in Sources */,

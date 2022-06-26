@@ -167,6 +167,10 @@ public class MemoryAccessArray: MemoryAccess {
         return arr.first { $0.contains(address: address) }
     }
     
+    func find(typeOf: AnyClass) -> MemoryAccess? {
+        return arr.first { type(of: $0) == typeOf }
+    }
+    
     func remove(item: MemoryAccess) {
         let index = arr.firstIndex { x in
             return x === item
@@ -175,6 +179,10 @@ public class MemoryAccessArray: MemoryAccess {
         if index != nil {
             arr.remove(at: index!)
         }
+    }
+    
+    func insert(item: MemoryAccess, index: Int = 0) {
+        arr.insert(item, at: index)
     }
     
     func contains(address: UInt16) -> Bool {
@@ -306,7 +314,7 @@ public class MMU: MemoryAccessArray {
     lazy var nr51 = Address(0xFF25, self)
     lazy var nr52 = Address(0xFF26, self)
         
-    public init(_ cartridge: Cartridge) {
+    public init() {
         self.vramTileData = MemoryBlock(range: 0x8000...0x97FF, readOnly: false, enabled: true)
         self.vramTileMaps = MemoryBlock(range: 0x9800...0x9FFF, readOnly: false, enabled: true)
         self.oam = MemoryBlock(range: 0xFE00...0xFE9F, readOnly: false, enabled: true)
@@ -320,7 +328,7 @@ public class MMU: MemoryAccessArray {
         
         super.init([
             bios,
-            cartridge,
+            //cartridge,
             vramTileData,
             vramTileMaps,
             wram,
@@ -340,6 +348,14 @@ public class MMU: MemoryAccessArray {
         self.dmaTransfer.subscribe { byte in
             self.startDMATransfer(byte: byte)
         }
+    }
+    
+    func insertCartridge(_ cart: Cartridge) {
+        if let found = self.find(typeOf: Cartridge.self) {
+            self.remove(item: found)
+        }
+        
+        self.insert(item: cart, index: 1) // Always insert cartridge after bios
     }
     
     func startDMATransfer(byte: UInt8) {

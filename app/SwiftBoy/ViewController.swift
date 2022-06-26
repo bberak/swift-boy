@@ -29,18 +29,19 @@ class ViewController: UIViewController {
         // let cart = Cartridge(path: #fileLiteral(resourceName: "super-mario-land.gb"))
         // let cart = Cartridge(path: #fileLiteral(resourceName: "tetris.gb"))
         
-        let gameState = GameState(gameLibrary: carts, currentlyPlaying: carts[0])
-        let mmu = MMU(gameState.currentlyPlaying)
+        let mmu = MMU()
         let ppu = PPU(mmu)
         let cpu = CPU(mmu)
         let apu = APU(mmu)
         let timer = Timer(mmu)
         let joypad = Joypad(mmu)
+        let glm = GameLibraryManager(carts, mmu, ppu, cpu)
         let clock = Clock(mmu, ppu, cpu, apu, timer)
         
+        glm.insertCartridge()
         clock.start()
         
-        let ui = UIHostingController(rootView: GameBoyView(lcd: ppu.view).environmentObject(joypad.buttons).environmentObject(gameState))
+        let ui = UIHostingController(rootView: GameBoyView(lcd: ppu.view).environmentObject(joypad.buttons).environmentObject(glm))
         
         view.backgroundColor = .black
         view.translatesAutoresizingMaskIntoConstraints = false
