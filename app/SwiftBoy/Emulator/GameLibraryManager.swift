@@ -13,16 +13,22 @@ class GameLibraryManager: ObservableObject {
         self.library = carts
         self.inserted = carts.first!
         self.clock = clock
-        self.insertCartridge()
+        self.insertCartridge(inserted)
     }
     
-    func insertCartridge(_ nextCartridge: Cartridge? = nil) {
-        if let cart = nextCartridge ?? self.library.first {
-            // Save current cartridge's RAM
-            self.inserted = cart
-            self.clock.insertCartridgeSynced(cart)
+    func insertCartridge(_ next: Cartridge) {
+        // TODO: Save prev cartridge's RAM
+        self.inserted = next
+        
+        self.clock.sync { mmu, cpu, ppu, apu, timer in
+            mmu.insertCartridge(next)
+            mmu.reset()
+            cpu.reset()
+            ppu.reset()
+            apu.reset()
+            timer.reset()
         }
     }
     
-    // Write some code to save current cartridge's RAM when app is about to close
+    // TODO: Write some code to save current cartridge's RAM when app is about to close
 }
