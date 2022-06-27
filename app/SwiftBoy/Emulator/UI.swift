@@ -242,6 +242,61 @@ struct TitleView: View {
     }
 }
 
+struct GameLibraryItemView: View {
+    var game: Cartridge
+    @State private var confirmDelete = false
+    @EnvironmentObject private var gameLibraryManager: GameLibraryManager
+    
+    private func delay(numSeconds: Double, cb: @escaping () -> Void) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + numSeconds) {
+            cb()
+        }
+    }
+    
+    var body: some View {
+        PressableView { pressed in
+            HStack (alignment: .top) {
+                VStack {
+                    Text(game.title)
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .textCase(.uppercase)
+                        .lineLimit(1)
+                        .foregroundColor(gameLibraryManager.inserted === game || pressed ? .cyan : .black)
+                        .scaleEffect(pressed ? 1.2 : 1)
+                        .animation(.spring().speed(4), value: pressed)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.trailing, 20)
+                    
+                    Text(game.type == .unsupported ? "Not Supported ❌" : "Supported")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .textCase(.uppercase)
+                        .foregroundColor(.black.opacity(0.4))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                Button(role: .none, action: {
+                    if confirmDelete {
+                        gameLibraryManager.deleteCartridge(game)
+                    } else {
+                        confirmDelete = true
+                        delay(numSeconds: 5) {
+                            confirmDelete = false
+                        }
+                    }
+                }) {
+                    Label(confirmDelete ? "Confirm" : "", systemImage: "trash")
+                        .foregroundColor(confirmDelete ? .red : .black.opacity(0.4))
+                }.padding(.top, 5)
+                    .animation(.easeInOut, value: confirmDelete)
+            }
+            .padding([.leading, .trailing])
+        }.onPressed {
+            gameLibraryManager.insertCartridge(game)
+        }
+    }
+}
+
 struct GameLibraryModalView: View {
     @Binding var visible: Bool
     @State private var paddingTop: CGFloat
@@ -290,39 +345,15 @@ struct GameLibraryModalView: View {
                         visible = false
                     }
                 }
-                
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 20) {
-                        ForEach(gameLibraryManager.library.sorted(by: { x, y in x.title < y.title })) { game in
-                            PressableView { pressed in
-                                VStack {
-                                    Text(game.title)
-                                        .font(.title)
-                                        .fontWeight(.bold)
-                                        .textCase(.uppercase)
-                                        .lineLimit(1)
-                                        .foregroundColor(gameLibraryManager.inserted === game || pressed ? .cyan : .black)
-                                        .scaleEffect(pressed ? 1.2 : 1)
-                                        .animation(.spring().speed(4), value: pressed)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(.trailing, 20)
-                                        
-                                    Text(game.type == .unsupported ? "Not Supported ❌" : "Supported")
-                                        .font(.caption)
-                                        .fontWeight(.bold)
-                                        .textCase(.uppercase)
-                                        .foregroundColor(.black.opacity(0.4))
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                                .padding([.leading, .trailing])
-                                
-                            }.onPressed {
-                                gameLibraryManager.insertCartridge(game)
-                            }
+                        ForEach(gameLibraryManager.library) { game in
+                            GameLibraryItemView(game: game)
                         }
                     }
                 }
                 .frame(maxHeight: .infinity)
+                .animation(.easeInOut, value: gameLibraryManager.library.count)
             }
             .frame(maxHeight: .infinity)
             .frame(maxWidth: .infinity)

@@ -56,4 +56,8 @@ struct FileSystem {
     static func listAbsolutePaths(inDirectory: String, suffix: String = "") -> [String] {
         return listPaths(inDirectory: inDirectory, suffix: suffix).map { "\(inDirectory)/\($0)" }
     }
+    
+    static func removeItem(at: URL) throws {
+        try FileManager.default.removeItem(atPath: at.path)
+    }
 }

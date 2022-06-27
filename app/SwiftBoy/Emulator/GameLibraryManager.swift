@@ -10,14 +10,26 @@ class GameLibraryManager: ObservableObject {
         let roms = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: ".gb")
         let carts = roms.map { Cartridge(path: URL(string: $0)!) }
         
-        self.library = carts
+        self.library = carts.sorted(by: { x, y in x.title < y.title })
         self.inserted = carts.first!
         self.clock = clock
         self.insertCartridge(inserted)
     }
     
+    func deleteCartridge(_ discarded: Cartridge) {
+        let discardedIndex = library.firstIndex(where: { $0 === discarded})!
+        let nextIndex = discardedIndex == library.count - 1 ? discardedIndex - 1 : discardedIndex + 1
+        let next = library[nextIndex]
+        insertCartridge(next)
+        library = library.filter { $0 !== discarded }
+        try? FileSystem.removeItem(at: discarded.path)
+        
+        // TODO: Delete the discarded cartridge's RAM
+    }
+    
     func insertCartridge(_ next: Cartridge) {
-        // TODO: Save prev cartridge's RAM
+        // TODO: Save the previous cartridge's RAM
+        
         self.inserted = next
         
         self.clock.sync { mmu, cpu, ppu, apu, timer in
@@ -30,5 +42,5 @@ class GameLibraryManager: ObservableObject {
         }
     }
     
-    // TODO: Write some code to save current cartridge's RAM when app is about to close
+    // TODO: Write some code to save current cartridge's RAM when the app is about to close
 }
