@@ -354,6 +354,21 @@ struct GameLibraryModalView: View {
                 }
                 .frame(maxHeight: .infinity)
                 .animation(.easeInOut, value: gameLibraryManager.library.count)
+                
+                PressableView { pressed in
+                    Group {
+                        Text("Import Game")
+                            .fontWeight(.bold)
+                            .textCase(.uppercase)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 40)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(pressed ? .cyan : .black))
+                    }
+                    .padding()
+                    .scaleEffect(pressed ? 1.2 : 1)
+                    .animation(.spring().speed(4), value: pressed)
+                }
             }
             .frame(maxHeight: .infinity)
             .frame(maxWidth: .infinity)
