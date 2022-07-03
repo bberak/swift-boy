@@ -1,5 +1,50 @@
 import Foundation
 import SwiftUI
+import UniformTypeIdentifiers
+
+// Source: https://github.com/markrenaud/FilePicker/blob/main/Sources/FilePicker/FilePickerUIRepresentable.swift
+public struct FilePickerUIRepresentable: UIViewControllerRepresentable {
+    public typealias UIViewControllerType = UIDocumentPickerViewController
+    public typealias PickedURLsCompletionHandler = (_ urls: [URL]) -> Void
+    
+    @Environment(\.dismiss) var dismiss
+    
+    public let types: [UTType]
+    public let allowMultiple: Bool
+    public let pickedCompletionHandler: PickedURLsCompletionHandler
+    
+    public init(types: [UTType], allowMultiple: Bool, onPicked completionHandler: @escaping PickedURLsCompletionHandler) {
+        self.types = types
+        self.allowMultiple = allowMultiple
+        self.pickedCompletionHandler = completionHandler
+    }
+    
+    public func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+    
+    public func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: true)
+        picker.delegate = context.coordinator
+        picker.allowsMultipleSelection = allowMultiple
+        return picker
+    }
+    
+    public func updateUIViewController(_ controller: UIDocumentPickerViewController, context: Context) {}
+    
+    public class Coordinator: NSObject, UIDocumentPickerDelegate {
+        var parent: FilePickerUIRepresentable
+        
+        init(parent: FilePickerUIRepresentable) {
+            self.parent = parent
+        }
+        
+        public func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            parent.pickedCompletionHandler(urls)
+            parent.dismiss()
+        }
+    }
+}
 
 struct PressableView<C: View> : View {
     @Binding var pressedBinding: Bool
@@ -287,8 +332,9 @@ struct GameLibraryItemView: View {
                 }) {
                     Label(confirmDelete ? "Confirm" : "", systemImage: "trash")
                         .foregroundColor(confirmDelete ? .red : .black.opacity(0.4))
-                }.padding(.top, 5)
-                    .animation(.easeInOut, value: confirmDelete)
+                }
+                .padding(.top, 5)
+                .animation(.easeInOut, value: confirmDelete)
             }
             .padding([.leading, .trailing])
         }.onReleased {
@@ -299,7 +345,8 @@ struct GameLibraryItemView: View {
 
 struct GameLibraryModalView: View {
     var landscape = false
-    @Environment(\.dismiss) private var dismiss
+    @State private var showFilePicker = false
+    @Environment(\.dismiss) private var dismissLibraryView
     @EnvironmentObject private var gameLibraryManager: GameLibraryManager
     
     var body: some View {
@@ -309,26 +356,20 @@ struct GameLibraryModalView: View {
                     PressableView { pressed in
                         Image(systemName: "xmark")
                             .font(Font.body.weight(.bold))
-                            .foregroundColor(pressed ? .white : .secondary)
+                            .foregroundColor(.white)
                             .imageScale(.small)
                             .background( Circle()
                                 .frame(width: 30, height: 30)
-                                .foregroundColor(pressed ? .cyan : Color(.secondarySystemFill)))
+                                .foregroundColor(pressed ? .cyan : .black))
                             .frame(width: 44, height: 44)
                             .scaleEffect(pressed ? 1.2 : 1)
                             .animation(.spring().speed(4), value: pressed)
                     }
                     .onReleased {
-                        dismiss()
+                        dismissLibraryView()
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                Capsule()
-                    .fill(.secondary)
-                    .opacity(0.5)
-                    .frame(width: 35, height: 5)
-                    .padding(6)
             }
             
             ScrollView(.vertical, showsIndicators: false) {
@@ -338,6 +379,7 @@ struct GameLibraryModalView: View {
                     }
                 }
             }
+            .padding(.top, 10)
             .frame(maxHeight: .infinity)
             .animation(.easeInOut, value: gameLibraryManager.library.count)
             
@@ -354,6 +396,15 @@ struct GameLibraryModalView: View {
                 .padding()
                 .scaleEffect(pressed ? 1.2 : 1)
                 .animation(.spring().speed(4), value: pressed)
+                
+            }
+            .onReleased {
+                showFilePicker = true
+            }
+            .sheet(isPresented: $showFilePicker) {
+                FilePickerUIRepresentable(types: [.plainText], allowMultiple: false) { urls in
+                    print("selected files", urls)
+                }
             }
         }
         .frame(maxHeight: .infinity)
