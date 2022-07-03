@@ -226,7 +226,7 @@ struct StartSelectView: View {
 
 struct TitleView: View {
     var title: String
-    var onPressed: () -> Void
+    var onReleased: () -> Void
     
     var body: some View {
         PressableView { pressed in
@@ -238,7 +238,7 @@ struct TitleView: View {
                 .padding(.vertical, 5)
                 .scaleEffect(pressed ? 1.2 : 1)
                 .animation(.spring().speed(4), value: pressed)
-        }.onPressed(onPressed)
+        }.onReleased(onReleased)
     }
 }
 
@@ -291,7 +291,7 @@ struct GameLibraryItemView: View {
                     .animation(.easeInOut, value: confirmDelete)
             }
             .padding([.leading, .trailing])
-        }.onPressed {
+        }.onReleased {
             gameLibraryManager.insertCartridge(game)
         }
     }

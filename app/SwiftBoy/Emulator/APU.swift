@@ -400,7 +400,7 @@ public class APU {
         self.customWave = CustomWave(maxDuration: 1.0)
         self.noise = Noise(maxDuration: 0.25)
         self.master = Synthesizer(voices: [self.pulseA, self.pulseB, self.customWave, self.noise])
-        self.master.volume = 0.125
+        self.master.volume = 0 //0.125
         
         self.wireUpPulseA()
         self.wireUpPulseB()
