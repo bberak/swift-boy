@@ -298,89 +298,73 @@ struct GameLibraryItemView: View {
 }
 
 struct GameLibraryModalView: View {
-    @Binding var visible: Bool
-    @State private var paddingTop: CGFloat
-    @State private var maxDragOffset: CGFloat
-    @State private var dragOffset: CGFloat = 0
+    var landscape = false
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var gameLibraryManager: GameLibraryManager
     
-    init(visible: Binding<Bool>, paddingTop: CGFloat = 140, maxDragOffset: CGFloat = 300) {
-        self._visible = visible
-        self.paddingTop = paddingTop
-        self.maxDragOffset = maxDragOffset
-    }
-    
     var body: some View {
-        ZStack(alignment: .bottom) {
-            if visible {
-                Color.black
-                    .opacity(0.3)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        visible = false
-                    }
-                
-                listView
-                    .transition(.move(edge: .bottom))
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-        .animation(.easeInOut, value: visible)
-    }
-    
-    var listView: some View {
         VStack {
-            VStack {
-                DraggableView($dragOffset) { _, isDragging in
-                    ZStack {
-                        Capsule()
-                            .frame(width: 40, height: 6)
-                            .foregroundColor(isDragging ? .cyan : .black)
+            if landscape {
+                VStack {
+                    PressableView { pressed in
+                        Image(systemName: "xmark")
+                            .font(Font.body.weight(.bold))
+                            .foregroundColor(pressed ? .white : .secondary)
+                            .imageScale(.small)
+                            .background( Circle()
+                                .frame(width: 30, height: 30)
+                                .foregroundColor(pressed ? .cyan : Color(.secondarySystemFill)))
+                            .frame(width: 44, height: 44)
+                            .scaleEffect(pressed ? 1.2 : 1)
+                            .animation(.spring().speed(4), value: pressed)
                     }
-                    .frame(height: 40)
-                    .frame(maxWidth: .infinity)
-                    .background(Color.white.opacity(0.00001))
-                }.onReleased { _ in
-                    if dragOffset > maxDragOffset {
-                        visible = false
-                    }
-                }
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 20) {
-                        ForEach(gameLibraryManager.library) { game in
-                            GameLibraryItemView(game: game)
-                        }
+                    .onReleased {
+                        dismiss()
                     }
                 }
-                .frame(maxHeight: .infinity)
-                .animation(.easeInOut, value: gameLibraryManager.library.count)
-                
-                PressableView { pressed in
-                    Group {
-                        Text("Import Game")
-                            .fontWeight(.bold)
-                            .textCase(.uppercase)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 40)
-                            .background(RoundedRectangle(cornerRadius: 10).fill(pressed ? .cyan : .black))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Capsule()
+                    .fill(.secondary)
+                    .opacity(0.5)
+                    .frame(width: 35, height: 5)
+                    .padding(6)
+            }
+            
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 20) {
+                    ForEach(gameLibraryManager.library) { game in
+                        GameLibraryItemView(game: game)
                     }
-                    .padding()
-                    .scaleEffect(pressed ? 1.2 : 1)
-                    .animation(.spring().speed(4), value: pressed)
                 }
             }
             .frame(maxHeight: .infinity)
-            .frame(maxWidth: .infinity)
-            .background(.white)
+            .animation(.easeInOut, value: gameLibraryManager.library.count)
+            
+            PressableView { pressed in
+                Group {
+                    Text("Import Game")
+                        .fontWeight(.bold)
+                        .textCase(.uppercase)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 40)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(pressed ? .cyan : .black))
+                }
+                .padding()
+                .scaleEffect(pressed ? 1.2 : 1)
+                .animation(.spring().speed(4), value: pressed)
+            }
         }
-        .padding(.top, paddingTop + dragOffset.clamp(min: 0, max: .infinity))
+        .frame(maxHeight: .infinity)
+        .frame(maxWidth: .infinity)
+        .background(.white)
     }
 }
 
 struct GameBoyView: View {
     private var lcd: LCDBitmapView
-    @State private var showGames: Bool = false
+    @State private var showGameLibrary: Bool = false
     @EnvironmentObject private var gameLibraryManager: GameLibraryManager
     
     init(lcd: LCDBitmapView) {
@@ -395,7 +379,10 @@ struct GameBoyView: View {
                         DPadView()
                         VStack {
                             TitleView(title: gameLibraryManager.inserted.title) {
-                                showGames = true
+                                showGameLibrary = true
+                            }
+                            .sheet(isPresented: $showGameLibrary) {
+                                GameLibraryModalView(landscape: true)
                             }
                             lcd
                         }
@@ -406,11 +393,13 @@ struct GameBoyView: View {
                             StartSelectView()
                         }
                     }
-                    GameLibraryModalView(visible: $showGames, paddingTop: 80, maxDragOffset: geometry.size.height - 80 * 2)
                 } else {
                     VStack{
                         TitleView(title: gameLibraryManager.inserted.title) {
-                            showGames = true
+                            showGameLibrary = true
+                        }
+                        .sheet(isPresented: $showGameLibrary) {
+                            GameLibraryModalView()
                         }
                         lcd.frame(height: geometry.size.height * 0.5)
                         VStack{
@@ -424,11 +413,9 @@ struct GameBoyView: View {
                         .padding()
                         .frame(height: geometry.size.height * 0.5)
                     }
-                    GameLibraryModalView(visible: $showGames)
                 }
             }
             .background(.black)
-            
         }
         .frame(width: .infinity, height: .infinity)
     }
