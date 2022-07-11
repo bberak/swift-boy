@@ -275,8 +275,7 @@ struct TitleView: View {
     
     var body: some View {
         PressableView { pressed in
-            Text("\(title)  →")
-                .font(.caption)
+            Text(title)
                 .fontWeight(.bold)
                 .textCase(.uppercase)
                 .foregroundColor(.white)
