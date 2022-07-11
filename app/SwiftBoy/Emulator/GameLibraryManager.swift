@@ -17,10 +17,13 @@ class GameLibraryManager: ObservableObject {
     }
     
     func deleteCartridge(_ discarded: Cartridge) {
-        let discardedIndex = library.firstIndex(where: { $0 === discarded})!
-        let nextIndex = discardedIndex == library.count - 1 ? discardedIndex - 1 : discardedIndex + 1
-        let next = library[nextIndex]
-        insertCartridge(next)
+        if discarded === inserted {
+            let discardedIndex = library.firstIndex(where: { $0 === discarded})!
+            let nextIndex = discardedIndex == library.count - 1 ? discardedIndex - 1 : discardedIndex + 1
+            let next = library[nextIndex]
+            insertCartridge(next)
+        }
+        
         library = library.filter { $0 !== discarded }
         try? FileSystem.removeItem(at: discarded.path)
         
@@ -28,6 +31,10 @@ class GameLibraryManager: ObservableObject {
     }
     
     func insertCartridge(_ next: Cartridge) {
+        if next === inserted {
+            return
+        }
+        
         // TODO: Save the previous cartridge's RAM
         
         self.inserted = next

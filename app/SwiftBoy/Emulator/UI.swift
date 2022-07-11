@@ -279,10 +279,9 @@ struct TitleView: View {
                 .font(.caption)
                 .fontWeight(.bold)
                 .textCase(.uppercase)
-                .foregroundColor(pressed ? .cyan : .white)
+                .foregroundColor(.white)
                 .padding(.vertical, 5)
-                .scaleEffect(pressed ? 1.2 : 1)
-                .animation(.spring().speed(4), value: pressed)
+                .background(Rectangle().fill(pressed ? .cyan : .white.opacity(0)))
         }.onReleased(onReleased)
     }
 }
@@ -291,6 +290,7 @@ struct GameLibraryItemView: View {
     var game: Cartridge
     @State private var confirmDelete = false
     @EnvironmentObject private var gameLibraryManager: GameLibraryManager
+    @Environment(\.dismiss) private var dismissLibraryView
     
     private func delay(numSeconds: Double, cb: @escaping () -> Void) {
         DispatchQueue.main.asyncAfter(deadline: .now() + numSeconds) {
@@ -301,15 +301,15 @@ struct GameLibraryItemView: View {
     var body: some View {
         PressableView { pressed in
             HStack (alignment: .top) {
+                let highlight = gameLibraryManager.inserted === game || pressed
                 VStack {
                     Text(game.title)
-                        .font(.title)
+                        .font(.title2)
                         .fontWeight(.bold)
                         .textCase(.uppercase)
                         .lineLimit(1)
-                        .foregroundColor(gameLibraryManager.inserted === game || pressed ? .cyan : .black)
-                        .scaleEffect(pressed ? 1.2 : 1)
-                        .animation(.spring().speed(4), value: pressed)
+                        .foregroundColor(highlight ? .white : .black)
+                        .background(Rectangle().fill(highlight ? .cyan : .white.opacity(0)))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.trailing, 20)
                     
@@ -339,6 +339,7 @@ struct GameLibraryItemView: View {
             .padding([.leading, .trailing])
         }.onReleased {
             gameLibraryManager.insertCartridge(game)
+            dismissLibraryView()
         }
     }
 }
@@ -346,32 +347,11 @@ struct GameLibraryItemView: View {
 struct GameLibraryModalView: View {
     var landscape = false
     @State private var showFilePicker = false
-    @Environment(\.dismiss) private var dismissLibraryView
     @EnvironmentObject private var gameLibraryManager: GameLibraryManager
+    @Environment(\.dismiss) private var dismissLibraryView
     
     var body: some View {
         VStack {
-            if landscape {
-                VStack {
-                    PressableView { pressed in
-                        Image(systemName: "xmark")
-                            .font(Font.body.weight(.bold))
-                            .foregroundColor(.white)
-                            .imageScale(.small)
-                            .background( Circle()
-                                .frame(width: 30, height: 30)
-                                .foregroundColor(pressed ? .cyan : .black))
-                            .frame(width: 44, height: 44)
-                            .scaleEffect(pressed ? 1.2 : 1)
-                            .animation(.spring().speed(4), value: pressed)
-                    }
-                    .onReleased {
-                        dismissLibraryView()
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 20) {
                     ForEach(gameLibraryManager.library) { game in
@@ -379,12 +359,12 @@ struct GameLibraryModalView: View {
                     }
                 }
             }
-            .padding(.top, 10)
+            .padding(.top, 20)
             .frame(maxHeight: .infinity)
             .animation(.easeInOut, value: gameLibraryManager.library.count)
             
-            PressableView { pressed in
-                Group {
+            HStack (spacing: 10) {
+                PressableView { pressed in
                     Text("Import Game")
                         .fontWeight(.bold)
                         .textCase(.uppercase)
@@ -393,19 +373,31 @@ struct GameLibraryModalView: View {
                         .frame(height: 40)
                         .background(RoundedRectangle(cornerRadius: 10).fill(pressed ? .cyan : .black))
                 }
-                .padding()
-                .scaleEffect(pressed ? 1.2 : 1)
-                .animation(.spring().speed(4), value: pressed)
+                .onReleased {
+                    showFilePicker = true
+                }
+                .sheet(isPresented: $showFilePicker) {
+                    FilePickerUIRepresentable(types: [.plainText], allowMultiple: false) { urls in
+                        print("selected files", urls)
+                    }
+                }
                 
-            }
-            .onReleased {
-                showFilePicker = true
-            }
-            .sheet(isPresented: $showFilePicker) {
-                FilePickerUIRepresentable(types: [.plainText], allowMultiple: false) { urls in
-                    print("selected files", urls)
+                if landscape {
+                    PressableView { pressed in
+                        Text("Close")
+                            .fontWeight(.bold)
+                            .textCase(.uppercase)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: 200)
+                            .frame(height: 40)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(pressed ? .cyan : .black))
+                    }
+                    .onReleased {
+                        dismissLibraryView()
+                    }
                 }
             }
+            .padding()
         }
         .frame(maxHeight: .infinity)
         .frame(maxWidth: .infinity)
