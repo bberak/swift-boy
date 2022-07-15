@@ -297,49 +297,51 @@ struct GameLibraryItemView: View {
         }
     }
     
+    func shouldHighlight(_ pressed: Bool) -> Bool {
+        return gameLibraryManager.inserted === game || pressed
+    }
+    
     var body: some View {
-        PressableView { pressed in
-            HStack (alignment: .top) {
-                let highlight = gameLibraryManager.inserted === game || pressed
-                VStack {
+        HStack (alignment: .top) {
+            VStack {
+                PressableView { pressed in
                     Text(game.title)
                         .font(.title2)
                         .fontWeight(.bold)
                         .textCase(.uppercase)
                         .lineLimit(1)
-                        .foregroundColor(highlight ? .white : .black)
-                        .background(Rectangle().fill(highlight ? .cyan : .white.opacity(0)))
+                        .foregroundColor(shouldHighlight(pressed) ? .white : .black)
+                        .background(Rectangle().fill(shouldHighlight(pressed) ? .cyan : .white.opacity(0)))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.trailing, 20)
-                    
-                    Text(game.type == .unsupported ? "Not Supported ❌" : "Supported")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .textCase(.uppercase)
-                        .foregroundColor(.black.opacity(0.4))
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                }.onReleased {
+                    gameLibraryManager.insertCartridge(game)
+                    dismissLibraryView()
                 }
-                Button(role: .none, action: {
-                    if confirmDelete {
-                        gameLibraryManager.deleteCartridge(game)
-                    } else {
-                        confirmDelete = true
-                        delay(numSeconds: 5) {
-                            confirmDelete = false
-                        }
-                    }
-                }) {
-                    Label(confirmDelete ? "Confirm" : "", systemImage: "trash")
-                        .foregroundColor(confirmDelete ? .red : .black.opacity(0.4))
-                }
-                .padding(.top, 5)
-                .animation(.easeInOut, value: confirmDelete)
+                Text(game.type == .unsupported ? "Not Supported ❌" : "Supported")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .textCase(.uppercase)
+                    .foregroundColor(.black.opacity(0.4))
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding([.leading, .trailing])
-        }.onReleased {
-            gameLibraryManager.insertCartridge(game)
-            dismissLibraryView()
+            Button(role: .none, action: {
+                if confirmDelete {
+                    gameLibraryManager.deleteCartridge(game)
+                } else {
+                    confirmDelete = true
+                    delay(numSeconds: 5) {
+                        confirmDelete = false
+                    }
+                }
+            }) {
+                Label(confirmDelete ? "Confirm" : "", systemImage: "trash")
+                    .foregroundColor(confirmDelete ? .red : .black.opacity(0.4))
+            }
+            .padding(.top, 5)
+            .animation(.easeInOut, value: confirmDelete)
         }
+        .padding([.leading, .trailing])
     }
 }
 
@@ -416,49 +418,46 @@ struct GameBoyView: View {
     var body: some View {
         ZStack {
             GeometryReader { geometry in
-                if geometry.size.width > geometry.size.height {
-                    HStack {
-                        DPadView()
-                        VStack {
+                Group {
+                    if geometry.size.width > geometry.size.height {
+                        HStack {
+                            DPadView()
+                            lcd
+                            VStack {
+                                Spacer()
+                                ABView()
+                                Spacer()
+                                StartSelectView()
+                            }
+                        }
+                    } else {
+                        VStack{
                             TitleView(title: gameLibraryManager.inserted.title) {
                                 showGameLibrary = true
                             }
-                            .sheet(isPresented: $showGameLibrary) {
-                                GameLibraryModalView(landscape: true)
+                            lcd.frame(height: geometry.size.height * 0.5)
+                            VStack{
+                                HStack {
+                                    DPadView()
+                                    Spacer()
+                                    ABView()
+                                }
+                                StartSelectView().offset(x: 0, y: 30)
                             }
-                            lcd
-                        }
-                        VStack {
-                            Spacer()
-                            ABView()
-                            Spacer()
-                            StartSelectView()
+                            .padding()
+                            .frame(height: geometry.size.height * 0.5)
                         }
                     }
-                } else {
-                    VStack{
-                        TitleView(title: gameLibraryManager.inserted.title) {
-                            showGameLibrary = true
-                        }
-                        .sheet(isPresented: $showGameLibrary) {
-                            GameLibraryModalView()
-                        }
-                        lcd.frame(height: geometry.size.height * 0.5)
-                        VStack{
-                            HStack {
-                                DPadView()
-                                Spacer()
-                                ABView()
-                            }
-                            StartSelectView().offset(x: 0, y: 30)
-                        }
-                        .padding()
-                        .frame(height: geometry.size.height * 0.5)
-                    }
+                }
+                .sheet(isPresented: $showGameLibrary) {
+                    GameLibraryModalView(landscape: geometry.size.width > geometry.size.height)
                 }
             }
             .background(.black)
         }
         .frame(width: .infinity, height: .infinity)
+        .sheet(isPresented: $showGameLibrary) {
+            GameLibraryModalView()
+        }
     }
 }
