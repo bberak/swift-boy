@@ -49,5 +49,9 @@ class GameLibraryManager: ObservableObject {
         }
     }
     
+    func importURLs(urls: [URL]) {
+        library.append(contentsOf: urls.map { Cartridge(path: $0 )})
+    }
+    
     // TODO: Write some code to save current cartridge's RAM when the app is about to close
 }

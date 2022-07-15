@@ -347,7 +347,7 @@ struct GameLibraryModalView: View {
     var landscape = false
     @State private var showFilePicker = false
     @EnvironmentObject private var gameLibraryManager: GameLibraryManager
-    @Environment(\.dismiss) private var dismissLibraryView
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         VStack {
@@ -376,8 +376,8 @@ struct GameLibraryModalView: View {
                     showFilePicker = true
                 }
                 .sheet(isPresented: $showFilePicker) {
-                    FilePickerUIRepresentable(types: [.plainText], allowMultiple: false) { urls in
-                        print("selected files", urls)
+                    FilePickerUIRepresentable(types: [UTType("com.borisBerak.SwiftBoy.gb")!], allowMultiple: true) { urls in
+                        gameLibraryManager.importURLs(urls: urls)
                     }
                 }
                 
@@ -392,7 +392,7 @@ struct GameLibraryModalView: View {
                             .background(RoundedRectangle(cornerRadius: 10).fill(pressed ? .cyan : .black))
                     }
                     .onReleased {
-                        dismissLibraryView()
+                        dismiss()
                     }
                 }
             }
