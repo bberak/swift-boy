@@ -437,7 +437,7 @@ struct GameBoyView: View {
                                 showGameLibrary = true
                             }
                             lcd.frame(height: geometry.size.height * 0.5)
-                            VStack{
+                            VStack {
                                 HStack {
                                     DPadView()
                                     Spacer()
