@@ -353,7 +353,7 @@ struct GameLibraryModalView: View {
     
     var body: some View {
         VStack {
-            ScrollView(.vertical, showsIndicators: false) {
+            ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 20) {
                     ForEach(gameLibraryManager.library) { game in
                         GameLibraryItemView(game: game)
