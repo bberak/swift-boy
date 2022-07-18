@@ -381,6 +381,7 @@ struct GameLibraryModalView: View {
                     FilePickerUIRepresentable(types: [UTType("com.borisBerak.SwiftBoy.gb")!], allowMultiple: true) { urls in
                         gameLibraryManager.importURLs(urls: urls)
                     }
+                    .ignoresSafeArea()
                 }
                 
                 if landscape {
