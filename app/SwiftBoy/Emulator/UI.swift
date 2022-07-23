@@ -440,6 +440,7 @@ struct GameBoyView: View {
                                 DPadView()
                                 Spacer()
                             }
+                            .padding(.trailing, 20)
                             .frame(width: geometry.size.width * 0.2)
                             lcd
                             VStack {
