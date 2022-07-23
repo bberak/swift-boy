@@ -448,7 +448,6 @@ struct GameBoyView: View {
                                 Spacer()
                                 StartSelectView()
                             }
-                            .padding()
                             .frame(width: geometry.size.width * 0.2)
                         }
                     } else {
