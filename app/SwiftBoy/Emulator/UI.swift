@@ -206,7 +206,7 @@ struct GameButtonView<S>: View where S : Shape {
         VStack {
             PressableView { pressed in
                 shape
-                    .fill(pressed ? .cyan : .white)
+                    .fill(.white)
                     .frame(width: width, height: height)
                     .scaleEffect(pressed ? 1.2 : 1)
                     .animation(.spring().speed(4), value: pressed)
@@ -289,9 +289,9 @@ struct TitleView: View {
             Text(title)
                 .fontWeight(.bold)
                 .textCase(.uppercase)
-                .foregroundColor(.white)
+                .foregroundColor(pressed ? .black : .white)
                 .padding(.vertical, 5)
-                .background(Rectangle().fill(pressed ? .cyan : .white.opacity(0)))
+                .background(Rectangle().fill(pressed ? .white : .white.opacity(0)))
         }
         .onReleased(onReleased)
     }
@@ -323,7 +323,7 @@ struct GameLibraryItemView: View {
                         .textCase(.uppercase)
                         .lineLimit(1)
                         .foregroundColor(shouldHighlight(pressed) ? .white : .black)
-                        .background(Rectangle().fill(shouldHighlight(pressed) ? .cyan : .white.opacity(0)))
+                        .background(Rectangle().fill(shouldHighlight(pressed) ? .black : .black.opacity(0)))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.trailing, 20)
                 }
@@ -382,10 +382,14 @@ struct GameLibraryModalView: View {
                     Text("Import Game")
                         .fontWeight(.bold)
                         .textCase(.uppercase)
-                        .foregroundColor(.white)
+                        .foregroundColor(pressed ? .black : .white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 40)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(pressed ? .cyan : .black))
+                        .background(
+                            pressed ?
+                            AnyView(RoundedRectangle(cornerRadius: 10).stroke(.black, lineWidth: 4)) :
+                            AnyView(RoundedRectangle(cornerRadius: 10).fill(.black))
+                        )
                 }
                 .onReleased {
                     showFilePicker = true
@@ -402,10 +406,14 @@ struct GameLibraryModalView: View {
                         Text("Close")
                             .fontWeight(.bold)
                             .textCase(.uppercase)
-                            .foregroundColor(.white)
+                            .foregroundColor(pressed ? .black : .white)
                             .frame(maxWidth: 200)
                             .frame(height: 40)
-                            .background(RoundedRectangle(cornerRadius: 10).fill(pressed ? .cyan : .black))
+                            .background(
+                                pressed ?
+                                AnyView(RoundedRectangle(cornerRadius: 10).stroke(.black, lineWidth: 4)) :
+                                AnyView(RoundedRectangle(cornerRadius: 10).fill(.black))
+                            )
                     }
                     .onReleased {
                         dismiss()
