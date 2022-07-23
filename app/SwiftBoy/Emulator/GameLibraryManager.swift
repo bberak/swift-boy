@@ -7,8 +7,10 @@ class GameLibraryManager: ObservableObject {
     let clock: Clock
     
     init(_ clock: Clock) {
-        let roms = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: ".gb")
-        let carts = roms.map { Cartridge(path: URL(string: $0)!) }
+        let bundledRoms = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: ".gb")
+        let userRoms = FileSystem.listAbsolutePaths(inDirectory: FileSystem.getDocumentsDirectory(), suffix: ".gb")
+        let allRoms = bundledRoms + userRoms
+        let carts = allRoms.map { Cartridge(path: URL(string: $0)!) }
         
         self.library = carts.sorted(by: { x, y in x.title < y.title })
         self.inserted = carts.first!
@@ -50,7 +52,11 @@ class GameLibraryManager: ObservableObject {
     }
     
     func importURLs(urls: [URL]) {
-        library.append(contentsOf: urls.map { Cartridge(path: $0 )})
+        library.append(contentsOf: urls.map { src in
+            let dest = URL(string: "file://" + FileSystem.getDocumentsDirectory() + "/" + src.lastPathComponent)!
+            try! FileSystem.copyItem(at: src, to: dest)
+            return Cartridge(path: dest)
+        })
     }
     
     // TODO: Write some code to save current cartridge's RAM when the app is about to close

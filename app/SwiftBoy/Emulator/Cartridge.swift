@@ -120,7 +120,7 @@ public class Cartridge: MemoryAccessArray, Identifiable {
     }
     
     public init(path: URL) {
-        let rom = readPath(path: path)
+        let rom = FileSystem.readItem(at: path)
         
         self.type = MBCType(rawValue: rom[0x0147])
         self.path = path

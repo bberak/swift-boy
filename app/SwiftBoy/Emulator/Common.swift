@@ -3,19 +3,6 @@
 import Foundation
 import SwiftUI
 
-public func readPath(path: URL) -> Data {
-    do {
-        let handle = try FileHandle(forReadingFrom: path)
-        let bytes = handle.readDataToEndOfFile()
-        
-        return bytes
-    } catch {
-        print("Unexpected error: \(error).")
-    }
-    
-    return Data()
-}
-
 public extension Data {
     func extract(_ range: ClosedRange<Int>) -> [UInt8] {
         return range.map({ self[$0] })

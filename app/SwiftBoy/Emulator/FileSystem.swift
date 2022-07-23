@@ -1,14 +1,9 @@
 import Foundation
 
-enum GameDirectory: String {
-    case roms = "roms"
-    case saves = "saves"
-}
-
 struct FileSystem {
     static func write<T: Encodable>(
         _ object: T,
-        inDirectory directoryName: GameDirectory,
+        inDirectory directoryName: String,
         toDocumentNamed documentName: String,
         encodedUsing encoder: JSONEncoder = .init()
     ) throws {
@@ -21,7 +16,7 @@ struct FileSystem {
             create: false
         )
 
-        let nestedFolderURL = rootFolderURL.appendingPathComponent(directoryName.rawValue)
+        let nestedFolderURL = rootFolderURL.appendingPathComponent(directoryName)
         
         if !manager.fileExists(atPath: nestedFolderURL.relativePath) {
             try manager.createDirectory(
@@ -57,7 +52,33 @@ struct FileSystem {
         return listPaths(inDirectory: inDirectory, suffix: suffix).map { "\(inDirectory)/\($0)" }
     }
     
+    static func getDocumentsDirectory() -> String {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        return paths[0].path
+    }
+    
     static func removeItem(at: URL) throws {
         try FileManager.default.removeItem(atPath: at.path)
+    }
+    
+    static func readItem(at: URL) -> Data {
+        do {
+            let handle = try FileHandle(forReadingFrom: at)
+            let bytes = handle.readDataToEndOfFile()
+            
+            return bytes
+        } catch {
+            print("Unexpected error: \(error).")
+        }
+        
+        return Data()
+    }
+    
+    static func copyItem(at: URL, to: URL) throws {
+        try FileManager.default.copyItem(at: at, to: to)
+    }
+    
+    static func moveItem(at: URL, to: URL) throws {
+        try FileManager.default.moveItem(at: at, to: to)
     }
 }
