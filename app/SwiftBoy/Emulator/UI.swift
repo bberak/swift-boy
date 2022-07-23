@@ -219,7 +219,8 @@ struct GameButtonView<S>: View where S : Shape {
                     .font(.footnote)
                     .foregroundColor(.white)
             }
-        }.rotation3DEffect(Angle(degrees: -30), axis: (x: 0, y: 0, z: 1))
+        }
+        .rotation3DEffect(Angle(degrees: -30), axis: (x: 0, y: 0, z: 1))
     }
 }
 
@@ -228,22 +229,15 @@ struct DPadView: View {
     
     var body: some View {
         VStack {
-            HStack {
-                Spacer()
-                GameButtonView(shape: Circle(), onPressed: { buttons.up = true  }, onReleased: { buttons.up = false })
-                Spacer()
-            }.offset(x: 0, y: 10)
-            HStack {
+            GameButtonView(shape: Circle(), onPressed: { buttons.up = true  }, onReleased: { buttons.up = false })
+                .offset(x: 0, y: 10)
+            HStack(spacing: 40) {
                 GameButtonView(shape: Circle(), onPressed: { buttons.left = true }, onReleased: { buttons.left = false })
-                Spacer()
                 GameButtonView(shape: Circle(), onPressed: { buttons.right = true }, onReleased: { buttons.right = false })
             }
-            HStack {
-                Spacer()
-                GameButtonView(shape: Circle(), onPressed: { buttons.down = true }, onReleased: { buttons.down = false })
-                Spacer()
-            }.offset(x: 0, y: -10)
-        }.frame(width: 150)
+            GameButtonView(shape: Circle(), onPressed: { buttons.down = true }, onReleased: { buttons.down = false })
+                .offset(x: 0, y: -10)
+        }
     }
 }
 
@@ -252,7 +246,8 @@ struct ABView: View {
     
     var body: some View {
         HStack {
-            GameButtonView(shape: Circle(), label: "B", onPressed: { buttons.b = true }, onReleased: { buttons.b = false }).offset(x: 0, y: 30)
+            GameButtonView(shape: Circle(), label: "B", onPressed: { buttons.b = true }, onReleased: { buttons.b = false })
+                .offset(x: 0, y: 30)
             GameButtonView(shape: Circle(), label: "A", onPressed: { buttons.a = true }, onReleased: { buttons.a = false })
         }
     }
@@ -263,8 +258,24 @@ struct StartSelectView: View {
     
     var body: some View {
         HStack {
-            GameButtonView(shape: RoundedRectangle(cornerRadius: 5), label: "START", width: 45, height: 10, onPressed: { buttons.start = true }, onReleased: { buttons.start = false }).padding(EdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5))
-            GameButtonView(shape: RoundedRectangle(cornerRadius: 5), label: "SELECT", width: 45, height: 10, onPressed: { buttons.select = true }, onReleased: { buttons.select = false }).padding(EdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5))
+            GameButtonView(
+                shape: RoundedRectangle(cornerRadius: 5),
+                label: "START",
+                width: 45,
+                height: 10,
+                onPressed: { buttons.start = true },
+                onReleased: { buttons.start = false }
+            )
+            .padding(EdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5))
+            GameButtonView(
+                shape: RoundedRectangle(cornerRadius: 5),
+                label: "SELECT",
+                width: 45,
+                height: 10,
+                onPressed: { buttons.select = true },
+                onReleased: { buttons.select = false }
+            )
+            .padding(EdgeInsets(top: 0, leading: 5, bottom: 0, trailing: 5))
         }
     }
 }
@@ -281,7 +292,8 @@ struct TitleView: View {
                 .foregroundColor(.white)
                 .padding(.vertical, 5)
                 .background(Rectangle().fill(pressed ? .cyan : .white.opacity(0)))
-        }.onReleased(onReleased)
+        }
+        .onReleased(onReleased)
     }
 }
 
@@ -314,7 +326,8 @@ struct GameLibraryItemView: View {
                         .background(Rectangle().fill(shouldHighlight(pressed) ? .cyan : .white.opacity(0)))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.trailing, 20)
-                }.onReleased {
+                }
+                .onReleased {
                     gameLibraryManager.insertCartridge(game)
                     dismissLibraryView()
                 }
@@ -422,7 +435,12 @@ struct GameBoyView: View {
                 Group {
                     if geometry.size.width > geometry.size.height {
                         HStack {
-                            DPadView()
+                            VStack {
+                                Spacer()
+                                DPadView()
+                                Spacer()
+                            }
+                            .frame(width: geometry.size.width * 0.2)
                             lcd
                             VStack {
                                 Spacer()
@@ -430,23 +448,27 @@ struct GameBoyView: View {
                                 Spacer()
                                 StartSelectView()
                             }
+                            .padding()
+                            .frame(width: geometry.size.width * 0.2)
                         }
                     } else {
                         VStack{
                             TitleView(title: gameLibraryManager.inserted.title) {
                                 showGameLibrary = true
                             }
+                            .padding(.top, 20)
                             lcd.frame(height: geometry.size.height * 0.5)
                             VStack {
+                                Spacer()
                                 HStack {
                                     DPadView()
                                     Spacer()
                                     ABView()
                                 }
-                                StartSelectView().offset(x: 0, y: 30)
+                                Spacer()
+                                StartSelectView()
                             }
                             .padding()
-                            .frame(height: geometry.size.height * 0.5)
                         }
                     }
                 }
