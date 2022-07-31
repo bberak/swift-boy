@@ -9,27 +9,11 @@
 /* Begin PBXBuildFile section */
 		A11768D127E55F2600DC4751 /* AudioKit in Frameworks */ = {isa = PBXBuildFile; productRef = A11768D027E55F2600DC4751 /* AudioKit */; };
 		A11768D427E55F4100DC4751 /* SoundpipeAudioKit in Frameworks */ = {isa = PBXBuildFile; productRef = A11768D327E55F4100DC4751 /* SoundpipeAudioKit */; };
-		A11A5E2D277EB2DD00D12966 /* super-mario-land.gb in Resources */ = {isa = PBXBuildFile; fileRef = A11A5E2C277EB2DD00D12966 /* super-mario-land.gb */; };
 		A12B15FA2774851C00418291 /* Joypad.swift in Sources */ = {isa = PBXBuildFile; fileRef = A12B15F92774851C00418291 /* Joypad.swift */; };
 		A13BADBA284613F7001B9FF6 /* FileSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13BADB9284613F7001B9FF6 /* FileSystem.swift */; };
 		A13BADBC284636EE001B9FF6 /* UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13BADBB284636EE001B9FF6 /* UI.swift */; };
-		A1514E37277EADA0005A50B5 /* deadeus.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1514E36277EABD8005A50B5 /* deadeus.gb */; };
 		A1779F0728669826005E6C8C /* GameLibraryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1779F0628669826005E6C8C /* GameLibraryManager.swift */; };
-		A1785E6F283BA1D3006CD7AC /* instr_timing.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1785E69283BA1D3006CD7AC /* instr_timing.gb */; };
 		A1785E70283BA1D3006CD7AC /* cpu_instrs.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1785E6A283BA1D3006CD7AC /* cpu_instrs.gb */; };
-		A1785E71283BA1D3006CD7AC /* interrupt_time.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1785E6B283BA1D3006CD7AC /* interrupt_time.gb */; };
-		A1785E72283BA1D3006CD7AC /* mem_timing-2.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1785E6C283BA1D3006CD7AC /* mem_timing-2.gb */; };
-		A1785E73283BA1D3006CD7AC /* mem_timing.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1785E6D283BA1D3006CD7AC /* mem_timing.gb */; };
-		A1785E74283BA1D3006CD7AC /* dmg_sound.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1785E6E283BA1D3006CD7AC /* dmg_sound.gb */; };
-		A18B2B7226EDD32F00A148F5 /* 07-jr,jp,call,ret,rst.gb in Resources */ = {isa = PBXBuildFile; fileRef = A18B2B6926EDD32E00A148F5 /* 07-jr,jp,call,ret,rst.gb */; };
-		A18B2B7326EDD32F00A148F5 /* 02-interrupts.gb in Resources */ = {isa = PBXBuildFile; fileRef = A18B2B6A26EDD32E00A148F5 /* 02-interrupts.gb */; };
-		A18B2B7426EDD32F00A148F5 /* 05-op rp.gb in Resources */ = {isa = PBXBuildFile; fileRef = A18B2B6B26EDD32F00A148F5 /* 05-op rp.gb */; };
-		A18B2B7526EDD32F00A148F5 /* 01-special.gb in Resources */ = {isa = PBXBuildFile; fileRef = A18B2B6C26EDD32F00A148F5 /* 01-special.gb */; };
-		A18B2B7626EDD32F00A148F5 /* 11-op a,(hl).gb in Resources */ = {isa = PBXBuildFile; fileRef = A18B2B6D26EDD32F00A148F5 /* 11-op a,(hl).gb */; };
-		A18B2B7726EDD32F00A148F5 /* 09-op r,r.gb in Resources */ = {isa = PBXBuildFile; fileRef = A18B2B6E26EDD32F00A148F5 /* 09-op r,r.gb */; };
-		A18B2B7826EDD32F00A148F5 /* 04-op r,imm.gb in Resources */ = {isa = PBXBuildFile; fileRef = A18B2B6F26EDD32F00A148F5 /* 04-op r,imm.gb */; };
-		A18B2B7926EDD32F00A148F5 /* 06-ld r,r.gb in Resources */ = {isa = PBXBuildFile; fileRef = A18B2B7026EDD32F00A148F5 /* 06-ld r,r.gb */; };
-		A18B2B7A26EDD32F00A148F5 /* 08-misc instrs.gb in Resources */ = {isa = PBXBuildFile; fileRef = A18B2B7126EDD32F00A148F5 /* 08-misc instrs.gb */; };
 		A1B4011226EB5937002F4512 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4011126EB5937002F4512 /* AppDelegate.swift */; };
 		A1B4011426EB5937002F4512 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4011326EB5937002F4512 /* SceneDelegate.swift */; };
 		A1B4011626EB5937002F4512 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4011526EB5937002F4512 /* ViewController.swift */; };
@@ -43,35 +27,16 @@
 		A1B4014C26EB5DB3002F4512 /* MMU.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4014426EB5DB3002F4512 /* MMU.swift */; };
 		A1B4014D26EB5DB3002F4512 /* Common.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4014526EB5DB3002F4512 /* Common.swift */; };
 		A1B4014E26EB5DB3002F4512 /* CPU.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4014626EB5DB3002F4512 /* CPU.swift */; };
-		A1B4015226EB5DCE002F4512 /* tetris.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1B4015026EB5DCE002F4512 /* tetris.gb */; };
 		A1DCD2D52709696B001CF043 /* Timer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1DCD2D42709696B001CF043 /* Timer.swift */; };
 		A1F3754D2789881C00EDEC23 /* APU.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F3754C2789881C00EDEC23 /* APU.swift */; };
-		A1FB19DA26EC9657004CFE19 /* 10-bit ops.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1FB19D926EC9657004CFE19 /* 10-bit ops.gb */; };
-		A1FB19DC26ECA12A004CFE19 /* 03-op sp,hl.gb in Resources */ = {isa = PBXBuildFile; fileRef = A1FB19DB26ECA12A004CFE19 /* 03-op sp,hl.gb */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A11A5E2C277EB2DD00D12966 /* super-mario-land.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "super-mario-land.gb"; sourceTree = "<group>"; };
 		A12B15F92774851C00418291 /* Joypad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Joypad.swift; sourceTree = "<group>"; };
 		A13BADB9284613F7001B9FF6 /* FileSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSystem.swift; sourceTree = "<group>"; };
 		A13BADBB284636EE001B9FF6 /* UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UI.swift; sourceTree = "<group>"; };
-		A1514E36277EABD8005A50B5 /* deadeus.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = deadeus.gb; sourceTree = "<group>"; };
 		A1779F0628669826005E6C8C /* GameLibraryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameLibraryManager.swift; sourceTree = "<group>"; };
-		A1785E69283BA1D3006CD7AC /* instr_timing.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = instr_timing.gb; sourceTree = "<group>"; };
 		A1785E6A283BA1D3006CD7AC /* cpu_instrs.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = cpu_instrs.gb; sourceTree = "<group>"; };
-		A1785E6B283BA1D3006CD7AC /* interrupt_time.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = interrupt_time.gb; sourceTree = "<group>"; };
-		A1785E6C283BA1D3006CD7AC /* mem_timing-2.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "mem_timing-2.gb"; sourceTree = "<group>"; };
-		A1785E6D283BA1D3006CD7AC /* mem_timing.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = mem_timing.gb; sourceTree = "<group>"; };
-		A1785E6E283BA1D3006CD7AC /* dmg_sound.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = dmg_sound.gb; sourceTree = "<group>"; };
-		A18B2B6926EDD32E00A148F5 /* 07-jr,jp,call,ret,rst.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "07-jr,jp,call,ret,rst.gb"; sourceTree = "<group>"; };
-		A18B2B6A26EDD32E00A148F5 /* 02-interrupts.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "02-interrupts.gb"; sourceTree = "<group>"; };
-		A18B2B6B26EDD32F00A148F5 /* 05-op rp.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "05-op rp.gb"; sourceTree = "<group>"; };
-		A18B2B6C26EDD32F00A148F5 /* 01-special.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "01-special.gb"; sourceTree = "<group>"; };
-		A18B2B6D26EDD32F00A148F5 /* 11-op a,(hl).gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "11-op a,(hl).gb"; sourceTree = "<group>"; };
-		A18B2B6E26EDD32F00A148F5 /* 09-op r,r.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "09-op r,r.gb"; sourceTree = "<group>"; };
-		A18B2B6F26EDD32F00A148F5 /* 04-op r,imm.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "04-op r,imm.gb"; sourceTree = "<group>"; };
-		A18B2B7026EDD32F00A148F5 /* 06-ld r,r.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "06-ld r,r.gb"; sourceTree = "<group>"; };
-		A18B2B7126EDD32F00A148F5 /* 08-misc instrs.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "08-misc instrs.gb"; sourceTree = "<group>"; };
 		A1B4010E26EB5937002F4512 /* SwiftBoy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftBoy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1B4011126EB5937002F4512 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A1B4011326EB5937002F4512 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -87,11 +52,8 @@
 		A1B4014426EB5DB3002F4512 /* MMU.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MMU.swift; sourceTree = "<group>"; };
 		A1B4014526EB5DB3002F4512 /* Common.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Common.swift; sourceTree = "<group>"; };
 		A1B4014626EB5DB3002F4512 /* CPU.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CPU.swift; sourceTree = "<group>"; };
-		A1B4015026EB5DCE002F4512 /* tetris.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = tetris.gb; sourceTree = "<group>"; };
 		A1DCD2D42709696B001CF043 /* Timer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Timer.swift; sourceTree = "<group>"; };
 		A1F3754C2789881C00EDEC23 /* APU.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APU.swift; sourceTree = "<group>"; };
-		A1FB19D926EC9657004CFE19 /* 10-bit ops.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "10-bit ops.gb"; sourceTree = "<group>"; };
-		A1FB19DB26ECA12A004CFE19 /* 03-op sp,hl.gb */ = {isa = PBXFileReference; lastKnownFileType = file; path = "03-op sp,hl.gb"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -163,25 +125,6 @@
 			isa = PBXGroup;
 			children = (
 				A1785E6A283BA1D3006CD7AC /* cpu_instrs.gb */,
-				A1785E6E283BA1D3006CD7AC /* dmg_sound.gb */,
-				A1785E69283BA1D3006CD7AC /* instr_timing.gb */,
-				A1785E6B283BA1D3006CD7AC /* interrupt_time.gb */,
-				A1785E6C283BA1D3006CD7AC /* mem_timing-2.gb */,
-				A1785E6D283BA1D3006CD7AC /* mem_timing.gb */,
-				A18B2B6C26EDD32F00A148F5 /* 01-special.gb */,
-				A18B2B6A26EDD32E00A148F5 /* 02-interrupts.gb */,
-				A1FB19DB26ECA12A004CFE19 /* 03-op sp,hl.gb */,
-				A18B2B6F26EDD32F00A148F5 /* 04-op r,imm.gb */,
-				A18B2B6B26EDD32F00A148F5 /* 05-op rp.gb */,
-				A18B2B7026EDD32F00A148F5 /* 06-ld r,r.gb */,
-				A18B2B6926EDD32E00A148F5 /* 07-jr,jp,call,ret,rst.gb */,
-				A18B2B7126EDD32F00A148F5 /* 08-misc instrs.gb */,
-				A18B2B6E26EDD32F00A148F5 /* 09-op r,r.gb */,
-				A1FB19D926EC9657004CFE19 /* 10-bit ops.gb */,
-				A18B2B6D26EDD32F00A148F5 /* 11-op a,(hl).gb */,
-				A1514E36277EABD8005A50B5 /* deadeus.gb */,
-				A11A5E2C277EB2DD00D12966 /* super-mario-land.gb */,
-				A1B4015026EB5DCE002F4512 /* tetris.gb */,
 			);
 			path = ROMs;
 			sourceTree = "<group>";
@@ -253,28 +196,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1B4011E26EB593A002F4512 /* LaunchScreen.storyboard in Resources */,
-				A18B2B7226EDD32F00A148F5 /* 07-jr,jp,call,ret,rst.gb in Resources */,
-				A1514E37277EADA0005A50B5 /* deadeus.gb in Resources */,
-				A18B2B7526EDD32F00A148F5 /* 01-special.gb in Resources */,
-				A1FB19DA26EC9657004CFE19 /* 10-bit ops.gb in Resources */,
-				A1785E72283BA1D3006CD7AC /* mem_timing-2.gb in Resources */,
-				A1785E74283BA1D3006CD7AC /* dmg_sound.gb in Resources */,
-				A1785E6F283BA1D3006CD7AC /* instr_timing.gb in Resources */,
 				A1B4011B26EB593A002F4512 /* Assets.xcassets in Resources */,
-				A11A5E2D277EB2DD00D12966 /* super-mario-land.gb in Resources */,
 				A1785E70283BA1D3006CD7AC /* cpu_instrs.gb in Resources */,
-				A18B2B7326EDD32F00A148F5 /* 02-interrupts.gb in Resources */,
-				A18B2B7426EDD32F00A148F5 /* 05-op rp.gb in Resources */,
-				A18B2B7926EDD32F00A148F5 /* 06-ld r,r.gb in Resources */,
 				A1B4011926EB5937002F4512 /* Main.storyboard in Resources */,
-				A1B4015226EB5DCE002F4512 /* tetris.gb in Resources */,
-				A18B2B7826EDD32F00A148F5 /* 04-op r,imm.gb in Resources */,
-				A18B2B7A26EDD32F00A148F5 /* 08-misc instrs.gb in Resources */,
-				A18B2B7726EDD32F00A148F5 /* 09-op r,r.gb in Resources */,
-				A1785E73283BA1D3006CD7AC /* mem_timing.gb in Resources */,
-				A18B2B7626EDD32F00A148F5 /* 11-op a,(hl).gb in Resources */,
-				A1FB19DC26ECA12A004CFE19 /* 03-op sp,hl.gb in Resources */,
-				A1785E71283BA1D3006CD7AC /* interrupt_time.gb in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
