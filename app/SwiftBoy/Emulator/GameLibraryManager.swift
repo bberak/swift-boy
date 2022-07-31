@@ -7,15 +7,25 @@ class GameLibraryManager: ObservableObject {
     let clock: Clock
     
     init(_ clock: Clock) {
-        let bundledRoms = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: ".gb")
-        let userRoms = FileSystem.listAbsolutePaths(inDirectory: FileSystem.getDocumentsDirectory(), suffix: ".gb")
-        let allRoms = bundledRoms + userRoms
-        let carts = allRoms.map { Cartridge(path: URL(string: $0)!) }
+        let bundledGames = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: ".gb")
+        let importedGames = FileSystem.listAbsolutePaths(inDirectory: FileSystem.getDocumentsDirectory(), suffix: ".gb")
+        let bundledCarts = bundledGames.map { rom -> Cartridge in
+            let romPath = URL(string: rom)!
+            let ramPath = URL(string:
+                (FileSystem.getDocumentsDirectory() + "/" + romPath.lastPathComponent + ".ram")
+                    .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!
+            )!
+            return Cartridge(romPath: romPath, ramPath: ramPath)
+        }
+        let importedCarts = importedGames.map { rom -> Cartridge in
+            return Cartridge(romPath: URL(string: rom)!, ramPath: URL(string: rom + ".ram")!)
+        }
+        let allCarts = bundledCarts + importedCarts
         
-        self.library = carts.sorted(by: { x, y in x.title < y.title })
-        self.inserted = carts.first!
+        self.library = allCarts.sorted(by: { a, b in a.title < b.title })
+        self.inserted = allCarts.first!
         self.clock = clock
-        self.insertCartridge(inserted)
+        self.insertCartridge(self.inserted)
     }
     
     func deleteCartridge(_ discarded: Cartridge) {
@@ -27,16 +37,12 @@ class GameLibraryManager: ObservableObject {
         }
         
         library = library.filter { $0 !== discarded }
-        try? FileSystem.removeItem(at: discarded.path)
         
-        // TODO: Delete the discarded cartridge's RAM
+        try? FileSystem.removeItem(at: discarded.romPath)
+        try? FileSystem.removeItem(at: discarded.ramPath)
     }
     
     func insertCartridge(_ next: Cartridge) {
-        if next === inserted {
-            return
-        }
-        
         // TODO: Save the previous cartridge's RAM
         
         self.inserted = next
@@ -53,9 +59,13 @@ class GameLibraryManager: ObservableObject {
     
     func importURLs(urls: [URL]) {
         library.append(contentsOf: urls.map { src in
-            let dest = URL(string: "file://" + FileSystem.getDocumentsDirectory() + "/" + src.lastPathComponent)!
-            try! FileSystem.copyItem(at: src, to: dest)
-            return Cartridge(path: dest)
+            let romPath = URL(string:
+                // Identical schemes are required for move operation
+                src.scheme! + "://" + (FileSystem.getDocumentsDirectory() + "/" + src.lastPathComponent).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!
+            )!
+            let ramPath = romPath.appendingPathExtension("ram")
+            try! FileSystem.moveItem(at: src, to: romPath)
+            return Cartridge(romPath: romPath, ramPath: ramPath)
         })
     }
     

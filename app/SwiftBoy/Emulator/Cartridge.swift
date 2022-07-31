@@ -110,20 +110,22 @@ func mbcUnsupported(_ rom: Data) -> MemoryAccessArray {
 
 public class Cartridge: MemoryAccessArray, Identifiable {
     let type: MBCType
-    let path: URL
+    let romPath: URL
+    let ramPath: URL
     
     public var title: String {
         get {
             let bytes = (0x0134...0x0143).map { try! self.readByte(address: $0) }
-            return String(bytes: bytes, encoding: .utf8) ?? path.lastPathComponent.replacingOccurrences(of: ".gb", with: "")
+            return String(bytes: bytes, encoding: .utf8) ?? romPath.lastPathComponent.replacingOccurrences(of: ".gb", with: "")
         }
     }
     
-    public init(path: URL) {
-        let rom = FileSystem.readItem(at: path)
+    public init(romPath: URL, ramPath: URL) {
+        let rom = FileSystem.readItem(at: romPath)
         
         self.type = MBCType(rawValue: rom[0x0147])
-        self.path = path
+        self.romPath = romPath
+        self.ramPath = ramPath
         
         super.init()
         
