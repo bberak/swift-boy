@@ -2,6 +2,8 @@ import UIKit
 import SwiftUI
 
 class ViewController: UIViewController {
+    var onClose: (() -> Void)?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -27,6 +29,10 @@ class ViewController: UIViewController {
         ui.view.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive =  true
         ui.view.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive =  true
         ui.view.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive =  true
+        
+        self.onClose = {
+            glm.inserted.saveRam()
+        }
     }
 }
 

@@ -1,42 +1,8 @@
+// TODO: Reading and writing files needs refactoring.. Paths need to be normalized using some sort of sanitization logic.
+
 import Foundation
 
 struct FileSystem {
-    static func write<T: Encodable>(
-        _ object: T,
-        inDirectory directoryName: String,
-        toDocumentNamed documentName: String,
-        encodedUsing encoder: JSONEncoder = .init()
-    ) throws {
-        let manager = FileManager.default
-        
-        let rootFolderURL = try manager.url(
-            for: .documentDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: false
-        )
-
-        let nestedFolderURL = rootFolderURL.appendingPathComponent(directoryName)
-        
-        if !manager.fileExists(atPath: nestedFolderURL.relativePath) {
-            try manager.createDirectory(
-                at: nestedFolderURL,
-                withIntermediateDirectories: false,
-                attributes: nil
-            )
-        }
-
-        try manager.createDirectory(
-            at: nestedFolderURL,
-            withIntermediateDirectories: false,
-            attributes: nil
-        )
-
-        let fileURL = nestedFolderURL.appendingPathComponent(documentName)
-        let data = try encoder.encode(object)
-        try data.write(to: fileURL)
-    }
-    
     static func listPaths(inDirectory: String, suffix: String = "") -> [String] {
         if let files = try? FileManager.default.contentsOfDirectory(atPath: inDirectory) {
             return files
@@ -66,12 +32,32 @@ struct FileSystem {
             let handle = try FileHandle(forReadingFrom: at)
             let bytes = handle.readDataToEndOfFile()
             
+            try handle.close()
+            
             return bytes
         } catch {
             print("Unexpected error: \(error).")
         }
         
         return Data()
+    }
+    
+    static func writeItem(at: URL, data: Data) {
+        do {
+            let manager = FileManager.default
+
+            if !manager.fileExists(atPath: at.absoluteString) {
+                manager.createFile(atPath: at.absoluteString, contents: nil, attributes: nil)
+            }
+            
+            let handle = try FileHandle(forWritingTo: at)
+
+            handle.write(data)
+
+            try handle.close()
+        } catch {
+            print("Unexpected error: \(error).")
+        }
     }
     
     static func copyItem(at: URL, to: URL) throws {

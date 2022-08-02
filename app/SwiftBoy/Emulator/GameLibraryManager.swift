@@ -43,11 +43,12 @@ class GameLibraryManager: ObservableObject {
     }
     
     func insertCartridge(_ next: Cartridge) {
-        // TODO: Save the previous cartridge's RAM
+        let previous = self.inserted
         
         self.inserted = next
         
         self.clock.sync { mmu, cpu, ppu, apu, timer in
+            previous.saveRam()
             mmu.insertCartridge(next)
             mmu.reset()
             cpu.reset()
