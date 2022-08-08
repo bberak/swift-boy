@@ -1,26 +1,19 @@
-// TODO: Reading and writing files needs refactoring.. Paths need to be normalized using some sort of sanitization logic.
-
 import Foundation
 
 struct FileSystem {
-    static func listPaths(inDirectory: String, suffix: String = "") -> [String] {
+    static var documentsDirectory: String {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        return paths[0].path
+    }
+    
+    static func listAbsoluteURLs(inDirectory: String, suffix: String = "") -> [URL] {
         if let files = try? FileManager.default.contentsOfDirectory(atPath: inDirectory) {
             return files
                 .filter { $0.hasSuffix(suffix) }
-                .map { $0.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "" }
-                .filter { $0.isNotEmpty }
+                .map { URL(fileURLWithPath: "\(inDirectory)/\($0)") }
         }
         
         return []
-    }
-    
-    static func listAbsolutePaths(inDirectory: String, suffix: String = "") -> [String] {
-        return listPaths(inDirectory: inDirectory, suffix: suffix).map { "\(inDirectory)/\($0)" }
-    }
-    
-    static func getDocumentsDirectory() -> String {
-        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        return paths[0].path
     }
     
     static func removeItem(at: URL) throws {
@@ -44,17 +37,7 @@ struct FileSystem {
     
     static func writeItem(at: URL, data: Data) {
         do {
-            let manager = FileManager.default
-
-            if !manager.fileExists(atPath: at.absoluteString) {
-                manager.createFile(atPath: at.absoluteString, contents: nil, attributes: nil)
-            }
-            
-            let handle = try FileHandle(forWritingTo: at)
-
-            handle.write(data)
-
-            try handle.close()
+            try data.write(to: at)
         } catch {
             print("Unexpected error: \(error).")
         }

@@ -4,8 +4,7 @@
 // https://b13rg.github.io/Gameboy-MBC-Analysis/
 
 // TODO: Support more MBC types
-// TODO: Support RAM persistence to local storage (saves, games state etc)
-// TODO: Reading and writing RAM is not working properly
+// TODO: Restoring RAM state is not working properly
 
 import Foundation
 
@@ -147,8 +146,6 @@ public class Cartridge: MemoryAccessArray, Identifiable {
         self.type = MBCType(rawValue: rom[0x0147])
         self.romPath = romPath
         self.ramPath = ramPath
-        
-        print(ram)
         
         super.init()
         

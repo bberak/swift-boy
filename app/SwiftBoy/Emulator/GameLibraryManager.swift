@@ -7,18 +7,15 @@ class GameLibraryManager: ObservableObject {
     let clock: Clock
     
     init(_ clock: Clock) {
-        let bundledGames = FileSystem.listAbsolutePaths(inDirectory: Bundle.main.bundlePath, suffix: ".gb")
-        let importedGames = FileSystem.listAbsolutePaths(inDirectory: FileSystem.getDocumentsDirectory(), suffix: ".gb")
-        let bundledCarts = bundledGames.map { rom -> Cartridge in
-            let romPath = URL(string: rom)!
-            let ramPath = URL(string:
-                (FileSystem.getDocumentsDirectory() + "/" + romPath.lastPathComponent + ".ram")
-                    .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!
-            )!
+        let bundledGames = FileSystem.listAbsoluteURLs(inDirectory: Bundle.main.bundlePath, suffix: ".gb")
+        let importedGames = FileSystem.listAbsoluteURLs(inDirectory: FileSystem.documentsDirectory, suffix: ".gb")
+        
+        let bundledCarts = bundledGames.map { romPath -> Cartridge in
+            let ramPath = URL(fileURLWithPath: "\(FileSystem.documentsDirectory)/\(romPath.lastPathComponent).ram")
             return Cartridge(romPath: romPath, ramPath: ramPath)
         }
-        let importedCarts = importedGames.map { rom -> Cartridge in
-            return Cartridge(romPath: URL(string: rom)!, ramPath: URL(string: rom + ".ram")!)
+        let importedCarts = importedGames.map { romPath -> Cartridge in
+            return Cartridge(romPath: romPath, ramPath: romPath.appendingPathExtension("ram"))
         }
         let allCarts = bundledCarts + importedCarts
         
@@ -60,15 +57,10 @@ class GameLibraryManager: ObservableObject {
     
     func importURLs(urls: [URL]) {
         library.append(contentsOf: urls.map { src in
-            let romPath = URL(string:
-                // Identical schemes are required for move operation
-                src.scheme! + "://" + (FileSystem.getDocumentsDirectory() + "/" + src.lastPathComponent).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)!
-            )!
+            let romPath = URL(fileURLWithPath: "\(FileSystem.documentsDirectory)/\(src.lastPathComponent)")
             let ramPath = romPath.appendingPathExtension("ram")
             try! FileSystem.moveItem(at: src, to: romPath)
             return Cartridge(romPath: romPath, ramPath: ramPath)
         })
     }
-    
-    // TODO: Write some code to save current cartridge's RAM when the app is about to close
 }
