@@ -4,7 +4,7 @@
 // https://b13rg.github.io/Gameboy-MBC-Analysis/
 
 // TODO: Support more MBC types
-// TODO: Restoring RAM state is not working properly
+// TODO: Make sure memory bank switching is working properly
 
 import Foundation
 
