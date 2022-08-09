@@ -5,6 +5,7 @@
 
 // TODO: Support more MBC types
 // TODO: Make sure memory bank switching is working properly
+// TODO: Make sure catridge RAM restoration is working properly
 
 import Foundation
 
