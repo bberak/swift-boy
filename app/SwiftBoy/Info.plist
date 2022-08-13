@@ -8,8 +8,6 @@
 		<true/>
 		<key>UIColorName</key>
 		<string>LaunchScreen-Color</string>
-		<key>UIImageName</key>
-		<string>LaunchScreen-Image</string>
 	</dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
