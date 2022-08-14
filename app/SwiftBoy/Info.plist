@@ -4,8 +4,6 @@
 <dict>
 	<key>UILaunchScreen</key>
 	<dict>
-		<key>UIImageRespectsSafeAreaInsets</key>
-		<true/>
 		<key>UIColorName</key>
 		<string>LaunchScreen-Color</string>
 	</dict>
