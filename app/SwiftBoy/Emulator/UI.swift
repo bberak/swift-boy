@@ -2,6 +2,10 @@ import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 
+extension UTType {
+    public static var gb: UTType { UTType(importedAs: "com.swiftboy.gameboyfile" )}
+}
+
 // Source: https://github.com/markrenaud/FilePicker/blob/main/Sources/FilePicker/FilePickerUIRepresentable.swift
 public struct FilePickerUIRepresentable: UIViewControllerRepresentable {
     public typealias UIViewControllerType = UIDocumentPickerViewController
@@ -395,7 +399,7 @@ struct GameLibraryModalView: View {
                     showFilePicker = true
                 }
                 .sheet(isPresented: $showFilePicker) {
-                    FilePickerUIRepresentable(types: [UTType("com.swiftboy.gameboyfile")!], allowMultiple: true) { urls in
+                    FilePickerUIRepresentable(types: [.gb], allowMultiple: true) { urls in
                         gameLibraryManager.importURLs(urls: urls)
                     }
                     .ignoresSafeArea()
