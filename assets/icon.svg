@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="60px" height="60px" viewBox="0 0 60 60" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>v3</title>
+    <defs>
+        <radialGradient cx="17.5270343%" cy="7.22661767%" fx="17.5270343%" fy="7.22661767%" r="252.145828%" id="radialGradient-1">
+            <stop stop-color="#00D4B6" offset="0%"></stop>
+            <stop stop-color="#DA00BB" offset="61.6775794%"></stop>
+            <stop stop-color="#0078F7" offset="100%"></stop>
+        </radialGradient>
+        <path d="M49.0606381,38.6607 C49.0592381,38.6589 49.0579381,38.6576 49.0564381,38.6559 C49.1221381,38.4323 49.1899381,38.2101 49.2474381,37.9809 C51.7124381,28.16 45.6963381,16.549 35.5158381,10.4355 C39.9771381,16.4834 41.9497381,23.8088 40.1971381,30.215 C40.0408381,30.7864 39.8529381,31.3348 39.6452381,31.8678 C39.4198381,31.7197 39.1358381,31.5516 38.7544381,31.3413 C38.7544381,31.3413 28.6275381,25.0886 17.6516381,14.0291 C17.3636381,13.7388 23.5044381,22.8061 30.4735381,30.169 C27.1901381,28.3263 18.0397381,21.6686 12.2469381,16.3667 C12.9586381,17.5536 13.8051381,18.6965 14.7356381,19.7968 C19.5731381,25.9317 25.8818381,33.5012 33.4399381,39.3137 C28.1295381,42.5635 20.6258381,42.8162 13.1547381,39.3171 C11.3068381,38.4511 9.56963811,37.4062 7.96153811,36.219 C11.1240381,41.2775 15.9947381,45.6419 21.9228381,48.1898 C28.9923381,51.2279 36.0224381,51.0219 41.2584381,48.2396 L41.2543381,48.2456 C41.2782381,48.2305 41.3086381,48.214 41.3334381,48.1987 C41.5484381,48.0831 41.7618381,47.9654 41.9705381,47.8411 C44.4862381,46.5353 49.4552381,45.2105 52.1223381,50.3999 C52.7755381,51.6699 54.1635381,44.9395 49.0606381,38.6607 Z" id="path-2"></path>
+        <filter x="-15.6%" y="-12.5%" width="131.2%" height="134.9%" filterUnits="objectBoundingBox" id="filter-3">
+            <feOffset dx="0" dy="2" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="2" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.347191871 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="v3" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle" fill="url(#radialGradient-1)" x="0" y="0" width="60" height="60"></rect>
+        <g id="Path" fill-rule="nonzero">
+            <use fill="black" fill-opacity="1" filter="url(#filter-3)" xlink:href="#path-2"></use>
+            <use fill="#FFFFFF" xlink:href="#path-2"></use>
+        </g>
+    </g>
+</svg>
