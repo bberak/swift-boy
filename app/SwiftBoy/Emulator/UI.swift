@@ -395,7 +395,7 @@ struct GameLibraryModalView: View {
                     showFilePicker = true
                 }
                 .sheet(isPresented: $showFilePicker) {
-                    FilePickerUIRepresentable(types: [UTType("com.borisBerak.SwiftBoy.gb")!], allowMultiple: true) { urls in
+                    FilePickerUIRepresentable(types: [UTType("com.swiftboy.gameboyfile")!], allowMultiple: true) { urls in
                         gameLibraryManager.importURLs(urls: urls)
                     }
                     .ignoresSafeArea()
