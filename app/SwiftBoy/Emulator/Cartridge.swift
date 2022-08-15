@@ -14,6 +14,12 @@ enum MBCType {
     case one
     case one_ram
     case one_ram_battery
+    case five
+    case five_ram
+    case five_ram_battery
+    case five_rumble
+    case five_rumble_ram
+    case five_rumble_ram_battery
     case unsupported
     
     init(rawValue: UInt8) {
@@ -22,27 +28,35 @@ enum MBCType {
         case 0x01: self = .one
         case 0x02: self = .one_ram
         case 0x03: self = .one_ram_battery
+        case 0x19: self = .five
+        case 0x1A: self = .five_ram
+        case 0x1B: self = .five_ram_battery
+        case 0x1C: self = .five_rumble
+        case 0x1D: self = .five_rumble_ram
+        case 0x1E: self = .five_rumble_ram_battery
         default: self = .unsupported
         }
-    }
-}
-
-func getRamSize(rom: Data) -> Int {
-    switch rom[0x0149] {
-    case 1:
-        return 2048
-    case 2:
-        return 8096
-    case 3:
-        return 8096 * 4
-    default:
-        return 2048
     }
 }
 
 struct MBC {
     let memory: MemoryAccessArray
     let extractRam: () -> [UInt8]
+}
+
+func getRamSize(rom: Data) -> Int {
+    switch rom[0x0149] {
+    case 2:
+        return 8192
+    case 3:
+        return 8192 * 4
+    case 4:
+        return 8192 * 16
+    case 5:
+        return 8192 * 8
+    default:
+        return 8192
+    }
 }
 
 func mbcZero(rom: Data, ram: Data) -> MBC {
@@ -58,7 +72,7 @@ func mbcZero(rom: Data, ram: Data) -> MBC {
 
 func mbcOne(rom: Data, ram: Data) -> MBC {
     let rom0 = MemoryBlock(range: 0x0000...0x3FFF, buffer: rom.extract(0x0000...0x3FFF), readOnly: true, enabled: true)
-    let romBank = MemoryBlockBanked(range: 0x4000...0x7FFF, buffer: rom.extractFrom(0x4000), readOnly: true, enabled: true)
+    let romBank = MemoryBlockBanked(range: 0x4000...0x7FFF, buffer: rom.extractFrom(0x4000).forCount(????), readOnly: true, enabled: true)
     let ramSize = getRamSize(rom: rom)
     let ramBank = ram.count > 0 ?
         MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: ram.map { $0 }, readOnly: false, enabled: true) :
@@ -75,7 +89,7 @@ func mbcOne(rom: Data, ram: Data) -> MBC {
         var upper = UInt8(0)
         var lower = UInt8(0)
         
-        upper = romBank.bankIndex
+        upper = UInt8(romBank.bankIndex & 0x00FF)
         upper = upper & 0b01100000
         lower = byte
         lower = lower & 0b00011111
@@ -83,7 +97,7 @@ func mbcOne(rom: Data, ram: Data) -> MBC {
         bank = upper | lower
         bank = bank - 1 // Convert to index
         
-        romBank.bankIndex = bank
+        romBank.bankIndex = UInt16(bank)
     }
     
     memory.subscribe({ addr, _ in addr >= 0x6000 && addr <= 0x7FFF }) { _, byte in
@@ -98,15 +112,65 @@ func mbcOne(rom: Data, ram: Data) -> MBC {
             
             upper = upper & 0b00000011
             upper = upper << 5
-            lower = romBank.bankIndex + 1 // ROM bank numbers start from 1, index starts from 0
+            lower = UInt8(romBank.bankIndex & 0x00FF) + 1 // ROM bank numbers start from 1, index starts from 0
             lower = lower & 0b00011111
             bank = upper | lower
             bank = bank - 1 // Convert to index
             
-            romBank.bankIndex = bank
+            romBank.bankIndex = UInt16(bank)
         } else {
             let bank = byte & 0b00000011
-            ramBank.bankIndex = bank
+            ramBank.bankIndex = UInt16(bank)
+        }
+    }
+    
+    return MBC(memory: memory) {
+        return ramBank.banks.reduce([]) { agg, arr in
+            return arr + arr
+        }
+    }
+}
+
+func mbcFive(rom: Data, ram: Data) -> MBC {
+    let rom0 = MemoryBlock(range: 0x0000...0x3FFF, buffer: rom.extract(0x0000...0x3FFF), readOnly: true, enabled: true)
+    let romBank = MemoryBlockBanked(range: 0x4000...0x7FFF, buffer: rom.extractFrom(0x4000).forCount(????), readOnly: true, enabled: true)
+    let ramSize = getRamSize(rom: rom)
+    let ramBank = ram.count > 0 ?
+        MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: ram.map { $0 }, readOnly: false, enabled: true) :
+        MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: [UInt8](repeating: 0xFF, count: ramSize), readOnly: false, enabled: true)
+    let memory = MemoryAccessArray([rom0, romBank, ramBank])
+    
+    memory.subscribe({ addr, _ in addr <= 0x1FFF }) { _, byte in
+        ramBank.enabled = (byte & 0x0A) == 0x0A
+    }
+    
+    memory.subscribe({ addr, _ in addr >= 0x2000 && addr <= 0x2FFF }) { _, byte in
+        var bank = UInt16(0)
+        var upper = UInt16(0)
+        var lower = UInt16(0)
+
+        upper = romBank.bankIndex & 0b100000000
+        lower = UInt16(byte)
+        bank = upper | lower
+
+        romBank.bankIndex = bank
+    }
+    
+    memory.subscribe({ addr, _ in addr >= 0x3000 && addr <= 0x3FFF }) { _, byte in
+        var bank = UInt16(0)
+        var upper = UInt16(0)
+        var lower = UInt16(0)
+
+        upper = UInt16(byte & 0b00000001) << 8
+        lower = romBank.bankIndex & 0b11111111
+        bank = upper | lower
+
+        romBank.bankIndex = bank
+    }
+    
+    memory.subscribe({ addr, _ in addr >= 0x4000 && addr <= 0x5FFF }) { _, byte in
+        if byte.isBetween(0x00, 0x0F) {
+            ramBank.bankIndex = UInt16(byte)
         }
     }
     
@@ -157,6 +221,10 @@ public class Cartridge: MemoryAccessArray, Identifiable {
             self.extractRam = mbc.extractRam
         case .one, .one_ram, .one_ram_battery:
             let mbc = mbcOne(rom: rom, ram: ram)
+            super.copy(other: mbc.memory)
+            self.extractRam = mbc.extractRam
+        case .five, .five_ram, .five_ram_battery, .five_rumble, .five_rumble_ram, .five_rumble_ram_battery:
+            let mbc = mbcFive(rom: rom, ram: ram)
             super.copy(other: mbc.memory)
             self.extractRam = mbc.extractRam
         case .unsupported:

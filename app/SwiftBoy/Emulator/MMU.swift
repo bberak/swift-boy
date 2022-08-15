@@ -132,7 +132,7 @@ class MemoryBlock: MemoryAccess {
 
 class MemoryBlockBanked: MemoryBlock {
     var banks: [[UInt8]]
-    var bankIndex: UInt8 = 0 {
+    var bankIndex: UInt16 = 0 {
         didSet {
             super.buffer = banks[Int(bankIndex)]
         }
