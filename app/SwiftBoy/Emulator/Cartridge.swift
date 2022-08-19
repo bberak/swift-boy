@@ -44,10 +44,37 @@ struct MBC {
     let extractRam: () -> [UInt8]
 }
 
+func getRomSize(rom: Data) -> Int {
+    switch rom[0x0148] {
+    case 0x01:
+        return 16384 * 4
+    case 0x02:
+        return 16384 * 8
+    case 0x03:
+        return 16384 * 16
+    case 0x04:
+        return 16384 * 32
+    case 0x05:
+        return 16384 * 64
+    case 0x06:
+        return 16384 * 128
+    case 0x07:
+        return 16384 * 256
+    case 0x08:
+        return 16384 * 512
+    case 0x52:
+        return 16384 * 72
+    case 0x53:
+        return 16384 * 80
+    case 0x54:
+        return 16384 * 96
+    default:
+        return 16384 * 2
+    }
+}
+
 func getRamSize(rom: Data) -> Int {
     switch rom[0x0149] {
-    case 2:
-        return 8192
     case 3:
         return 8192 * 4
     case 4:
@@ -60,22 +87,26 @@ func getRamSize(rom: Data) -> Int {
 }
 
 func mbcZero(rom: Data, ram: Data) -> MBC {
-    let rom = MemoryBlock(range: 0x0000...0x7FFF, buffer: rom.map { $0 }, readOnly: true, enabled: true)
-    let ram = ram.count > 0 ?
-        MemoryBlock(range: 0xA000...0xBFFF, buffer: ram.map { $0 }, readOnly: false, enabled: true) :
-        MemoryBlock(range: 0xA000...0xBFFF, readOnly: false, enabled: true)
+    let romSize = getRomSize(rom: rom)
+    let romBlock = MemoryBlock(range: 0x0000...0x7FFF, buffer: rom.extractFrom(0).fillUntil(count: romSize, with: 0xFF), readOnly: true, enabled: true)
+    let ramSize = getRamSize(rom: rom)
+    let ramBlock = ram.count > 0 ?
+    MemoryBlock(range: 0xA000...0xBFFF, buffer: ram.extractFrom(0).fillUntil(count: ramSize, with: 0xFF), readOnly: false, enabled: true) :
+        MemoryBlock(range: 0xA000...0xBFFF, buffer: [UInt8](repeating: 0xFF, count: ramSize),  readOnly: false, enabled: true)
     
-    return MBC(memory: MemoryAccessArray([rom, ram])) {
-        return ram.buffer
+    return MBC(memory: MemoryAccessArray([romBlock, ramBlock])) {
+        return ramBlock.buffer
     }
 }
 
 func mbcOne(rom: Data, ram: Data) -> MBC {
-    let rom0 = MemoryBlock(range: 0x0000...0x3FFF, buffer: rom.extract(0x0000...0x3FFF), readOnly: true, enabled: true)
-    let romBank = MemoryBlockBanked(range: 0x4000...0x7FFF, buffer: rom.extractFrom(0x4000).forCount(????), readOnly: true, enabled: true)
+    let romSize = getRomSize(rom: rom)
+    let romBytes = rom.extractFrom(0).fillUntil(count: romSize, with: 0xFF)
+    let rom0 = MemoryBlock(range: 0x0000...0x3FFF, buffer: romBytes.extractFrom(0x0000...0x3FFF), readOnly: true, enabled: true)
+    let romBank = MemoryBlockBanked(range: 0x4000...0x7FFF, buffer: romBytes.extractFrom(0x4000), readOnly: true, enabled: true)
     let ramSize = getRamSize(rom: rom)
     let ramBank = ram.count > 0 ?
-        MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: ram.map { $0 }, readOnly: false, enabled: true) :
+        MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: ram.extractFrom(0).fillUntil(count: ramSize, with: 0xFF), readOnly: false, enabled: true) :
         MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: [UInt8](repeating: 0xFF, count: ramSize), readOnly: false, enabled: true)
     let memory = MemoryAccessArray([rom0, romBank, ramBank])
     var mode: UInt8 = 0
@@ -132,11 +163,13 @@ func mbcOne(rom: Data, ram: Data) -> MBC {
 }
 
 func mbcFive(rom: Data, ram: Data) -> MBC {
-    let rom0 = MemoryBlock(range: 0x0000...0x3FFF, buffer: rom.extract(0x0000...0x3FFF), readOnly: true, enabled: true)
-    let romBank = MemoryBlockBanked(range: 0x4000...0x7FFF, buffer: rom.extractFrom(0x4000).forCount(????), readOnly: true, enabled: true)
+    let romSize = getRomSize(rom: rom)
+    let romBytes = rom.extractFrom(0).fillUntil(count: romSize, with: 0xFF)
+    let rom0 = MemoryBlock(range: 0x0000...0x3FFF, buffer: romBytes.extractFrom(0x0000...0x3FFF), readOnly: true, enabled: true)
+    let romBank = MemoryBlockBanked(range: 0x4000...0x7FFF, buffer: romBytes.extractFrom(0x4000), readOnly: true, enabled: true)
     let ramSize = getRamSize(rom: rom)
     let ramBank = ram.count > 0 ?
-        MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: ram.map { $0 }, readOnly: false, enabled: true) :
+        MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: ram.extractFrom(0).fillUntil(count: ramSize, with: 0xFF), readOnly: false, enabled: true) :
         MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: [UInt8](repeating: 0xFF, count: ramSize), readOnly: false, enabled: true)
     let memory = MemoryAccessArray([rom0, romBank, ramBank])
     

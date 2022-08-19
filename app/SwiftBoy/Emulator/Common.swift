@@ -4,12 +4,12 @@ import Foundation
 import SwiftUI
 
 public extension Data {
-    func extract(_ range: ClosedRange<Int>) -> [UInt8] {
+    func extractFrom(_ range: ClosedRange<Int>) -> [UInt8] {
         return range.map({ self[$0] })
     }
     
     func extractFrom(_ start: Int) -> [UInt8] {
-        return self.extract(start...(self.count-1))
+        return self.extractFrom(start...(self.count-1))
     }
 }
 
@@ -18,6 +18,22 @@ extension Array {
         return stride(from: 0, to: count, by: size).map {
             Array(self[$0 ..< Swift.min($0 + size, count)])
         }
+    }
+    
+    func extractFrom(_ range: ClosedRange<Int>) -> [Element] {
+        return range.map({ self[$0] })
+    }
+    
+    func extractFrom(_ start: Int) -> [Element] {
+        return self.extractFrom(start...(self.count-1))
+    }
+    
+    func fillUntil(count: Int, with value: Element) -> [Element] {
+        if self.count < count {
+            return self + [Element](repeating: value, count: count - self.count)
+        }
+        
+        return self
     }
 }
 
