@@ -3,12 +3,12 @@ import Foundation
 public class Timer {
     private let mmu: MMU
     private let divTreshold: UInt = 16
-    private var counterThreshold: UInt = 0
+    private var counterThreshold: UInt = 16
     private var enabled = false
         
     private var counterCycles: UInt = 0 {
         didSet {
-            let result = counterCycles.quotientAndRemainder(dividingBy: divTreshold)
+            let result = counterCycles.quotientAndRemainder(dividingBy: counterThreshold)
             
             if result.quotient > 0 {
                 let previousValue = mmu.timerCounter.read()
@@ -75,7 +75,7 @@ public class Timer {
     public  func reset() {
         divCycles = 0
         counterCycles = 0
-        counterThreshold = 0
+        counterThreshold = 16
         enabled = false
     }
 }
