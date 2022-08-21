@@ -91,7 +91,7 @@ func mbcZero(rom: Data, ram: Data) -> MBC {
     let romBlock = MemoryBlock(range: 0x0000...0x7FFF, buffer: rom.extractFrom(0).fillUntil(count: romSize, with: 0xFF), readOnly: true, enabled: true)
     let ramSize = getRamSize(rom: rom)
     let ramBlock = ram.count > 0 ?
-    MemoryBlock(range: 0xA000...0xBFFF, buffer: ram.extractFrom(0).fillUntil(count: ramSize, with: 0xFF), readOnly: false, enabled: true) :
+        MemoryBlock(range: 0xA000...0xBFFF, buffer: ram.extractFrom(0).fillUntil(count: ramSize, with: 0xFF), readOnly: false, enabled: true) :
         MemoryBlock(range: 0xA000...0xBFFF, buffer: [UInt8](repeating: 0xFF, count: ramSize),  readOnly: false, enabled: true)
     
     return MBC(memory: MemoryAccessArray([romBlock, ramBlock])) {
