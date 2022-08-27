@@ -45,44 +45,56 @@ struct MBC {
 }
 
 func getRomSize(rom: Data) -> Int {
+    let sixteenKB = 16384
+    
     switch rom[0x0148] {
+    case 0x00:
+        return sixteenKB * 2
     case 0x01:
-        return 16384 * 4
+        return sixteenKB * 4
     case 0x02:
-        return 16384 * 8
+        return sixteenKB * 8
     case 0x03:
-        return 16384 * 16
+        return sixteenKB * 16
     case 0x04:
-        return 16384 * 32
+        return sixteenKB * 32
     case 0x05:
-        return 16384 * 64
+        return sixteenKB * 64
     case 0x06:
-        return 16384 * 128
+        return sixteenKB * 128
     case 0x07:
-        return 16384 * 256
+        return sixteenKB * 256
     case 0x08:
-        return 16384 * 512
+        return sixteenKB * 512
     case 0x52:
-        return 16384 * 72
+        return sixteenKB * 72
     case 0x53:
-        return 16384 * 80
+        return sixteenKB * 80
     case 0x54:
-        return 16384 * 96
+        return sixteenKB * 96
     default:
-        return 16384 * 2
+        return sixteenKB * 2
     }
 }
 
 func getRamSize(rom: Data) -> Int {
+    let eightKB = 8192
+    
     switch rom[0x0149] {
-    case 3:
-        return 8192 * 4
-    case 4:
-        return 8192 * 16
-    case 5:
-        return 8192 * 8
+    case 0x00:
+        return 0
+    case 0x01:
+        return 2048
+    case 0x02:
+        return eightKB
+    case 0x03:
+        return eightKB * 4
+    case 0x04:
+        return eightKB * 16
+    case 0x05:
+        return eightKB * 8
     default:
-        return 8192
+        return eightKB
     }
 }
 
@@ -202,7 +214,7 @@ func mbcFive(rom: Data, ram: Data) -> MBC {
     }
     
     memory.subscribe({ addr, _ in addr >= 0x4000 && addr <= 0x5FFF }) { _, byte in
-        if byte.isBetween(0x00, 0x0F) {
+        if byte < ramBank.banks.count {
             ramBank.bankIndex = UInt16(byte)
         }
     }
