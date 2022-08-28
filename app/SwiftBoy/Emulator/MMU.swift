@@ -146,6 +146,10 @@ class MemoryBlockBanked: MemoryBlock {
     convenience override init(range: ClosedRange<UInt16>, buffer: [UInt8], readOnly: Bool, enabled: Bool) {
         self.init(range: range, banks: buffer.chunked(into: range.count), readOnly: readOnly, enabled: enabled)
     }
+    
+    convenience init(range: ClosedRange<UInt16>, readOnly: Bool, enabled: Bool) {
+        self.init(range: range, buffer: [UInt8](repeating: 0xFF, count: range.count), readOnly: readOnly, enabled: enabled)
+    }
 }
 
 struct Subscriber {

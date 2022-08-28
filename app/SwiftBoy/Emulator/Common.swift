@@ -5,11 +5,20 @@ import SwiftUI
 
 public extension Data {
     func extractFrom(_ range: ClosedRange<Int>) -> [UInt8] {
+        if self.count == 0 {
+            return []
+        }
+        
+        if range.lowerBound == range.upperBound {
+            return [self[range.lowerBound]]
+        }
+        
         return range.map({ self[$0] })
     }
     
     func extractFrom(_ start: Int) -> [UInt8] {
-        return self.extractFrom(start...(self.count-1))
+        let end = self.count == 0 ? 0 : self.count - 1
+        return self.extractFrom(start...end)
     }
 }
 
@@ -21,11 +30,20 @@ extension Array {
     }
     
     func extractFrom(_ range: ClosedRange<Int>) -> [Element] {
+        if self.count == 0 {
+            return []
+        }
+        
+        if range.lowerBound == range.upperBound {
+            return [self[range.lowerBound]]
+        }
+        
         return range.map({ self[$0] })
     }
     
     func extractFrom(_ start: Int) -> [Element] {
-        return self.extractFrom(start...(self.count-1))
+        let end = self.count == 0 ? 0 : self.count - 1
+        return self.extractFrom(start...end)
     }
     
     func fillUntil(count: Int, with value: Element) -> [Element] {
