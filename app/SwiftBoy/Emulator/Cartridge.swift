@@ -83,50 +83,37 @@ func mbcOne(rom: Data, ram: Data) -> MBC {
         MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: ram.extractFrom(0).fillUntil(count: ramSize, with: 0xFF), readOnly: false, enabled: true) :
         MemoryBlockBanked(range: 0xA000...0xBFFF, readOnly: false, enabled: true)
     let memory = MemoryAccessArray([rom0, romBank, ramBank])
-    var mode: UInt8 = 0
-    
+    var modeRegister: UInt8 = 0
+    var bank1Register: UInt8 = 1 {
+        didSet {
+            romBank.bankIndex = UInt16((bank2Register << 5) | bank1Register) - 1 // Normalize to zero-based index
+        }
+    }
+    var bank2Register: UInt8 = 0 {
+        didSet {
+            if modeRegister == 0 {
+                romBank.bankIndex = UInt16((bank2Register << 5) | bank1Register) - 1 // Normalize to zero-based index
+            } else if modeRegister == 1 {
+                ramBank.bankIndex = UInt16(bank2Register)
+            }
+        }
+    }
+
     memory.subscribe({ addr, _ in addr <= 0x1FFF }) { _, byte in
         ramBank.enabled = (byte & 0x0A) == 0x0A
     }
-    
+
     memory.subscribe({ addr, _ in addr >= 0x2000 && addr <= 0x3FFF }) { _, byte in
-        var bank = UInt8(0)
-        var upper = UInt8(0)
-        var lower = UInt8(0)
-        
-        upper = UInt8(romBank.bankIndex & 0x00FF)
-        upper = upper & 0b01100000
-        lower = byte
-        lower = lower & 0b00011111
-        lower = lower == 0 ? 1 : lower // If zero, automatically set to one
-        bank = upper | lower
-        bank = bank - 1 // Convert to index
-        
-        romBank.bankIndex = UInt16(bank)
+        let nextBank1 = byte & 0b00011111
+        bank1Register = nextBank1 == 0 ? 1 : nextBank1
     }
-    
-    memory.subscribe({ addr, _ in addr >= 0x6000 && addr <= 0x7FFF }) { _, byte in
-        mode = byte
-    }
-    
+
     memory.subscribe({ addr, _ in addr >= 0x4000 && addr <= 0x5FFF }) { _, byte in
-        if mode == 0 {
-            var bank = UInt8(0)
-            var upper = UInt8(0)
-            var lower = UInt8(0)
-            
-            upper = upper & 0b00000011
-            upper = upper << 5
-            lower = UInt8(romBank.bankIndex & 0x00FF) + 1 // ROM bank numbers start from 1, index starts from 0
-            lower = lower & 0b00011111
-            bank = upper | lower
-            bank = bank - 1 // Convert to index
-            
-            romBank.bankIndex = UInt16(bank)
-        } else {
-            let bank = byte & 0b00000011
-            ramBank.bankIndex = UInt16(bank)
-        }
+        bank2Register = byte & 0b00000011
+    }
+
+    memory.subscribe({ addr, _ in addr >= 0x6000 && addr <= 0x7FFF }) { _, byte in
+        modeRegister = byte & 0b00000001
     }
     
     return MBC(memory: memory) {
