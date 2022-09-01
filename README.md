@@ -25,7 +25,7 @@ You can import your own legally-obtained Game Boy ROMs by clicking the title abo
 
 ## TODOs
 
-- Better MBC support (currently only partially support MBC0 and MBC1)
+- Better MBC support (currently only partially supports MBC0 and MBC1)
 - The sound synthesizer is not quite right yet
 - Handle transparent pixels and sprite priority
 - A bunch of other stuff
