@@ -23,6 +23,13 @@ You can import your own legally-obtained Game Boy ROMs by clicking the title abo
     <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/super-marioland-demo-portrait.gif" width="249"  height="540" />
 </p>
 
+## Links and Resources
+
+- [Blargg's Test ROMs](https://github.com/retrio/gb-test-roms)
+- [Mooneye Test Suite](https://github.com/Gekkio/mooneye-test-suite)
+- [Game Boy Complete Technical Reference](https://github.com/Gekkio/gb-ctr)
+- [Pan Docs](https://gbdev.io/pandocs/)
+
 ## TODOs
 
 - Better MBC support (currently only partially supports MBC0 and MBC1)
