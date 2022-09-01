@@ -11,7 +11,7 @@ A Game Boy emulator for iOS 📱
 1. Clone the repo: `git clone https://github.com/bberak/swift-boy.git`
 2. Open `app/SwiftBoy.xcodeproc` with XCode
 3. Select `Swift Boy Release` scheme and target device
-4. Build, run and enjoy 🎉
+4. Build, run and enjoy some nostalgic gaming 🎉
 
 ## Importing Games
 
