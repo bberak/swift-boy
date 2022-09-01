@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/icon.png" alt="Swift Boy" height="120" />
+  <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/icon-rounded.png" alt="Swift Boy" height="120" />
 </p>
 
 # Swift Boy
@@ -21,8 +21,14 @@ You can import your own legally-obtained Game Boy ROMs by clicking the title abo
     <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-import-screen.png" width="249" height="540" />
     <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-tetris-demo.gif" width="249" height="540" />
     <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-super-marioland-main-screen.png" width="249"  height="540" />
-    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/landscape-super-marioland-demo.gif" height="350" />
 </p>
+
+## TODOs
+
+- Better MBC support (currently only partially support MBC0 and MBC1)
+- The sound synthesizer is not quite right yet
+- Handle transparent pixels and sprite priority
+- A bunch of other stuff
 
 ## License
 
