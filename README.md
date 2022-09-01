@@ -18,9 +18,9 @@ A Game Boy emulator for iOS 📱
 You can import your own legally-obtained Game Boy ROMs by clicking the title above the *LCD* screen and clicking the big **IMPORT GAME** button at the bottom of the modal 👍.
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-import-screen.png" width="249" height="540" />
-    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-tetris-demo.gif" width="249" height="540" />
-    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-super-marioland-main-screen.png" width="249"  height="540" />
+    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/import-screen-portrait.png" width="249" height="540" />
+    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/tetris-demo-portrait.gif" width="249" height="540" />
+    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/super-marioland-demo-portrait.gif" width="249"  height="540" />
 </p>
 
 ## TODOs
