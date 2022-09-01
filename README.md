@@ -25,6 +25,7 @@ You can import your own legally-obtained Game Boy ROMs by clicking the title abo
 
 ## Links and Resources
 
+- [Game Boy CPU Instructions Database](https://gist.github.com/bberak/ca001281bb8431d2706afd31401e802b)
 - [Blargg's Test ROMs](https://github.com/retrio/gb-test-roms)
 - [Mooneye Test Suite](https://github.com/Gekkio/mooneye-test-suite)
 - [Game Boy Complete Technical Reference](https://github.com/Gekkio/gb-ctr)
