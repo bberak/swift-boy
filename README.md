@@ -22,9 +22,9 @@ You can import your own legally-obtained Game Boy ROMs by clicking the title abo
 Take a look at [Studious Bear](https://itunes.apple.com/us/app/studious-bear/id1434377602), a super-polished puzzle game with great visuals and music. One of the first published games to use RNGE.
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-import-screen.png" height="540" />
-    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-tetris-demo.gif" height="540" />
-    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-super-marioland-main-screen.png" height="540" />
+    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-import-screen.png" width="249" height="540" />
+    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-tetris-demo.gif" width="249" height="540" />
+    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-super-marioland-main-screen.png" width="249"  height="540" />
 </p>
 
 ## License
