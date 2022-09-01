@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/icon.png" alt="Swift Boy" height="120" style="border-radius: 20px" />
+  <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/icon.png" alt="Swift Boy" height="120" />
 </p>
 
 # Swift Boy
@@ -22,10 +22,9 @@ You can import your own legally-obtained Game Boy ROMs by clicking the title abo
 Take a look at [Studious Bear](https://itunes.apple.com/us/app/studious-bear/id1434377602), a super-polished puzzle game with great visuals and music. One of the first published games to use RNGE.
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-tetris.gif" height="540" />
-    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-tetris-main-screen.png" height="540" />
-    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-super-mario-land.gif" height="540" />
-    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/landscape-super-mario-land.gif" width="2340" />
+    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-import-screen.png" height="540" />
+    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-tetris-demo.gif" height="540" />
+    <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/portrait-super-marioland-main-screen.png" height="540" />
 </p>
 
 ## License
