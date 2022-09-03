@@ -19,8 +19,8 @@ You can import your own legally-obtained Game Boy ROMs (.gb files) by clicking t
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/import-menu-portrait.png" width="249" height="540" />
-  <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/tetris-demo-portrait.gif" width="249" height="540" />
-  <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/super-marioland-demo-portrait.gif" width="249"  height="540" />
+  <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/tetris-gameplay-portrait.gif" width="249" height="540" />
+  <img src="https://raw.githubusercontent.com/bberak/swift-boy/master/assets/super-marioland-gameplay-portrait.gif" width="249"  height="540" />
 </p>
 
 ## Links and Resources
