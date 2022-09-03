@@ -196,6 +196,12 @@ public class Cartridge: MemoryAccessArray, Identifiable {
         }
     }
     
+    public var canBeDeleted: Bool {
+        get {
+            return !romPath.absoluteString.contains(Bundle.main.bundleURL.absoluteString)
+        }
+    }
+    
     public init(romPath: URL, ramPath: URL) {
         let rom = FileSystem.readItem(at: romPath)
         let ram = FileSystem.readItem(at: ramPath)
@@ -231,5 +237,20 @@ public class Cartridge: MemoryAccessArray, Identifiable {
             let bytes = extractRam()
             FileSystem.writeItem(at: ramPath, data: Data(bytes))
         }
+    }
+}
+
+public extension Array where Element == Cartridge {
+    func sortedByDeletablilityAndTitle() -> [Cartridge] {
+        return self
+            .sorted(by: { a, b in
+                if a.canBeDeleted && b.canBeDeleted {
+                    return a.title.lowercased() < b.title.lowercased()
+                } else if a.canBeDeleted {
+                    return false
+                } else {
+                  return true
+                }
+            })
     }
 }

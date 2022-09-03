@@ -342,21 +342,23 @@ struct GameLibraryItemView: View {
                     .foregroundColor(.black.opacity(0.4))
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Button(role: .none, action: {
-                if confirmDelete {
-                    gameLibraryManager.deleteCartridge(game)
-                } else {
-                    confirmDelete = true
-                    delay(numSeconds: 5) {
-                        confirmDelete = false
+            if game.canBeDeleted {
+                Button(role: .none, action: {
+                    if confirmDelete {
+                        gameLibraryManager.deleteCartridge(game)
+                    } else {
+                        confirmDelete = true
+                        delay(numSeconds: 5) {
+                            confirmDelete = false
+                        }
                     }
+                }) {
+                    Label(confirmDelete ? "Confirm" : "", systemImage: "trash")
+                        .foregroundColor(confirmDelete ? .red : .black.opacity(0.4))
                 }
-            }) {
-                Label(confirmDelete ? "Confirm" : "", systemImage: "trash")
-                    .foregroundColor(confirmDelete ? .red : .black.opacity(0.4))
+                .padding(.top, 5)
+                .animation(.easeInOut, value: confirmDelete)
             }
-            .padding(.top, 5)
-            .animation(.easeInOut, value: confirmDelete)
         }
         .padding([.leading, .trailing])
     }
@@ -372,7 +374,7 @@ struct GameLibraryModalView: View {
         VStack {
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 20) {
-                    ForEach(gameLibraryManager.library) { game in
+                    ForEach(gameLibraryManager.library.sortedByDeletablilityAndTitle()) { game in
                         GameLibraryItemView(game: game)
                     }
                 }

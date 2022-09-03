@@ -19,7 +19,7 @@ class GameLibraryManager: ObservableObject {
         }
         let allCarts = bundledCarts + importedCarts
         
-        self.library = allCarts.sorted(by: { a, b in a.title < b.title })
+        self.library = allCarts
         self.inserted = allCarts.first!
         self.clock = clock
         self.insertCartridge(self.inserted)
