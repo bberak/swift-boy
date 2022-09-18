@@ -41,20 +41,5 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Called as the scene transitions from the foreground to the background.
         // Use this method to save data, release shared resources, and store enough scene-specific state information
         // to restore the scene back to its current state.
-        
-        
-//        func applicationWillTerminate(_ application: UIApplication) {
-//            print("shutting down")
-//
-//            let keyWindow: UIWindow? = {
-//                let scene = UIApplication.shared.connectedScenes.filter({$0.activationState == .foregroundActive}).first as? UIWindowScene
-//                let keyWindow = scene?.keyWindow
-//                return keyWindow
-//            }()
-//
-//            let viewController = keyWindow?.rootViewController as! ViewController
-//
-//            print("shutting down", viewController)
-//        }
     }
 }
