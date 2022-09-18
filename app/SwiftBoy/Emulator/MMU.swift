@@ -52,6 +52,7 @@ class MemoryBlock: MemoryAccess {
     private(set) var version: UInt64 = 0
     var buffer: [UInt8]
     var enabled: Bool
+    var offset: Int = 0
    
     init(range: ClosedRange<UInt16>, buffer: [UInt8], readOnly: Bool, enabled: Bool) {
         self.range = range
@@ -85,7 +86,7 @@ class MemoryBlock: MemoryAccess {
             return 0xFF
         }
         
-        let index = Int(address - range.lowerBound)
+        let index = Int(address - range.lowerBound) + offset
         
         return buffer[index % buffer.count]
     }
@@ -106,7 +107,7 @@ class MemoryBlock: MemoryAccess {
         }
         
         return (start...end).map { address in
-            let index = Int(address - range.lowerBound)
+            let index = Int(address - range.lowerBound) + offset
             return buffer[index % buffer.count]
         }
     }
@@ -124,7 +125,7 @@ class MemoryBlock: MemoryAccess {
             return
         }
         
-        let index = Int(address - range.lowerBound)
+        let index = Int(address - range.lowerBound) + offset
         
         buffer[index % buffer.count] = byte
         version = version &+ 1
