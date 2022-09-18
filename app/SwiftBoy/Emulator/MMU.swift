@@ -1,4 +1,5 @@
 // TODO: Make sure only HRAM is accessible to the CPU during the DMA transfer process
+// TODO: Should we still publish the write if the byte was not actually committed? Can happen if MemoryBlock is disabled..
 
 import Foundation
 
