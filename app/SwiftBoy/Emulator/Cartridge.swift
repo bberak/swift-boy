@@ -79,52 +79,42 @@ func mbcOne(rom: Data, ram: Data) -> MBC {
     let romBank1 = MemoryBlockBanked(range: 0x0000...0x3FFF, buffer: rom.extractFrom(0x0000), readOnly: true, enabled: true)
     let romBank2 = MemoryBlockBanked(range: 0x4000...0x7FFF, buffer: rom.extractFrom(0x4000), readOnly: true, enabled: true)
     let ramSize = getRamSize(rom: rom)
-    let ramBank = ramSize > 0 ?
-        MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: ram.extractFrom(0).fillUntil(count: ramSize, with: 0xFF), readOnly: false, enabled: false) :
-        MemoryBlockBanked(range: 0xA000...0xBFFF, readOnly: false, enabled: false)
+    let ramBank = MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: ram.extractFrom(0).fillUntil(count: ramSize, with: 0xFF), readOnly: false, enabled: false)
     let memory = MemoryAccessArray([romBank1, romBank2, ramBank])
-    var modeRegister: UInt8 = 0 {
+    
+    var ramBankingEnabled = false
+    var currentRomBank: UInt8 = 1 {
         didSet {
-            if modeRegister == 0 {
-                romBank1.bankIndex = 0
-                ramBank.bankIndex = 0
-            } else if modeRegister == 1 {
-                romBank1.bankIndex = UInt16(bank2Register << 5)
-                ramBank.bankIndex = UInt16(bank2Register)
-            }
+            romBank2.bankIndex = UInt16(currentRomBank) - 1
         }
     }
-    var bank1Register: UInt8 = 1 {
-        didSet {
-            romBank2.bankIndex = UInt16((bank2Register << 5) | bank1Register) - 1 // Normalize to zero-based index
-        }
-    }
-    var bank2Register: UInt8 = 0 {
-        didSet {
-            romBank2.bankIndex = UInt16((bank2Register << 5) | bank1Register) - 1 // Normalize to zero-based index
-            
-            if modeRegister == 1 {
-                romBank1.bankIndex = UInt16(bank2Register << 5)
-                ramBank.bankIndex = UInt16(bank2Register)
-            }
-        }
-    }
-
+    
     memory.subscribe({ addr, _ in addr <= 0x1FFF }) { _, byte in
-        ramBank.enabled = (byte & 0x0A) == 0x0A
+        ramBank.enabled = (byte & 0x0F == 0x0A)
     }
 
     memory.subscribe({ addr, _ in addr >= 0x2000 && addr <= 0x3FFF }) { _, byte in
-        let nextBank1 = byte & 0b00011111
-        bank1Register = nextBank1 == 0 ? 1 : nextBank1
+        currentRomBank = (currentRomBank & 0x60) | (byte & 0x1F)
+        
+        if byte & 0x1F == 0x00 {
+            currentRomBank += 1
+        }
     }
 
     memory.subscribe({ addr, _ in addr >= 0x4000 && addr <= 0x5FFF }) { _, byte in
-        bank2Register = byte & 0b00000011
+        if ramBankingEnabled {
+            ramBank.bankIndex = UInt16(byte & 0x03)
+        } else {
+            currentRomBank = (currentRomBank & 0x1F) | ((byte & 0x03) << 5)
+        }
     }
 
     memory.subscribe({ addr, _ in addr >= 0x6000 && addr <= 0x7FFF }) { _, byte in
-        modeRegister = byte & 0b00000001
+        ramBankingEnabled = (byte & 0x01 == 0x01)
+        
+        if !ramBankingEnabled {
+            ramBank.bankIndex = 0
+        }
     }
     
     return MBC(memory: memory) {
