@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AudioKit/AudioKit.git",
       "state" : {
-        "revision" : "86c9285d673baa7f7955e8f2c1550e5e9740bada",
-        "version" : "5.3.3"
+        "revision" : "cb50a6878535735fd1f10c8b8e5e96864630836c",
+        "version" : "5.5.4"
       }
     },
     {
@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AudioKit/AudioKitEX",
       "state" : {
-        "revision" : "57e2af5a924706ede3994440ffea3d0b2c003a08",
-        "version" : "5.3.2"
+        "revision" : "22183bcf7e8c6baf15e59c1126a4c541e044cec5",
+        "version" : "5.5.2"
       }
     },
     {
@@ -32,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AudioKit/SoundpipeAudioKit.git",
       "state" : {
-        "revision" : "73b438e5c094d0535e48e305c37a6b77190510e3",
-        "version" : "5.3.1"
+        "revision" : "c9349accd3c9e102a35962cf40c998eacb6108d5",
+        "version" : "5.5.3"
       }
     }
   ],
