@@ -76,24 +76,35 @@ func mbcZero(rom: Data, ram: Data) -> MBC {
 }
 
 func mbcOne(rom: Data, ram: Data) -> MBC {
-    let rom0 = MemoryBlock(range: 0x0000...0x3FFF, buffer: rom.extractFrom(0x0000...0x3FFF), readOnly: true, enabled: true)
-    let romBank = MemoryBlockBanked(range: 0x4000...0x7FFF, buffer: rom.extractFrom(0x4000), readOnly: true, enabled: true)
+    let romBank1 = MemoryBlockBanked(range: 0x0000...0x3FFF, buffer: rom.extractFrom(0x0000), readOnly: true, enabled: true)
+    let romBank2 = MemoryBlockBanked(range: 0x4000...0x7FFF, buffer: rom.extractFrom(0x4000), readOnly: true, enabled: true)
     let ramSize = getRamSize(rom: rom)
     let ramBank = ramSize > 0 ?
-        MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: ram.extractFrom(0).fillUntil(count: ramSize, with: 0xFF), readOnly: false, enabled: true) :
-        MemoryBlockBanked(range: 0xA000...0xBFFF, readOnly: false, enabled: true)
-    let memory = MemoryAccessArray([rom0, romBank, ramBank])
-    var modeRegister: UInt8 = 0
+        MemoryBlockBanked(range: 0xA000...0xBFFF, buffer: ram.extractFrom(0).fillUntil(count: ramSize, with: 0xFF), readOnly: false, enabled: false) :
+        MemoryBlockBanked(range: 0xA000...0xBFFF, readOnly: false, enabled: false)
+    let memory = MemoryAccessArray([romBank1, romBank2, ramBank])
+    var modeRegister: UInt8 = 0 {
+        didSet {
+            if modeRegister == 0 {
+                romBank1.bankIndex = 0
+                ramBank.bankIndex = 0
+            } else if modeRegister == 1 {
+                romBank1.bankIndex = UInt16(bank2Register << 5)
+                ramBank.bankIndex = UInt16(bank2Register)
+            }
+        }
+    }
     var bank1Register: UInt8 = 1 {
         didSet {
-            romBank.bankIndex = UInt16((bank2Register << 5) | bank1Register) - 1 // Normalize to zero-based index
+            romBank2.bankIndex = UInt16((bank2Register << 5) | bank1Register) - 1 // Normalize to zero-based index
         }
     }
     var bank2Register: UInt8 = 0 {
         didSet {
-            if modeRegister == 0 {
-                romBank.bankIndex = UInt16((bank2Register << 5) | bank1Register) - 1 // Normalize to zero-based index
-            } else if modeRegister == 1 {
+            romBank2.bankIndex = UInt16((bank2Register << 5) | bank1Register) - 1 // Normalize to zero-based index
+            
+            if modeRegister == 1 {
+                romBank1.bankIndex = UInt16(bank2Register << 5)
                 ramBank.bankIndex = UInt16(bank2Register)
             }
         }
